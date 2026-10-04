@@ -14,6 +14,7 @@ import { CornerCompass } from "@/components/CornerCompass";
 import { EnvironmentModal } from "@/components/EnvironmentModal";
 import { WalkthroughModal } from "@/components/WalkthroughModal";
 import { AgentCommerceModal } from "@/components/AgentCommerceModal";
+import { PitchDeckModal } from "@/components/PitchDeckModal";
 import MallSimulator from "@/components/MallSimulator";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
@@ -105,6 +106,7 @@ export function App() {
   const [parkingLotOpen, setParkingLotOpen] = useState(false);
   const [boughtModalOpen, setBoughtModalOpen] = useState(false);
   const [mallSimulatorOpen, setMallSimulatorOpen] = useState(false);
+  const [pitchDeckOpen, setPitchDeckOpen] = useState(false);
   const [parkedOffers, setParkedOffers] = useState<ParkedOffer[]>([]);
   const [boughtItems, setBoughtItems] = useState<BoughtItem[]>([]);
 
@@ -1868,7 +1870,26 @@ export function App() {
               </span>
             </button>
 
-            {/* 9. Interactive Walkthrough Guide Button (Far Right End of Carousel) */}
+            {/* 9. Pitch Deck (PDF) Button */}
+            <button
+              onClick={() => safeBottomAction(() => setPitchDeckOpen(true))}
+              className="glass relative snap-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 rounded-2xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 border border-amber-500/50 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 shadow-amber active:scale-95 transition-all cursor-pointer backdrop-blur-2xl ring-1 ring-amber-500/30 shrink-0 select-none"
+              aria-label="Open Pitch Deck"
+              title="Open Pitch Deck (PDF Download Available)"
+            >
+              <span className="text-base sm:text-lg shrink-0 pointer-events-none">📑</span>
+              <div className="text-left hidden sm:block min-w-0 pointer-events-none">
+                <p className="font-mono text-[8px] uppercase tracking-wider text-amber-400/80 leading-none">
+                  Seed Stage
+                </p>
+                <p className="text-[11px] font-bold text-amber-300 truncate">Pitch Deck</p>
+              </div>
+              <span className="text-[8.5px] font-mono text-amber-300 sm:hidden leading-none truncate max-w-full pointer-events-none">
+                Deck
+              </span>
+            </button>
+
+            {/* 10. Interactive Walkthrough Guide Button (Far Right End of Carousel) */}
             <button
               onClick={() => safeBottomAction(() => setWalkthroughOpen(true))}
               className="glass relative snap-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 rounded-2xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 border border-primary/40 bg-primary/15 text-primary hover:bg-primary/25 shadow-teal active:scale-95 transition-all cursor-pointer backdrop-blur-2xl ring-1 ring-primary/20 shrink-0 select-none"
@@ -2401,6 +2422,9 @@ export function App() {
         cachedOffersCount={matchedDeck.length}
         lastCachedTime={lastCacheSync}
       />
+
+      {/* Pitch Deck Presentation Modal & PDF Downloader */}
+      <PitchDeckModal isOpen={pitchDeckOpen} onClose={() => setPitchDeckOpen(false)} />
     </main>
   );
 }
