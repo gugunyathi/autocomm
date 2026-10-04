@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { formatCardinal, type SpatialCoordinates } from "@/lib/spatial-sensors";
 import type { Store } from "@/lib/acn-data";
 
@@ -15,7 +15,7 @@ interface SpatialCompassHUDProps {
   permissionStatus: string;
 }
 
-export function SpatialCompassHUD({
+export const SpatialCompassHUD = React.memo(function SpatialCompassHUD({
   heading,
   facingStore,
   outdoor,
@@ -168,4 +168,5 @@ export function SpatialCompassHUD({
       </div>
     </div>
   );
-}
+});
+SpatialCompassHUD.displayName = "SpatialCompassHUD";

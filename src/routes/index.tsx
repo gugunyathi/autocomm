@@ -13,6 +13,8 @@ import { SpatialCompassHUD } from "@/components/SpatialCompassHUD";
 import { CornerCompass } from "@/components/CornerCompass";
 import { EnvironmentModal } from "@/components/EnvironmentModal";
 import { WalkthroughModal } from "@/components/WalkthroughModal";
+import { AgentCommerceModal } from "@/components/AgentCommerceModal";
+import MallSimulator from "@/components/MallSimulator";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { registerServiceWorker, useOnlineStatus } from "@/lib/pwa-service";
@@ -99,9 +101,10 @@ export function App() {
     }
   };
 
-  // Parking Lot & Bought Bag Modals
+  // Parking Lot, Bought Bag & Mall Simulator Modals
   const [parkingLotOpen, setParkingLotOpen] = useState(false);
   const [boughtModalOpen, setBoughtModalOpen] = useState(false);
+  const [mallSimulatorOpen, setMallSimulatorOpen] = useState(false);
   const [parkedOffers, setParkedOffers] = useState<ParkedOffer[]>([]);
   const [boughtItems, setBoughtItems] = useState<BoughtItem[]>([]);
 
@@ -335,6 +338,7 @@ export function App() {
   }, [matchedDeck, activePopupDeal, stores]);
   const [claimed, setClaimed] = useState<string[]>([]);
   const [drawer, setDrawer] = useState(false);
+  const [agentCommerceOpen, setAgentCommerceOpen] = useState(false);
   const [drawerTab, setDrawerTab] = useState<"profile" | "logs">("profile");
   const [tags, setTags] = useState(["Coffee", "Hoodies", "Sushi"]);
   const [budget, setBudget] = useState(1500);
@@ -966,8 +970,11 @@ export function App() {
 
   const handleParkFromDeck = (d: MatchedDeal) => {
     handleParkDeal(d);
-    setMatchedDeck((prev) => prev.filter((item) => item.store.id !== d.store.id));
-    setMatchedDeckOpen(false); // Auto go back to 3D carousel
+    setMatchedDeck((prev) => {
+      const next = prev.filter((item) => item.store.id !== d.store.id);
+      if (next.length === 0) setMatchedDeckOpen(false);
+      return next;
+    });
   };
 
   const handleDiscardFromDeck = useCallback((storeId: string) => {
@@ -1050,153 +1057,58 @@ export function App() {
   return (
     <main className="relative min-h-[100dvh] w-full overflow-hidden bg-background bg-aurora select-none flex flex-col justify-between">
       {/* Dynamic Header */}
-      <header className="relative z-30 flex flex-col gap-3 px-4 pt-3.5 sm:px-6 sm:pt-5 md:px-10 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center justify-between gap-3 min-w-0">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <button
-              onClick={() => setView("landing")}
-              className="glass px-2.5 py-1.5 rounded-xl font-mono text-[11px] text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors flex items-center gap-1 shrink-0 cursor-pointer"
-              title="Return to Landing Page"
-            >
-              <span>←</span>
-              <span className="hidden sm:inline">Overview</span>
-            </button>
-            <button
-              onClick={() => setWalkthroughOpen(true)}
-              className="glass px-2.5 py-1.5 rounded-xl font-mono text-[11px] text-primary hover:text-white hover:border-primary transition-colors flex items-center gap-1 shrink-0 cursor-pointer"
-              title="Replay Interactive Walkthrough Guide"
-            >
-              <span>💡</span>
-              <span className="hidden sm:inline">Guide</span>
-            </button>
-            <div className="flex items-center gap-2.5 min-w-0">
-              <AutoComLogo size="sm" />
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inset-0 animate-ping rounded-full bg-primary opacity-75" />
-                    <span className="relative h-2 w-2 rounded-full bg-primary" />
-                  </span>
-                  <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.25em] sm:tracking-[0.35em] text-primary truncate">
-                    AUTOCOM · LIVE MESH
-                  </p>
-                </div>
-                <h1 className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-foreground truncate">
-                  AutoCom
-                </h1>
+      <header className="relative z-30 w-full px-3 pt-2.5 sm:px-6 sm:pt-4 md:px-10">
+        <div className="flex items-center justify-between gap-2 min-w-0 w-full">
+          {/* App Logo & Name */}
+          <div className="flex items-center gap-2 min-w-0">
+            <AutoComLogo size="sm" />
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="relative flex h-1.5 w-1.5 shrink-0">
+                  <span className="absolute inset-0 animate-ping rounded-full bg-primary opacity-75" />
+                  <span className="relative h-1.5 w-1.5 rounded-full bg-primary" />
+                </span>
+                <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.2em] sm:tracking-[0.25em] text-primary truncate">
+                  LIVE MESH
+                </p>
               </div>
+              <h1 className="text-sm sm:text-base md:text-lg font-bold tracking-tight text-foreground truncate leading-tight">
+                AutoCom
+              </h1>
             </div>
           </div>
 
-          {/* Quick Actions on Mobile */}
-          <div className="flex items-center gap-1.5 md:hidden shrink-0">
-            {currentUser ? (
-              <button
-                onClick={() => openPasskeyModal("signin")}
-                className="glass rounded-full px-2.5 py-1.5 text-[10px] font-mono text-primary flex items-center gap-1"
-                title="Passkey verified"
-              >
-                <span>🔑</span>
-                <span className="truncate max-w-[60px]">{currentUser.name}</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => openPasskeyModal("signin")}
-                className="glass rounded-full px-2.5 py-1.5 text-[10px] font-mono text-primary flex items-center gap-1"
-              >
-                <span>🔑</span>
-                <span>Sign In</span>
-              </button>
-            )}
+          {/* Quick Actions (User, Perimeter & Scan) */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Quick Perimeter Badge */}
             <button
-              onClick={() => trigger()}
-              className="glass items-center gap-1 rounded-full px-2.5 py-1.5 text-[11px] font-mono text-accent hover:border-accent transition-colors shrink-0"
-              aria-label="Discover deal"
-              title="Discover deal"
+              onClick={() => setEnvModalOpen(true)}
+              className="glass flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 text-[9.5px] sm:text-[10.5px] font-mono text-white hover:border-primary transition-all cursor-pointer"
+              title="Configure Proximity Perimeter & Sensors"
             >
-              <span>⚡ Scan</span>
+              <span>{outdoor ? "🌳" : "🏢"}</span>
+              <span className="text-primary font-bold">{activeProximityRadius.toFixed(0)}m</span>
             </button>
-          </div>
-        </div>
 
-        {/* Header Right: Segmented Mode Selector, Auto Deck controls & Passkey Badge */}
-        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 sm:gap-2.5">
-          {/* Auto Deck Alignment Controls & Silence Deal Popups Floating Button */}
-          <div className="glass flex items-center rounded-full p-0.5 font-mono text-[10px] gap-0.5">
-            <button
-              onClick={() => setDeckMode(deckMode === "left" ? "none" : "left")}
-              className={`px-2.5 py-1.5 rounded-full transition-all cursor-pointer ${
-                deckMode === "left"
-                  ? "bg-primary text-primary-foreground font-bold shadow-teal"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              title="Align pulled cards to left deck stack"
-            >
-              ⊟ Deck L
-            </button>
-            <button
-              onClick={() => setDeckMode(deckMode === "right" ? "none" : "right")}
-              className={`px-2.5 py-1.5 rounded-full transition-all cursor-pointer ${
-                deckMode === "right"
-                  ? "bg-primary text-primary-foreground font-bold shadow-teal"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              title="Align pulled cards to right deck stack"
-            >
-              ⊞ Deck R
-            </button>
-            {/* Floating button next to Deck R to silence or enable pop up deal cards */}
-            <button
-              onClick={handleToggleSilencePopups}
-              className={`px-2.5 py-1.5 rounded-full transition-all flex items-center gap-1 cursor-pointer font-bold ${
-                silencePopups
-                  ? "bg-rose-500/25 text-rose-300 border border-rose-500/40 shadow-[0_0_10px_rgba(244,63,94,0.35)]"
-                  : "bg-white/10 text-primary hover:bg-white/20 hover:text-white"
-              }`}
-              title={
-                silencePopups
-                  ? "Deal Pop-up Cards are Silenced (deals save directly to deck). Tap to enable popups."
-                  : "Deal Pop-up Cards are Enabled. Tap to silence popups."
-              }
-              aria-label="Silence or enable deal popup cards"
-            >
-              <span>{silencePopups ? "🔕" : "🔔"}</span>
-              <span className="hidden xs:inline">{silencePopups ? "Silenced" : "Pop-ups"}</span>
-            </button>
-            {deckMode !== "none" && (
-              <button
-                onClick={() => setDeckMode("none")}
-                className="px-2 py-1.5 rounded-full text-muted-foreground hover:text-foreground cursor-pointer"
-                title="Freeform movement"
-              >
-                ✕ Free
-              </button>
-            )}
-          </div>
-
-          {/* Desktop discover & passkey controls */}
-          <div className="hidden md:flex items-center gap-2">
-            <button
-              onClick={() => trigger()}
-              className="glass flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-mono text-accent hover:border-accent transition-all hover:scale-105 active:scale-95 shrink-0 cursor-pointer"
-            >
-              <span>⚡ Discover Deal</span>
-            </button>
+            {/* Passkey / User Badge */}
             {currentUser ? (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1">
                 <button
                   onClick={() => openPasskeyModal("signin")}
-                  className="glass flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-mono text-primary hover:border-primary transition-colors cursor-pointer"
+                  className="glass rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-mono text-primary flex items-center gap-1 hover:border-primary/60 transition-all cursor-pointer"
+                  title={`Passkey verified: ${currentUser.name}`}
                 >
                   <span>🔑</span>
-                  <span>{currentUser.displayName}</span>
+                  <span className="truncate max-w-[50px] sm:max-w-[90px] font-semibold">
+                    {currentUser.name}
+                  </span>
                 </button>
                 <button
                   onClick={() => {
                     signOutPasskey();
                     setCurrentUser(null);
                   }}
-                  className="glass text-[11px] text-muted-foreground hover:text-foreground px-2.5 py-2 rounded-full cursor-pointer"
+                  className="glass text-[10px] text-muted-foreground hover:text-foreground h-6 w-6 sm:h-7 sm:w-7 rounded-full flex items-center justify-center cursor-pointer"
                   title="Sign out"
                 >
                   ✕
@@ -1205,65 +1117,28 @@ export function App() {
             ) : (
               <button
                 onClick={() => openPasskeyModal("signin")}
-                className="glass flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-mono text-primary hover:border-primary transition-all cursor-pointer"
+                className="glass rounded-full px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-mono text-primary hover:border-primary transition-all cursor-pointer flex items-center gap-1"
               >
-                <span>🔑 Passkey Sign In</span>
+                <span>🔑</span>
+                <span className="hidden xs:inline">Sign In</span>
               </button>
             )}
 
-            {/* Quick Perimeter Radius Button */}
+            {/* Discover Scan Button */}
             <button
-              onClick={() => setEnvModalOpen(true)}
-              className="glass flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[10.5px] font-mono text-white hover:border-primary transition-all cursor-pointer"
-              title="Configure Proximity Perimeter & Sensors"
+              onClick={() => trigger()}
+              className="glass flex items-center gap-1 rounded-full px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[10.5px] sm:text-xs font-mono text-accent border-accent/40 bg-accent/10 hover:border-accent shadow-amber transition-all active:scale-95 shrink-0 cursor-pointer font-bold"
+              aria-label="Scan & Discover Deal"
+              title="Discover & Scan Live Deals"
             >
-              <span>{outdoor ? "🌳" : "🏢"}</span>
-              <span className="text-primary font-bold">{activeProximityRadius.toFixed(1)}m</span>
+              <span>⚡</span>
+              <span>Scan</span>
             </button>
-
-            {/* Quick Sound Toggle */}
-            <button
-              onClick={handleToggleSound}
-              className={`glass flex items-center justify-center h-8 w-8 rounded-full text-xs font-mono transition-all cursor-pointer ${
-                soundEnabled
-                  ? "text-primary border-primary/50 shadow-teal"
-                  : "text-muted-foreground opacity-60"
-              }`}
-              title={soundEnabled ? "Sound Alerts: ON" : "Sound Alerts: OFF"}
-              aria-label="Toggle sound alerts"
-            >
-              {soundEnabled ? "🔊" : "🔇"}
-            </button>
-
-            {/* Quick Vibration Toggle */}
-            <button
-              onClick={handleToggleVibrate}
-              className={`glass flex items-center justify-center h-8 w-8 rounded-full text-xs font-mono transition-all cursor-pointer ${
-                vibrateEnabled
-                  ? "text-accent border-accent/50 shadow-amber"
-                  : "text-muted-foreground opacity-60"
-              }`}
-              title={vibrateEnabled ? "Haptic Vibration: ON" : "Haptic Vibration: OFF"}
-              aria-label="Toggle vibration alerts"
-            >
-              📳
-            </button>
-
-            {/* Offline Status Badge */}
-            {!isOnline && (
-              <div className="flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/15 px-2.5 py-1 text-[10px] font-mono text-amber-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-                <span>Offline (Cached)</span>
-              </div>
-            )}
-
-            {/* PWA Install Button */}
-            <PWAInstallButton />
           </div>
         </div>
       </header>
 
-      {/* Top-Center Spatial Compass & Direction Indicator HUD (Just below Deck L / Deck R buttons) */}
+      {/* Top-Center Spatial Compass & Direction Indicator HUD */}
       <div className="relative z-30 w-full max-w-lg sm:max-w-xl mx-auto px-3 sm:px-4 mt-1.5 pointer-events-auto">
         <SpatialCompassHUD
           heading={heading}
@@ -1279,6 +1154,78 @@ export function App() {
         />
       </div>
 
+      {/* Independent Floating Quick Controls: Park (Left), Volume & Silence (Center), Bag (Right) */}
+      <div className="relative z-30 w-full max-w-lg sm:max-w-xl md:max-w-2xl mx-auto px-3 sm:px-4 mt-1.5 -mb-2 flex justify-between items-center pointer-events-auto">
+        {/* Far Left: Park 🅿️ Floating Button */}
+        <button
+          onClick={() => setParkingLotOpen(true)}
+          className="glass relative flex items-center justify-center gap-1.5 h-8 sm:h-9 px-2.5 sm:px-3.5 rounded-full text-xs font-mono font-bold text-white bg-[#090d19]/90 border border-primary/50 shadow-teal hover:border-primary transition-all cursor-pointer active:scale-95 shrink-0 backdrop-blur-2xl"
+          title="Open Parked Offers (Holding Lot)"
+          aria-label="Open Holding Lot"
+        >
+          <span>🅿️</span>
+          <span className="hidden xs:inline">Park</span>
+          {parkedOffers.length > 0 && (
+            <span className="rounded-full bg-primary text-primary-foreground font-mono text-[9px] font-black h-4 min-w-4 sm:h-4.5 sm:min-w-4.5 px-1 flex items-center justify-center shadow-md">
+              {parkedOffers.length}
+            </span>
+          )}
+        </button>
+
+        {/* Center: Volume & Card Silence Toggles */}
+        <div className="flex items-center gap-2">
+          {/* 1. App Sound Volume On/Off Floating Circular Icon Button */}
+          <button
+            onClick={handleToggleSound}
+            className={`h-8 w-8 sm:h-9 sm:w-9 rounded-full flex items-center justify-center text-xs sm:text-sm transition-all cursor-pointer shadow-xl backdrop-blur-2xl border active:scale-95 ${
+              soundEnabled
+                ? "bg-[#090d19]/90 text-primary border-primary/50 shadow-teal"
+                : "bg-[#090d19]/80 text-muted-foreground border-white/20 opacity-70 hover:opacity-100"
+            }`}
+            title={
+              soundEnabled ? "App Sounds: ON (Tap to Mute)" : "App Sounds: OFF (Tap to Unmute)"
+            }
+            aria-label="Toggle App Sounds"
+          >
+            {soundEnabled ? "🔊" : "🔇"}
+          </button>
+
+          {/* 2. Deal Pop-Up Silencer Floating Circular Icon Button */}
+          <button
+            onClick={handleToggleSilencePopups}
+            className={`h-8 w-8 sm:h-9 sm:w-9 rounded-full flex items-center justify-center text-xs sm:text-sm transition-all cursor-pointer shadow-xl backdrop-blur-2xl border active:scale-95 ${
+              silencePopups
+                ? "bg-rose-500/25 text-rose-300 border-rose-500/50 shadow-[0_0_12px_rgba(244,63,94,0.4)]"
+                : "bg-[#090d19]/90 text-accent border-accent/50 shadow-amber"
+            }`}
+            title={
+              silencePopups
+                ? "Deal Pop-up Cards: SILENCED (Saved directly to Deck). Tap to Enable."
+                : "Deal Pop-up Cards: ACTIVE. Tap to Silence."
+            }
+            aria-label="Toggle Deal Pop-up Silencer"
+          >
+            {silencePopups ? "🔕" : "🔔"}
+          </button>
+        </div>
+
+        {/* Far Right: Bag 🛍️ Floating Button */}
+        <button
+          onClick={() => setBoughtModalOpen(true)}
+          className="glass relative flex items-center justify-center gap-1.5 h-8 sm:h-9 px-2.5 sm:px-3.5 rounded-full text-xs font-mono font-bold text-white bg-[#090d19]/90 border border-accent/50 shadow-amber hover:border-accent transition-all cursor-pointer active:scale-95 shrink-0 backdrop-blur-2xl"
+          title="Open Bought Items & Receipts"
+          aria-label="Open Bought Items"
+        >
+          <span>🛍️</span>
+          <span className="hidden xs:inline">Bag</span>
+          {boughtItems.length > 0 && (
+            <span className="rounded-full bg-accent text-accent-foreground font-mono text-[9px] font-black h-4 min-w-4 sm:h-4.5 sm:min-w-4.5 px-1 flex items-center justify-center shadow-md">
+              {boughtItems.length}
+            </span>
+          )}
+        </button>
+      </div>
+
       {/* 3D Sphere Interactive Canvas */}
       <section
         className="relative z-10 flex-1 w-full flex items-center justify-center cursor-grab active:cursor-grabbing touch-none select-none overflow-hidden my-auto"
@@ -1288,7 +1235,7 @@ export function App() {
         onPointerLeave={up}
         style={{ minHeight: isMobile ? "55dvh" : "65dvh" }}
       >
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none w-0 h-0">
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[calc(50%+2.2rem)] sm:-translate-y-[calc(50%+2.75rem)] pointer-events-none w-0 h-0">
           {/* Breathing Radial Orbit Rings */}
           {mounted && (
             <>
@@ -1506,6 +1453,50 @@ export function App() {
         </div>
       </section>
 
+      {/* Floating Deck Alignment Control Bar (Appears ONLY when cards are pulled) */}
+      {pulledCards.length > 0 && (
+        <div className="fixed top-20 sm:top-24 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1.5 p-1.5 rounded-full glass bg-[#090d19]/95 border border-primary/50 shadow-2xl backdrop-blur-2xl animate-scale-up">
+          <span className="font-mono text-[10px] text-primary font-bold px-2 py-0.5 border-r border-white/10 flex items-center gap-1">
+            <span>📑</span>
+            <span>{pulledCards.length} Pulled</span>
+          </span>
+          <button
+            onClick={() => setDeckMode(deckMode === "left" ? "none" : "left")}
+            className={`px-3 py-1 rounded-full font-mono text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+              deckMode === "left"
+                ? "bg-primary text-primary-foreground shadow-teal"
+                : "text-muted-foreground hover:text-foreground hover:bg-white/10"
+            }`}
+            title="Align pulled cards to left deck stack"
+          >
+            <span>⊟</span>
+            <span>Deck L</span>
+          </button>
+          <button
+            onClick={() => setDeckMode(deckMode === "right" ? "none" : "right")}
+            className={`px-3 py-1 rounded-full font-mono text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+              deckMode === "right"
+                ? "bg-primary text-primary-foreground shadow-teal"
+                : "text-muted-foreground hover:text-foreground hover:bg-white/10"
+            }`}
+            title="Align pulled cards to right deck stack"
+          >
+            <span>⊞</span>
+            <span>Deck R</span>
+          </button>
+          {deckMode !== "none" && (
+            <button
+              onClick={() => setDeckMode("none")}
+              className="px-2.5 py-1 rounded-full font-mono text-[11px] text-amber-400 hover:text-amber-300 hover:bg-amber-500/20 transition-all cursor-pointer flex items-center gap-1"
+              title="Release alignment to freeform movement"
+            >
+              <span>✕</span>
+              <span>Free</span>
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Floating Pulled Deck Cards (Draggable, Swipable, Cascade Deck) */}
       {pulledCards.map((p) => (
         <FloatingDeckCard
@@ -1608,7 +1599,26 @@ export function App() {
               msOverflowStyle: "none",
             }}
           >
-            {/* 1. Home / Re-center Button */}
+            {/* 1. Indoor Mall Navigation Simulator Button */}
+            <button
+              onClick={() => safeBottomAction(() => setMallSimulatorOpen(true))}
+              className="glass relative snap-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 rounded-2xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 border border-purple-500/50 bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 shadow-[0_0_12px_rgba(168,85,247,0.3)] active:scale-95 transition-all cursor-pointer backdrop-blur-2xl ring-1 ring-purple-500/30 shrink-0 select-none"
+              aria-label="Open Indoor Mall Navigation Simulator"
+              title="Open Indoor Mall Navigation Simulator"
+            >
+              <span className="text-base sm:text-lg shrink-0 pointer-events-none">🧭</span>
+              <div className="text-left hidden sm:block min-w-0 pointer-events-none">
+                <p className="font-mono text-[8px] uppercase tracking-wider text-purple-300 leading-none">
+                  Sim
+                </p>
+                <p className="text-[11px] font-bold text-white truncate">Mall Nav</p>
+              </div>
+              <span className="text-[8.5px] font-mono text-purple-300 sm:hidden leading-none truncate max-w-full pointer-events-none">
+                Mall Sim
+              </span>
+            </button>
+
+            {/* 2. Home / Re-center Button */}
             <button
               onClick={() =>
                 safeBottomAction(() => {
@@ -1638,32 +1648,6 @@ export function App() {
               <span className="text-[8.5px] font-mono text-foreground/80 sm:hidden leading-none truncate max-w-full pointer-events-none">
                 Home
               </span>
-            </button>
-
-            {/* 2. Holding Lot Button */}
-            <button
-              onClick={() => safeBottomAction(() => setParkingLotOpen(true))}
-              className="glass relative snap-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 rounded-2xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 border border-primary/40 bg-[#090d19]/92 hover:bg-primary/20 hover:border-primary shadow-teal active:scale-95 transition-all cursor-pointer backdrop-blur-2xl ring-1 ring-white/10 shrink-0 select-none"
-              aria-label="Open Holding Lot"
-              title="Open Parked Offers (Holding Lot)"
-            >
-              <span className="text-base sm:text-lg shrink-0 pointer-events-none">🅿️</span>
-              <div className="text-left hidden sm:block min-w-0 pointer-events-none">
-                <p className="font-mono text-[8px] uppercase tracking-wider text-muted-foreground leading-none">
-                  Holding
-                </p>
-                <p className="text-[11px] font-bold text-foreground truncate">
-                  {parkedOffers.length} {parkedOffers.length === 1 ? "Offer" : "Offers"}
-                </p>
-              </div>
-              <span className="text-[8.5px] font-mono text-primary font-bold sm:hidden leading-none truncate max-w-full pointer-events-none">
-                Park
-              </span>
-              {parkedOffers.length > 0 && (
-                <span className="absolute -top-1 -right-1 sm:static rounded-full bg-primary text-primary-foreground font-mono text-[9px] sm:text-[10px] font-black h-4.5 min-w-4.5 sm:h-5 sm:min-w-5 px-1 flex items-center justify-center shadow-md pointer-events-none">
-                  {parkedOffers.length}
-                </span>
-              )}
             </button>
 
             {/* 3. Indoor / Outdoor & Velocity Auto-Switching Button */}
@@ -1728,6 +1712,68 @@ export function App() {
               )}
             </button>
 
+            {/* 4b. Permanent Deck L Stack Control in Bottom Carousel */}
+            <button
+              onClick={() =>
+                safeBottomAction(() => setDeckMode(deckMode === "left" ? "none" : "left"))
+              }
+              className={`glass relative snap-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 rounded-2xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 border transition-all cursor-pointer backdrop-blur-2xl ring-1 ring-white/10 shrink-0 select-none ${
+                deckMode === "left"
+                  ? "border-primary bg-primary/25 text-primary shadow-teal"
+                  : "border-white/20 bg-[#090d19]/92 hover:bg-white/15 hover:border-primary"
+              }`}
+              title="Align pulled cards into Left Deck stack"
+              aria-label="Align pulled cards to left stack"
+            >
+              <span className="text-base sm:text-lg shrink-0 pointer-events-none">⊟</span>
+              <div className="text-center sm:text-left font-mono leading-none min-w-0 pointer-events-none">
+                <p className="text-[9.5px] sm:text-xs font-bold text-white">Deck L</p>
+                <p className="text-[7.5px] sm:text-[8px] text-muted-foreground mt-0.5 truncate">
+                  {deckMode === "left" ? "Active ✓" : "Stack L"}
+                </p>
+              </div>
+            </button>
+
+            {/* 4c. Permanent Deck R Stack Control in Bottom Carousel */}
+            <button
+              onClick={() =>
+                safeBottomAction(() => setDeckMode(deckMode === "right" ? "none" : "right"))
+              }
+              className={`glass relative snap-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 rounded-2xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 border transition-all cursor-pointer backdrop-blur-2xl ring-1 ring-white/10 shrink-0 select-none ${
+                deckMode === "right"
+                  ? "border-primary bg-primary/25 text-primary shadow-teal"
+                  : "border-white/20 bg-[#090d19]/92 hover:bg-white/15 hover:border-primary"
+              }`}
+              title="Align pulled cards into Right Deck stack"
+              aria-label="Align pulled cards to right stack"
+            >
+              <span className="text-base sm:text-lg shrink-0 pointer-events-none">⊞</span>
+              <div className="text-center sm:text-left font-mono leading-none min-w-0 pointer-events-none">
+                <p className="text-[9.5px] sm:text-xs font-bold text-white">Deck R</p>
+                <p className="text-[7.5px] sm:text-[8px] text-muted-foreground mt-0.5 truncate">
+                  {deckMode === "right" ? "Active ✓" : "Stack R"}
+                </p>
+              </div>
+            </button>
+
+            {/* 4d. Permanent Free Alignment Reset Button in Bottom Carousel */}
+            {deckMode !== "none" && (
+              <button
+                onClick={() => safeBottomAction(() => setDeckMode("none"))}
+                className="glass relative snap-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 rounded-2xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 border border-amber-500/50 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.3)] transition-all cursor-pointer backdrop-blur-2xl ring-1 ring-amber-500/30 shrink-0 select-none"
+                title="Release alignment to freeform movement"
+                aria-label="Release alignment to freeform movement"
+              >
+                <span className="text-base sm:text-lg shrink-0 pointer-events-none">✕</span>
+                <div className="text-center sm:text-left font-mono leading-none min-w-0 pointer-events-none">
+                  <p className="text-[9.5px] sm:text-xs font-bold text-amber-300">Free</p>
+                  <p className="text-[7.5px] sm:text-[8px] text-amber-400 mt-0.5 truncate">
+                    Unstack
+                  </p>
+                </div>
+              </button>
+            )}
+
             {/* 5. Floating Agent Control Button */}
             <button
               onClick={() => safeBottomAction(() => setDrawer(true))}
@@ -1744,33 +1790,26 @@ export function App() {
               </div>
             </button>
 
-            {/* 6. Claimed Bag Button */}
+            {/* 5b. A2A Bot Hub Button */}
             <button
-              onClick={() => safeBottomAction(() => setBoughtModalOpen(true))}
-              className="glass relative snap-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 rounded-2xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 border border-accent/40 bg-[#090d19]/92 hover:bg-accent/20 hover:border-accent shadow-amber active:scale-95 transition-all cursor-pointer backdrop-blur-2xl ring-1 ring-white/10 shrink-0 select-none"
-              aria-label="Open Bought Items"
-              title="Open Bought Items & Receipts"
+              onClick={() => safeBottomAction(() => setAgentCommerceOpen(true))}
+              className="glass relative snap-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 rounded-2xl px-2.5 sm:px-4 py-2 sm:py-2.5 border border-primary/60 bg-gradient-to-r from-primary/25 to-teal-400/20 hover:from-primary/35 hover:to-teal-400/30 text-primary shadow-teal active:scale-95 transition-all cursor-pointer backdrop-blur-2xl ring-1 ring-primary/40 shrink-0 select-none"
+              aria-label="Open Agent-to-Agent (A2A) Commerce Core"
+              title="Open A2A Machine Negotiation Hub (Muse-ZA & Nibble-ZA)"
             >
-              <span className="text-base sm:text-lg shrink-0 pointer-events-none">🛍️</span>
-              <div className="text-left hidden sm:block min-w-0 pointer-events-none">
-                <p className="font-mono text-[8px] uppercase tracking-wider text-muted-foreground leading-none">
-                  Bag
-                </p>
-                <p className="text-[11px] font-bold text-foreground truncate">
-                  {boughtItems.length} {boughtItems.length === 1 ? "Item" : "Items"}
+              <span className="text-base sm:text-lg shrink-0 pointer-events-none">⚡</span>
+              <div className="text-center sm:text-left font-mono leading-none min-w-0 pointer-events-none">
+                <p className="text-[9.5px] sm:text-xs font-bold text-white">A2A Hub</p>
+                <p className="text-[7.5px] sm:text-[8.5px] text-teal-300 font-semibold mt-0.5 truncate">
+                  M2M Deals
                 </p>
               </div>
-              <span className="text-[8.5px] font-mono text-foreground/80 sm:hidden leading-none truncate max-w-full pointer-events-none">
-                Bag
+              <span className="absolute -top-1 -right-1 sm:static rounded-full bg-primary text-black font-mono text-[8px] font-black h-4 min-w-4 sm:h-4.5 sm:min-w-4.5 px-1 flex items-center justify-center shadow-md pointer-events-none">
+                AI
               </span>
-              {boughtItems.length > 0 && (
-                <span className="absolute -top-1 -right-1 sm:static rounded-full bg-accent text-accent-foreground font-mono text-[9px] sm:text-[10px] font-black h-4.5 min-w-4.5 sm:h-5 sm:min-w-5 px-1 flex items-center justify-center shadow-md pointer-events-none">
-                  {boughtItems.length}
-                </span>
-              )}
             </button>
 
-            {/* 7. Settings & Telemetry Button */}
+            {/* 6. Settings & Telemetry Button */}
             <button
               onClick={() => safeBottomAction(() => setEnvModalOpen(true))}
               className="glass relative snap-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 rounded-2xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 border border-white/20 bg-[#090d19]/92 hover:bg-white/15 hover:border-primary shadow-xl active:scale-95 transition-all cursor-pointer backdrop-blur-2xl ring-1 ring-white/10 shrink-0 select-none"
@@ -1789,89 +1828,7 @@ export function App() {
               </span>
             </button>
 
-            {/* 8. Silence / Enable Deal Pop-ups Button */}
-            <button
-              onClick={() => safeBottomAction(handleToggleSilencePopups)}
-              className={`glass relative snap-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 rounded-2xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 border transition-all cursor-pointer backdrop-blur-2xl shrink-0 select-none ${
-                silencePopups
-                  ? "border-rose-500/70 bg-rose-500/20 text-rose-300 shadow-[0_0_15px_rgba(244,63,94,0.3)] ring-1 ring-rose-500/40"
-                  : "border-white/20 bg-[#090d19]/92 hover:bg-white/15 hover:border-primary text-primary shadow-xl ring-1 ring-white/10"
-              }`}
-              title={
-                silencePopups
-                  ? "Deal Pop-up Cards are SILENCED (deals save directly to deck). Tap to enable popups."
-                  : "Deal Pop-up Cards are ACTIVE. Tap to silence popups."
-              }
-              aria-label="Silence or enable deal popup cards"
-            >
-              <span className="text-base sm:text-lg shrink-0 pointer-events-none">
-                {silencePopups ? "🔕" : "🔔"}
-              </span>
-              <div className="text-left hidden sm:block min-w-0 pointer-events-none">
-                <p className="font-mono text-[8px] uppercase tracking-wider text-muted-foreground leading-none">
-                  Popups
-                </p>
-                <p
-                  className={`text-[11px] font-bold truncate ${
-                    silencePopups ? "text-rose-300" : "text-foreground"
-                  }`}
-                >
-                  {silencePopups ? "Silenced" : "Active"}
-                </p>
-              </div>
-              <span
-                className={`text-[8.5px] font-mono font-bold sm:hidden leading-none truncate max-w-full pointer-events-none ${
-                  silencePopups ? "text-rose-300" : "text-primary"
-                }`}
-              >
-                {silencePopups ? "Muted" : "Alerts"}
-              </span>
-              {silencePopups && (
-                <span className="absolute -top-1 -right-1 sm:static rounded-full bg-rose-500 text-white font-mono text-[8px] font-black h-4 min-w-4 sm:h-4.5 sm:min-w-4.5 px-1 flex items-center justify-center shadow-md pointer-events-none">
-                  OFF
-                </span>
-              )}
-            </button>
-
-            {/* 9. Scan & Discover Deal Button */}
-            <button
-              onClick={() => safeBottomAction(() => trigger())}
-              className="glass relative snap-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 rounded-2xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 border border-accent/40 bg-accent/15 hover:bg-accent/25 hover:border-accent text-accent active:scale-95 transition-all cursor-pointer backdrop-blur-2xl ring-1 ring-accent/30 shrink-0 select-none"
-              title="Trigger Immediate Deal Radar Scan"
-              aria-label="Scan for Deals"
-            >
-              <span className="text-base sm:text-lg shrink-0 pointer-events-none">⚡</span>
-              <div className="text-left hidden sm:block min-w-0 pointer-events-none">
-                <p className="font-mono text-[8px] uppercase tracking-wider text-muted-foreground leading-none">
-                  Radar
-                </p>
-                <p className="text-[11px] font-bold text-accent truncate">Scan</p>
-              </div>
-              <span className="text-[8.5px] font-mono text-accent font-bold sm:hidden leading-none truncate max-w-full pointer-events-none">
-                Scan
-              </span>
-            </button>
-
-            {/* 10. Guide / Interactive Walkthrough Button */}
-            <button
-              onClick={() => safeBottomAction(() => setWalkthroughOpen(true))}
-              className="glass relative snap-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 rounded-2xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 border border-white/20 bg-[#090d19]/92 hover:bg-white/15 hover:border-primary shadow-xl active:scale-95 transition-all cursor-pointer backdrop-blur-2xl ring-1 ring-white/10 shrink-0 select-none"
-              title="View Interactive Guide & Walkthrough"
-              aria-label="Open Interactive Guide"
-            >
-              <span className="text-base sm:text-lg shrink-0 pointer-events-none">📖</span>
-              <div className="text-left hidden sm:block min-w-0 pointer-events-none">
-                <p className="font-mono text-[8px] uppercase tracking-wider text-muted-foreground leading-none">
-                  Help
-                </p>
-                <p className="text-[11px] font-bold text-foreground truncate">Guide</p>
-              </div>
-              <span className="text-[8.5px] font-mono text-foreground/80 sm:hidden leading-none truncate max-w-full pointer-events-none">
-                Guide
-              </span>
-            </button>
-
-            {/* 11. Passkey Sign In / Profile Button */}
+            {/* 7. Passkey Sign In / Profile Button */}
             <button
               onClick={() => safeBottomAction(() => openPasskeyModal("signin"))}
               className="glass relative snap-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 rounded-2xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 border border-primary/30 bg-primary/10 hover:bg-primary/20 hover:border-primary text-primary active:scale-95 transition-all cursor-pointer backdrop-blur-2xl ring-1 ring-primary/20 shrink-0 select-none"
@@ -1889,6 +1846,44 @@ export function App() {
               </div>
               <span className="text-[8.5px] font-mono text-primary font-bold sm:hidden leading-none truncate max-w-full pointer-events-none">
                 Auth
+              </span>
+            </button>
+
+            {/* 8. Overview / Landing Page Button (Far Right End of Carousel) */}
+            <button
+              onClick={() => safeBottomAction(() => setView("landing"))}
+              className="glass relative snap-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 rounded-2xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 border border-white/20 bg-[#090d19]/92 hover:bg-white/15 hover:border-primary shadow-xl active:scale-95 transition-all cursor-pointer backdrop-blur-2xl ring-1 ring-white/10 shrink-0 select-none"
+              aria-label="Return to Overview Landing Page"
+              title="Return to Overview Landing Page"
+            >
+              <span className="text-base sm:text-lg shrink-0 pointer-events-none">←</span>
+              <div className="text-left hidden sm:block min-w-0 pointer-events-none">
+                <p className="font-mono text-[8px] uppercase tracking-wider text-muted-foreground leading-none">
+                  Landing
+                </p>
+                <p className="text-[11px] font-bold text-foreground truncate">Overview</p>
+              </div>
+              <span className="text-[8.5px] font-mono text-foreground/80 sm:hidden leading-none truncate max-w-full pointer-events-none">
+                Overview
+              </span>
+            </button>
+
+            {/* 9. Interactive Walkthrough Guide Button (Far Right End of Carousel) */}
+            <button
+              onClick={() => safeBottomAction(() => setWalkthroughOpen(true))}
+              className="glass relative snap-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 rounded-2xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 border border-primary/40 bg-primary/15 text-primary hover:bg-primary/25 shadow-teal active:scale-95 transition-all cursor-pointer backdrop-blur-2xl ring-1 ring-primary/20 shrink-0 select-none"
+              aria-label="Replay Interactive Walkthrough Guide"
+              title="Replay Interactive Walkthrough Guide"
+            >
+              <span className="text-base sm:text-lg shrink-0 pointer-events-none">💡</span>
+              <div className="text-left hidden sm:block min-w-0 pointer-events-none">
+                <p className="font-mono text-[8px] uppercase tracking-wider text-primary/80 leading-none">
+                  Help
+                </p>
+                <p className="text-[11px] font-bold text-foreground truncate">Guide</p>
+              </div>
+              <span className="text-[8.5px] font-mono text-primary sm:hidden leading-none truncate max-w-full pointer-events-none">
+                Guide
               </span>
             </button>
           </div>
@@ -1975,6 +1970,30 @@ export function App() {
             <div className="grid gap-5 md:grid-cols-2 pt-2">
               {/* Agent Profile & Budget Section */}
               <div className={isMobile && drawerTab !== "profile" ? "hidden md:block" : "block"}>
+                {/* A2A Negotiation Hub Launch Banner */}
+                <div className="mb-4 p-3.5 rounded-2xl border border-primary/50 bg-gradient-to-r from-primary/20 via-teal-500/15 to-transparent flex items-center justify-between gap-3 shadow-teal">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="text-2xl">🤖🤝🏪</span>
+                    <div className="min-w-0">
+                      <h4 className="text-xs font-bold text-white truncate">
+                        Agent-to-Agent (A2A) Commerce Core
+                      </h4>
+                      <p className="text-[10px] font-mono text-teal-300 truncate">
+                        Autonomous M2M Bargaining (Muse-ZA & Nibble-ZA)
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setDrawer(false);
+                      setAgentCommerceOpen(true);
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-primary text-black font-mono text-xs font-bold hover:opacity-95 transition-all shadow-md shrink-0 cursor-pointer"
+                  >
+                    Open Hub ⚡
+                  </button>
+                </div>
+
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm sm:text-base font-bold text-foreground">
                     My Agent Intent & Guardrails
@@ -2259,12 +2278,122 @@ export function App() {
         onClearReceipt={handleClearBoughtReceipt}
       />
 
+      {/* Agent-to-Agent (A2A) Commerce Core & Settlement Modal */}
+      <AgentCommerceModal
+        isOpen={agentCommerceOpen}
+        onClose={() => setAgentCommerceOpen(false)}
+        currentUser={currentUser}
+        availableStores={stores}
+        onClaimItem={(boughtItem) => {
+          saveBought([boughtItem, ...boughtItems]);
+          setClaimed((prev) => [...prev, boughtItem.store.id]);
+          setLogs((l) => [
+            {
+              t: now(),
+              msg: `A2A M2M CLEARANCE: ${boughtItem.item} @ R${boughtItem.price} · Voucher ${boughtItem.qrToken} issued`,
+              id: logId++,
+            },
+            ...l,
+          ]);
+          setBoughtModalOpen(true);
+        }}
+      />
+
       {/* Interactive First-Time Walkthrough Guide Modal */}
       <WalkthroughModal
         isOpen={walkthroughOpen}
         onClose={() => setWalkthroughOpen(false)}
         onComplete={handleCompleteWalkthrough}
       />
+
+      {/* Indoor Mall Navigation Simulator Modal */}
+      {mallSimulatorOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/90 backdrop-blur-xl animate-fade-in p-2 sm:p-4 md:p-6 flex justify-center items-start sm:items-center">
+          <div className="w-full max-w-5xl my-auto">
+            <MallSimulator
+              onClose={() => setMallSimulatorOpen(false)}
+              onClaimOffer={(mallStore) => {
+                const appStore = stores.find((s) => s.id === mallStore.id) || {
+                  id: mallStore.id,
+                  name: mallStore.name,
+                  offer: mallStore.promo,
+                  item: mallStore.category,
+                  cat: mallStore.category,
+                  price: 199,
+                  orig: 299,
+                  bearing: 0,
+                  dist: 15,
+                  claimed: true,
+                  color: mallStore.color,
+                  perks: mallStore.perks,
+                  lat: -26.145,
+                  lng: 28.045,
+                };
+                const boughtItem = {
+                  id: `claim-sim-${Date.now()}`,
+                  store: appStore,
+                  item: appStore.item,
+                  price: appStore.price,
+                  orig: appStore.orig,
+                  boughtAt: now(),
+                  qrToken: `VOUCHER-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+                };
+                saveBought([boughtItem, ...boughtItems]);
+                setClaimed((prev) => [...prev, mallStore.id]);
+                setLogs((l) => [
+                  {
+                    t: now(),
+                    msg: `SIMULATOR PROXIMITY CLAIM: ${mallStore.name} · ${mallStore.promo}`,
+                    id: logId++,
+                  },
+                  ...l,
+                ]);
+              }}
+              onParkOffer={(mallStore) => {
+                const appStore = stores.find((s) => s.id === mallStore.id) || {
+                  id: mallStore.id,
+                  name: mallStore.name,
+                  offer: mallStore.promo,
+                  item: mallStore.category,
+                  cat: mallStore.category,
+                  price: 199,
+                  orig: 299,
+                  bearing: 0,
+                  dist: 15,
+                  claimed: false,
+                  color: mallStore.color,
+                  perks: mallStore.perks,
+                  lat: -26.145,
+                  lng: 28.045,
+                };
+                if (!parkedOffers.some((p) => p.store.id === mallStore.id)) {
+                  saveParked([
+                    {
+                      id: `park-sim-${Date.now()}`,
+                      store: appStore,
+                      parkedAt: now(),
+                      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }),
+                      savedPrice: appStore.price,
+                    },
+                    ...parkedOffers,
+                  ]);
+                  setLogs((l) => [
+                    {
+                      t: now(),
+                      msg: `SIMULATOR HOLDING LOT: Parked offer for ${mallStore.name}`,
+                      id: logId++,
+                    },
+                    ...l,
+                  ]);
+                }
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Offline Status & Cached Offers Indicator */}
       <OfflineIndicator

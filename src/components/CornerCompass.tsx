@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import type { Store } from "@/lib/acn-data";
 import { formatCardinal, isFacingTarget } from "@/lib/spatial-sensors";
 
@@ -12,7 +12,7 @@ interface CornerCompassProps {
   onSelectStore?: (store: Store) => void;
 }
 
-export function CornerCompass({
+export const CornerCompass = React.memo(function CornerCompass({
   heading,
   facingStore,
   stores,
@@ -215,4 +215,5 @@ export function CornerCompass({
       </div>
     </aside>
   );
-}
+});
+CornerCompass.displayName = "CornerCompass";

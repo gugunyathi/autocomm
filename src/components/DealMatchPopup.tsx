@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { Store } from "@/lib/acn-data";
 
 export interface MatchedDeal {
@@ -19,7 +19,7 @@ interface DealMatchPopupProps {
   onDismiss: () => void;
 }
 
-export function DealMatchPopup({
+export const DealMatchPopup = React.memo(function DealMatchPopup({
   deal,
   onAutoDismissToDeck,
   onOpenDeck,
@@ -248,4 +248,5 @@ export function DealMatchPopup({
       </div>
     </aside>
   );
-}
+});
+DealMatchPopup.displayName = "DealMatchPopup";

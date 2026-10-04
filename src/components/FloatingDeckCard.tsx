@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import type { Store } from "@/lib/acn-data";
 
 interface FloatingDeckCardProps {
@@ -27,7 +27,7 @@ function triggerHaptic(pattern: number | number[]) {
   }
 }
 
-export function FloatingDeckCard({
+export const FloatingDeckCard = React.memo(function FloatingDeckCard({
   store,
   liveTick,
   isBought,
@@ -380,4 +380,5 @@ export function FloatingDeckCard({
       </div>
     </div>
   );
-}
+});
+FloatingDeckCard.displayName = "FloatingDeckCard";

@@ -15,9 +15,16 @@ export function useDeviceHeading(initialHeading = 45): UseDeviceHeadingResult {
   const [heading, setHeading] = useState<number>(initialHeading);
   const [isLiveSensor, setIsLiveSensor] = useState<boolean>(false);
   const [permissionStatus, setPermissionStatus] = useState<HeadingPermissionStatus>("prompt");
-  const liveHeadingRef = useRef<number>(initialHeading);
+
+  // Performance Optimization: Throttle hardware sensor updates to prevent high-frequency React re-renders on budget Android CPUs
+  const lastUpdateRef = useRef<number>(0);
+  const lastHeadingRef = useRef<number>(initialHeading);
 
   const handleOrientation = useCallback((event: DeviceOrientationEvent) => {
+    const now = performance.now();
+    // Throttle to max 20 FPS (~50ms) to protect mobile CPU
+    if (now - lastUpdateRef.current < 50) return;
+
     // webkitCompassHeading is native to iOS Safari (0 = North)
     // alpha handles Android (requires absolute orientation pairing)
     const eventWithWebkit = event as unknown as { webkitCompassHeading?: number };
@@ -34,10 +41,16 @@ export function useDeviceHeading(initialHeading = 45): UseDeviceHeadingResult {
 
     if (currentHeading !== null) {
       const rounded = Math.round(currentHeading);
-      liveHeadingRef.current = rounded;
-      setHeading(rounded);
-      setIsLiveSensor(true);
-      setPermissionStatus("granted");
+
+      // Deadband filter: only propagate if changed by at least 1 degree or if 200ms have passed
+      const delta = Math.abs(rounded - lastHeadingRef.current);
+      if (delta >= 1 || now - lastUpdateRef.current > 200) {
+        lastUpdateRef.current = now;
+        lastHeadingRef.current = rounded;
+        setHeading(rounded);
+        setIsLiveSensor(true);
+        setPermissionStatus("granted");
+      }
     }
   }, []);
 
@@ -96,13 +109,15 @@ export function useDeviceHeading(initialHeading = 45): UseDeviceHeadingResult {
 
   const setManualHeading = useCallback((deg: number) => {
     const normalized = ((deg % 360) + 360) % 360;
+    lastHeadingRef.current = normalized;
     setHeading(normalized);
   }, []);
 
   const turnHeadingBy = useCallback((delta: number) => {
     setHeading((prev) => {
-      const next = (prev + delta + 360) % 360;
-      return Math.round(next);
+      const next = Math.round((prev + delta + 360) % 360);
+      lastHeadingRef.current = next;
+      return next;
     });
   }, []);
 

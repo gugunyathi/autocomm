@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import type { Store } from "@/lib/acn-data";
 
 export interface MatchedDeal {
@@ -32,7 +32,7 @@ function triggerHaptic(pattern: number | number[]) {
   }
 }
 
-export function InteractiveDealCard({
+export const InteractiveDealCard = React.memo(function InteractiveDealCard({
   deal,
   timeLeft,
   isExpanded: controlledExpanded,
@@ -655,4 +655,5 @@ export function InteractiveDealCard({
       </div>
     </aside>
   );
-}
+});
+InteractiveDealCard.displayName = "InteractiveDealCard";
