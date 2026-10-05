@@ -4,6 +4,7 @@ import { type PasskeyUser, signOutPasskey } from "@/lib/passkey-auth";
 import { AutoComLogo } from "@/components/AutoComLogo";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { PitchDeckModal } from "@/components/PitchDeckModal";
+import MallSimulator from "@/components/MallSimulator";
 import { downloadPitchDeckPDF } from "@/lib/pitch-deck-pdf";
 import { Download, FileText, Sparkles, CheckCircle2 } from "lucide-react";
 
@@ -250,7 +251,8 @@ export function LandingPage({
 
         {/* Subheading */}
         <h2 className="mt-3.5 sm:mt-5 text-lg sm:text-2xl md:text-3xl font-bold tracking-tight text-accent text-balance leading-snug max-w-3xl mx-auto">
-          Where your AI agent negotiates deals live within 50 meters.
+          Where personal AI shopping agents negotiate deals with merchant agents live within 50
+          meters of retail stores and billboards
         </h2>
 
         {/* Descriptive Body */}
@@ -327,47 +329,98 @@ export function LandingPage({
           </div>
         </div>
 
-        {/* Visual Showcase */}
-        <div className="mt-10 w-full max-w-3xl mx-auto">
-          <div className="glass relative rounded-2xl sm:rounded-3xl p-2 sm:p-3 border border-border/80 shadow-2xl overflow-hidden group">
-            <div className="relative aspect-video w-full rounded-xl sm:rounded-2xl overflow-hidden bg-muted/40">
+        {/* Ambient Distribution: 5 Surfaces Banner Section */}
+        <div className="mt-12 sm:mt-16 w-full max-w-5xl mx-auto text-center space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-400 text-xs font-mono font-bold">
+            <span className="h-2 w-2 rounded-full bg-teal-400 animate-pulse" />
+            <span>Multi-Device Omnipresence</span>
+          </div>
+          <h2 className="text-xl sm:text-3xl font-extrabold text-foreground tracking-tight max-w-3xl mx-auto">
+            Ambient distribution: One commerce layer. Five surfaces. Zero missed intent
+          </h2>
+          <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl mx-auto">
+            From smartphones, smartwatches, pocket AI devices to AR spatial glasses and connected
+            vehicle dashboards; AutoCom unifies real-time agentic deal bargaining across every
+            surface you interact with.
+          </p>
+
+          <div className="glass relative rounded-2xl sm:rounded-3xl p-2 sm:p-3 border border-teal-500/30 shadow-2xl overflow-hidden group">
+            <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border border-border/80 bg-slate-950">
               <img
-                src={heroStoreImage}
-                alt="AutoCom autonomous retail network storefront with holographic mesh geometry"
-                referrerPolicy="no-referrer"
-                onLoad={() => setImageLoaded(true)}
-                className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${
-                  imageLoaded ? "opacity-100" : "opacity-0"
-                }`}
+                src="/autocom-5-surfaces.jpg"
+                alt="Ambient distribution: One commerce layer. Five surfaces. Zero missed intent"
+                className="w-full h-auto object-cover rounded-xl shadow-lg transition-transform duration-500 group-hover:scale-[1.01]"
+                loading="eager"
               />
-              {!imageLoaded && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted/50 p-6 text-center">
-                  <span className="text-3xl animate-pulse">🌐</span>
-                  <p className="mt-2 text-xs font-mono text-primary">
-                    Loading AutoCom Mesh Visual…
-                  </p>
+              <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent pointer-events-none" />
+            </div>
+
+            {/* 5 Surfaces Quick Navigation Grid Badges */}
+            <div className="mt-3 grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-5 gap-2 text-left pt-1">
+              <div className="p-2 sm:p-2.5 rounded-xl bg-slate-900/80 border border-teal-500/20 space-y-0.5">
+                <div className="text-teal-400 font-mono text-[10px] sm:text-xs font-black tracking-wider flex items-center gap-1">
+                  <span>📱</span> PHONE
                 </div>
-              )}
-              <div className="absolute bottom-2.5 left-2.5 right-2.5 sm:bottom-3 sm:left-4 sm:right-4 glass rounded-xl p-2.5 sm:p-3 border border-border/70 backdrop-blur-md flex items-center justify-between">
-                <div className="flex items-center gap-2.5 min-w-0 text-left">
-                  <AutoComLogo size="sm" />
-                  <div className="min-w-0">
-                    <p className="text-[11px] sm:text-xs font-bold text-foreground truncate">
-                      AutoCom Live Merchant Sphere
-                    </p>
-                    <p className="text-[9px] sm:text-[10px] font-mono text-muted-foreground truncate">
-                      11 storefronts in broadcast range
-                    </p>
-                  </div>
+                <p className="text-[10px] sm:text-xs font-medium text-slate-300">
+                  Full spatial deal deck
+                </p>
+              </div>
+
+              <div className="p-2 sm:p-2.5 rounded-xl bg-slate-900/80 border border-teal-500/20 space-y-0.5">
+                <div className="text-teal-400 font-mono text-[10px] sm:text-xs font-black tracking-wider flex items-center gap-1">
+                  <span>⌚</span> WATCH
                 </div>
-                <button
-                  onClick={onLaunchLiveMesh}
-                  className="rounded-lg bg-primary px-3 py-1.5 text-[10px] sm:text-[11px] font-bold text-primary-foreground hover:bg-primary/90 transition-colors shrink-0 cursor-pointer"
-                >
-                  Open 3D
-                </button>
+                <p className="text-[10px] sm:text-xs font-medium text-slate-300">
+                  Negotiation at a glance
+                </p>
+              </div>
+
+              <div className="p-2 sm:p-2.5 rounded-xl bg-slate-900/80 border border-teal-500/20 space-y-0.5">
+                <div className="text-teal-400 font-mono text-[10px] sm:text-xs font-black tracking-wider flex items-center gap-1">
+                  <span>🧭</span> MUSE
+                </div>
+                <p className="text-[10px] sm:text-xs font-medium text-slate-300">
+                  Pocket ambient commerce
+                </p>
+              </div>
+
+              <div className="p-2 sm:p-2.5 rounded-xl bg-slate-900/80 border border-teal-500/20 space-y-0.5">
+                <div className="text-teal-400 font-mono text-[10px] sm:text-xs font-black tracking-wider flex items-center gap-1">
+                  <span>👓</span> AR GLASSES
+                </div>
+                <p className="text-[10px] sm:text-xs font-medium text-slate-300">
+                  Offers inside the world
+                </p>
+              </div>
+
+              <div className="p-2 sm:p-2.5 rounded-xl bg-slate-900/80 border border-teal-500/20 space-y-0.5 col-span-2 xs:col-span-1 sm:col-span-1">
+                <div className="text-teal-400 font-mono text-[10px] sm:text-xs font-black tracking-wider flex items-center gap-1">
+                  <span>🚘</span> IN-CAR
+                </div>
+                <p className="text-[10px] sm:text-xs font-medium text-slate-300">
+                  Offers on the dashboard
+                </p>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Visual Showcase: Live Mall Simulator Auto Grid Walk */}
+        <div className="mt-10 sm:mt-14 w-full max-w-4xl mx-auto text-center space-y-2.5">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary text-xs font-mono font-bold">
+            <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <span>Interactive Live Simulation</span>
+          </div>
+          <h2 className="text-xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+            Mall Passage Walk × Agentic Commerce Simulation
+          </h2>
+          <p className="text-xs sm:text-sm text-muted-foreground max-w-xl mx-auto">
+            Watch autonomous AI shopping agents navigate indoor passage corridors, enter shops, and
+            trigger real-time micro-deal negotiations.
+          </p>
+
+          <div className="pt-2 glass relative rounded-2xl sm:rounded-3xl p-2 sm:p-3 border border-border/80 shadow-2xl overflow-hidden group text-left">
+            <MallSimulator compactEmbed={true} onLaunch3D={onLaunchLiveMesh} />
           </div>
         </div>
       </section>
@@ -601,8 +654,8 @@ export function LandingPage({
             <span>Download Deck PDF</span>
           </button>
           <span>·</span>
-          <a href="mailto:gugu@ribbonprotocol.org" className="hover:text-foreground">
-            Contact: gugu@ribbonprotocol.org
+          <a href="mailto:hello@ribbonprotocol.org" className="hover:text-foreground">
+            Contact: hello@ribbonprotocol.org
           </a>
         </div>
         <p>© 2026 AutoCom · Ribbon Protocol Inc. All rights reserved.</p>

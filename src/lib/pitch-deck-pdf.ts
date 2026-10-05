@@ -169,7 +169,7 @@ export const PITCH_DECK_SLIDES: PitchDeckSlide[] = [
     ],
     highlight:
       "Join us in defining the autonomous agentic spatial commerce layer for the physical world.",
-    footerNote: "Contact: gugu@ribbonprotocol.org · https://www.linkedin.com/in/gugunyathi/",
+    footerNote: "Contact: hello@ribbonprotocol.org · https://www.linkedin.com/in/gugunyathi/",
   },
 ];
 

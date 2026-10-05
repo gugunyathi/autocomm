@@ -4,7 +4,6 @@ import {
   Footprints,
   MapPin,
   Tag,
-  Smartphone,
   Radio,
   X,
   BellRing,
@@ -14,12 +13,8 @@ import {
   RotateCcw,
   Sliders,
   CheckCircle2,
-  BookmarkPlus,
-  Zap,
-  ShoppingBag,
-  QrCode,
   Trash2,
-  ExternalLink,
+  QrCode,
 } from "lucide-react";
 
 // --- Domain Models & Data Schemas ---
@@ -27,6 +22,9 @@ export interface MallStore {
   id: string;
   name: string;
   category: string;
+  logoSymbol: string;
+  brandBgColor: string;
+  brandTextColor: string;
   x: number; // Top-left X on 1000x1000 map canvas
   y: number; // Top-left Y on 1000x1000 map canvas
   width: number;
@@ -52,12 +50,15 @@ export interface SimClaimedVoucher {
   qrToken: string;
 }
 
-// 8 Richly Detailed South African Mall Outlets with Accurate Grid Entry/Exit Nodes
+// 8 Richly Detailed South African Mall Outlets with Official Brand Badges & Grid Entry/Exit Nodes
 export const MALL_DIRECTORY: MallStore[] = [
   {
     id: "s1",
     name: "Zara Fashion",
     category: "Apparel",
+    logoSymbol: "ZARA",
+    brandBgColor: "#000000",
+    brandTextColor: "#ffffff",
     x: 70,
     y: 70,
     width: 210,
@@ -79,6 +80,9 @@ export const MALL_DIRECTORY: MallStore[] = [
     id: "s2",
     name: "H&M Boutique",
     category: "Apparel",
+    logoSymbol: "H&M",
+    brandBgColor: "#e11d48",
+    brandTextColor: "#ffffff",
     x: 320,
     y: 70,
     width: 200,
@@ -100,6 +104,9 @@ export const MALL_DIRECTORY: MallStore[] = [
     id: "s3",
     name: "iStore Apple",
     category: "Electronics",
+    logoSymbol: " iStore",
+    brandBgColor: "#0f172a",
+    brandTextColor: "#ffffff",
     x: 550,
     y: 70,
     width: 170,
@@ -121,6 +128,9 @@ export const MALL_DIRECTORY: MallStore[] = [
     id: "s4",
     name: "Exclusive Books",
     category: "Leisure",
+    logoSymbol: "📚 EB",
+    brandBgColor: "#15803d",
+    brandTextColor: "#ffffff",
     x: 750,
     y: 70,
     width: 180,
@@ -142,6 +152,9 @@ export const MALL_DIRECTORY: MallStore[] = [
     id: "k1",
     name: "Mugg & Bean Kiosk",
     category: "Cafe",
+    logoSymbol: "☕ M&B",
+    brandBgColor: "#78350f",
+    brandTextColor: "#fef3c7",
     x: 440,
     y: 440,
     width: 130,
@@ -163,6 +176,9 @@ export const MALL_DIRECTORY: MallStore[] = [
     id: "s5",
     name: "Woolworths Food",
     category: "Grocery",
+    logoSymbol: "WOOLWORTHS",
+    brandBgColor: "#000000",
+    brandTextColor: "#ffffff",
     x: 70,
     y: 690,
     width: 280,
@@ -184,6 +200,9 @@ export const MALL_DIRECTORY: MallStore[] = [
     id: "s6",
     name: "Nike Performance",
     category: "Sportswear",
+    logoSymbol: "✔️ NIKE",
+    brandBgColor: "#0f172a",
+    brandTextColor: "#ffffff",
     x: 390,
     y: 730,
     width: 195,
@@ -205,6 +224,9 @@ export const MALL_DIRECTORY: MallStore[] = [
     id: "s7",
     name: "Clicks Pharmacy",
     category: "Health",
+    logoSymbol: "💊 CLICKS",
+    brandBgColor: "#0284c7",
+    brandTextColor: "#ffffff",
     x: 630,
     y: 730,
     width: 290,
@@ -236,7 +258,6 @@ export interface NavigationWaypoint {
   action: string;
 }
 
-// Complete Guided Passage & Retail Shop Tour with Clean Transitions
 const DEFAULT_MALL_TOUR: NavigationWaypoint[] = [
   // 1. Zara Fashion
   { x: 175, y: 270, type: "corridor", action: "Walking Top Passage to Zara" },
@@ -434,11 +455,13 @@ function buildRouteToStore(
   return route;
 }
 
-interface MallSimulatorProps {
+export interface MallSimulatorProps {
   onClose?: () => void;
   onClaimOffer?: (store: MallStore) => void;
   onParkOffer?: (store: MallStore) => void;
   isFullScreen?: boolean;
+  compactEmbed?: boolean;
+  onLaunch3D?: () => void;
 }
 
 // Memoized Sub-Component: Control Panel
@@ -451,49 +474,53 @@ const TelemetryControlPanel = React.memo(
     selectedTargetStore,
     onSelectTargetStore,
   }: {
-    simulationMode: "HARDWARE" | "AUTO_WALK";
+    simulationMode: "AUTO_WALK" | "HARDWARE";
     onToggleSimulationMode: () => void;
     walkScale: number;
     onChangeWalkScale: (scale: number) => void;
     selectedTargetStore: string;
-    onSelectTargetStore: (storeId: string) => void;
+    onSelectTargetStore: (id: string) => void;
   }) => (
-    <div className="flex flex-col gap-3">
-      {/* Simulation Mode Toggle */}
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          onClick={onToggleSimulationMode}
-          className={`py-2 px-3 rounded-xl border font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-            simulationMode === "AUTO_WALK"
-              ? "bg-blue-600/20 border-blue-500/50 text-blue-400 shadow-md"
-              : "bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-850"
-          }`}
-        >
-          <Zap className="w-3.5 h-3.5" />
-          <span>Auto Grid Walk</span>
-        </button>
-
-        <button
-          onClick={onToggleSimulationMode}
-          className={`py-2 px-3 rounded-xl border font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-            simulationMode === "HARDWARE"
-              ? "bg-purple-600/20 border-purple-500/50 text-purple-400 shadow-md"
-              : "bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-850"
-          }`}
-        >
-          <Smartphone className="w-3.5 h-3.5" />
-          <span>Device Gyro</span>
-        </button>
-      </div>
-
-      {/* Walk Velocity Controller */}
-      <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-2xl space-y-2.5">
+    <div className="space-y-3.5">
+      {/* Simulation Engine Mode Selector */}
+      <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-2xl space-y-2">
         <div className="flex items-center justify-between text-xs font-mono">
           <span className="text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
             <Sliders className="w-3.5 h-3.5 text-blue-400" />
-            Walk Velocity
+            Motion Driver Engine
           </span>
-          <span className="text-blue-400 font-bold">{walkScale}x Multiplier</span>
+          <span className="text-blue-400 font-bold">{simulationMode}</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <button
+            onClick={onToggleSimulationMode}
+            className={`py-2 px-3 rounded-xl font-mono text-xs font-bold transition-all border cursor-pointer ${
+              simulationMode === "AUTO_WALK"
+                ? "bg-blue-600 text-white border-blue-400 shadow-md shadow-blue-500/20"
+                : "bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200"
+            }`}
+          >
+            🤖 Guided Auto Walk
+          </button>
+
+          <button
+            onClick={onToggleSimulationMode}
+            className={`py-2 px-3 rounded-xl font-mono text-xs font-bold transition-all border cursor-pointer ${
+              simulationMode === "HARDWARE"
+                ? "bg-purple-600 text-white border-purple-400 shadow-md shadow-purple-500/20"
+                : "bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200"
+            }`}
+          >
+            🧭 Hardware Compass
+          </button>
+        </div>
+      </div>
+
+      {/* Speed Multiplier Slider */}
+      <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-2xl space-y-2">
+        <div className="flex items-center justify-between text-xs font-mono">
+          <span className="text-slate-400 uppercase tracking-wider">Passage Pace</span>
+          <span className="text-emerald-400 font-bold font-mono">{walkScale}x Speed</span>
         </div>
         <input
           type="range"
@@ -545,75 +572,111 @@ const TelemetryControlPanel = React.memo(
 );
 TelemetryControlPanel.displayName = "TelemetryControlPanel";
 
-// Memoized Sub-Component: Dynamic Offer Card Overlay with GPU Compositor Acceleration
+// Memoized Sub-Component: Dynamic Offer Card Overlay (Micro-Proportionally Responsive to Canvas Viewport)
 const OfferCardOverlay = React.memo(
   ({
     store,
+    isClaimed = false,
+    isParked = false,
     onClaim,
     onPark,
     onDismiss,
   }: {
     store: MallStore;
+    isClaimed?: boolean;
+    isParked?: boolean;
     onClaim: (store: MallStore) => void;
     onPark: (store: MallStore) => void;
     onDismiss: () => void;
   }) => (
-    <div className="absolute inset-x-3 bottom-3 z-30 transform transition-transform duration-300 ease-out will-change-transform animate-in fade-in slide-in-from-bottom-3">
-      <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-blue-500/40 shadow-2xl text-white">
-        <div className="flex items-start justify-between gap-2 mb-1.5">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400 shrink-0">
-              <Tag className="w-4 h-4" />
+    <div className="absolute right-[3.5%] top-[31%] z-30 w-[34%] min-w-[130px] sm:min-w-[190px] max-w-[280px] max-h-[40%] transform transition-all duration-300 ease-out will-change-transform animate-in fade-in zoom-in-95 slide-in-from-right-3">
+      <div className="p-1.5 xs:p-2 sm:p-3 rounded-lg xs:rounded-xl sm:rounded-2xl bg-slate-900/95 backdrop-blur-2xl border border-blue-500/50 shadow-[0_0_20px_rgba(59,130,246,0.3)] text-white flex flex-col justify-between space-y-1 xs:space-y-1.5 sm:space-y-2 ring-1 ring-blue-500/30 overflow-hidden">
+        {/* Top Header */}
+        <div className="flex items-start justify-between gap-1">
+          <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
+            {/* Official Brand Logo Badge */}
+            <span
+              className="px-1 sm:px-1.5 py-0.2 sm:py-0.5 rounded text-[8px] xs:text-[9px] sm:text-[10px] font-black font-mono shadow-sm shrink-0 border border-white/20"
+              style={{ backgroundColor: store.brandBgColor, color: store.brandTextColor }}
+            >
+              {store.logoSymbol}
             </span>
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <h3 className="font-bold text-sm sm:text-base text-white truncate">{store.name}</h3>
-                <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono text-[9px] font-bold shrink-0">
-                  {store.discount}
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 font-mono uppercase tracking-wider">
-                {store.category} · In-Store Proximity Triggered
+              <h3 className="font-extrabold text-[9.5px] xs:text-[11px] sm:text-xs text-white truncate leading-tight">
+                {store.name}
+              </h3>
+              <p className="text-[7.5px] xs:text-[8.5px] sm:text-[9px] text-slate-400 font-mono uppercase tracking-wider truncate">
+                {store.category}
               </p>
             </div>
           </div>
           <button
             onClick={onDismiss}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-0.5 sm:p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
+            title="Dismiss offer popup"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           </button>
         </div>
 
-        <p className="text-xs text-slate-200 font-medium leading-snug mb-2.5">{store.promo}</p>
+        {/* AI Agent Status / Discount Badge */}
+        <div className="flex items-center gap-1 flex-wrap">
+          <div className="inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-1.5 py-0.2 sm:py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono text-[7.5px] xs:text-[8.5px] sm:text-[9.5px] font-extrabold self-start shrink-0">
+            <span>⚡</span>
+            <span className="truncate">{store.discount} SPECIAL</span>
+          </div>
+
+          {isClaimed && (
+            <span className="px-1 sm:px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[7px] xs:text-[8px] font-mono font-bold flex items-center gap-0.5">
+              <span>🤖 AI Claimed</span>
+            </span>
+          )}
+          {isParked && (
+            <span className="px-1 sm:px-1.5 py-0.2 rounded bg-teal-500/20 text-teal-300 border border-teal-500/40 text-[7px] xs:text-[8px] font-mono font-bold flex items-center gap-0.5">
+              <span>🤖 AI Parked</span>
+            </span>
+          )}
+        </div>
+
+        {/* Promo text */}
+        <p className="text-[8.5px] xs:text-[9.5px] sm:text-[10.5px] text-slate-200 font-medium leading-tight sm:leading-snug line-clamp-2">
+          {store.promo}
+        </p>
 
         {/* Perks badges */}
-        <div className="flex flex-wrap gap-1 mb-3">
-          {store.perks.map((perk, i) => (
+        <div className="hidden sm:flex flex-wrap gap-1">
+          {store.perks.slice(0, 2).map((perk, i) => (
             <span
               key={i}
-              className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-800/80 text-slate-300 border border-slate-700/60"
+              className="text-[8px] sm:text-[9px] font-mono px-1 py-0.2 sm:px-1.5 sm:py-0.5 rounded bg-slate-800/90 text-slate-300 border border-slate-700/80 truncate max-w-full"
             >
               ✓ {perk}
             </span>
           ))}
         </div>
 
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-2">
+        {/* Compact Action Buttons */}
+        <div className="grid grid-cols-2 gap-1 sm:gap-1.5 pt-0.5 sm:pt-1 border-t border-slate-800/80 shrink-0">
           <button
             onClick={() => onClaim(store)}
-            className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-blue-500/25 transition-all active:scale-95 cursor-pointer"
+            className={`flex items-center justify-center gap-0.5 sm:gap-1 py-0.5 xs:py-1 sm:py-1.5 px-1 sm:px-2 rounded-md sm:rounded-xl font-bold text-[8.5px] xs:text-[9.5px] sm:text-[10.5px] shadow-sm transition-all active:scale-95 cursor-pointer whitespace-nowrap ${
+              isClaimed
+                ? "bg-emerald-600 text-white shadow-emerald-500/30 ring-1 ring-emerald-400"
+                : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-500/20"
+            }`}
           >
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Claim Deal</span>
+            <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
+            <span>{isClaimed ? "Claimed" : "Claim"}</span>
           </button>
           <button
             onClick={() => onPark(store)}
-            className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition-all active:scale-95 cursor-pointer"
+            className={`flex items-center justify-center gap-0.5 sm:gap-1 py-0.5 xs:py-1 sm:py-1.5 px-1 sm:px-2 rounded-md sm:rounded-xl font-bold text-[8.5px] xs:text-[9.5px] sm:text-[10.5px] transition-all active:scale-95 cursor-pointer whitespace-nowrap border ${
+              isParked
+                ? "bg-amber-600 text-white border-amber-400 shadow-md shadow-amber-500/30"
+                : "bg-slate-800 hover:bg-slate-750 text-amber-300 border-amber-500/30"
+            }`}
           >
-            <BookmarkPlus className="w-3.5 h-3.5" />
-            <span>Park Offer</span>
+            <span>{isParked ? "🅿️ Parked" : "🅿️ Park"}</span>
           </button>
         </div>
       </div>
@@ -651,81 +714,68 @@ const SimParkedModal = ({
               🅿️
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base sm:text-lg font-bold text-white">Parked Offers</h3>
-                <span className="rounded-full bg-teal-500/20 px-2 py-0.5 text-xs font-mono font-bold text-teal-300 border border-teal-500/30">
-                  {parkedStores.length} Saved
-                </span>
-              </div>
-              <p className="text-xs text-slate-400">Reserved in-store retail perks</p>
+              <h3 className="font-extrabold text-base text-white">Parked Deals</h3>
+              <p className="text-xs text-slate-400">
+                {parkedStores.length} saved offers ready for claim
+              </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Content Body */}
-        <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-3">
+        {/* Content List */}
+        <div className="p-4 sm:p-5 overflow-y-auto space-y-3 flex-1">
           {parkedStores.length === 0 ? (
-            <div className="py-12 text-center text-slate-400 space-y-2">
-              <span className="text-4xl inline-block">🅿️</span>
-              <p className="text-sm font-semibold text-white">No Parked Offers Yet</p>
+            <div className="text-center py-10 space-y-2">
+              <span className="text-3xl">🅿️</span>
+              <p className="text-sm font-bold text-slate-300">No Parked Offers Yet</p>
               <p className="text-xs text-slate-500 max-w-xs mx-auto">
-                When walking through the mall, click &quot;Park Offer&quot; on any store deal to
-                hold it here for later.
+                When walking the mall corridors, click "Park Offer" to hold a voucher while
+                browsing.
               </p>
             </div>
           ) : (
             parkedStores.map((store) => (
               <div
                 key={store.id}
-                className="p-3.5 rounded-xl sm:rounded-2xl bg-slate-950/70 border border-slate-800 hover:border-teal-500/40 transition-colors space-y-2.5"
+                className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-teal-500/40 transition-colors space-y-2"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-sm text-white">{store.name}</h4>
-                      <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono text-[10px] font-bold">
-                        {store.discount}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-400 font-mono">
-                      {store.category} Department
-                    </p>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className="px-2 py-0.5 rounded text-xs font-black font-mono"
+                      style={{ backgroundColor: store.brandBgColor, color: store.brandTextColor }}
+                    >
+                      {store.logoSymbol}
+                    </span>
+                    <h4 className="font-bold text-sm text-white truncate">{store.name}</h4>
                   </div>
+                  <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono text-[10px] font-bold shrink-0">
+                    {store.discount}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 font-medium leading-snug">{store.promo}</p>
+                <div className="flex items-center justify-end gap-2 pt-1">
                   <button
                     onClick={() => onRemove(store.id)}
-                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-                    title="Remove offer"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors text-xs flex items-center gap-1 font-mono"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
+                    <span>Discard</span>
+                  </button>
+                  <button
+                    onClick={() => onClaim(store)}
+                    className="py-1.5 px-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs transition-colors flex items-center gap-1"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Claim &amp; Generate QR</span>
                   </button>
                 </div>
-
-                <p className="text-xs text-slate-300">{store.promo}</p>
-
-                <div className="flex flex-wrap gap-1">
-                  {store.perks.map((perk, i) => (
-                    <span
-                      key={i}
-                      className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700"
-                    >
-                      ✓ {perk}
-                    </span>
-                  ))}
-                </div>
-
-                <button
-                  onClick={() => onClaim(store)}
-                  className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Claim & Redeem Deal</span>
-                </button>
               </div>
             ))
           )}
@@ -764,121 +814,123 @@ const SimBagModal = ({
               🛍️
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base sm:text-lg font-bold text-white">
-                  Shopping Bag & Vouchers
-                </h3>
-                <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-mono font-bold text-amber-300 border border-amber-500/30">
-                  {claimedVouchers.length} Items
-                </span>
-              </div>
-              <p className="text-xs text-slate-400">Digital checkout QR tokens</p>
+              <h3 className="font-extrabold text-base text-white">Shopping Bag &amp; Receipts</h3>
+              <p className="text-xs text-slate-400">
+                {claimedVouchers.length} active digital vouchers &amp; passkeys
+              </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Content Body */}
-        <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-3">
+        {/* Content List */}
+        <div className="p-4 sm:p-5 overflow-y-auto space-y-3 flex-1">
           {claimedVouchers.length === 0 ? (
-            <div className="py-12 text-center text-slate-400 space-y-2">
-              <span className="text-4xl inline-block">🛍️</span>
-              <p className="text-sm font-semibold text-white">Your Bag is Empty</p>
+            <div className="text-center py-10 space-y-2">
+              <span className="text-3xl">🛍️</span>
+              <p className="text-sm font-bold text-slate-300">Bag is Empty</p>
               <p className="text-xs text-slate-500 max-w-xs mx-auto">
-                Step inside any mall store or click &quot;Claim Deal&quot; to add digital vouchers
-                to your bag.
+                Walk through shop doors during the simulator tour to claim live discount vouchers.
               </p>
             </div>
           ) : (
-            claimedVouchers.map((voucher) => (
+            claimedVouchers.map((item) => (
               <div
-                key={voucher.id}
-                className="p-3.5 rounded-xl sm:rounded-2xl bg-slate-950/70 border border-slate-800 hover:border-amber-500/40 transition-colors space-y-2.5"
+                key={item.id}
+                className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-amber-500/40 transition-colors space-y-2"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-sm text-white">{voucher.store.name}</h4>
-                      <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold">
-                        {voucher.store.discount}
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-slate-400 font-mono">
-                      Redeemed{" "}
-                      {new Date(voucher.timestamp).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className="px-2 py-0.5 rounded text-xs font-black font-mono"
+                      style={{
+                        backgroundColor: item.store.brandBgColor,
+                        color: item.store.brandTextColor,
+                      }}
+                    >
+                      {item.store.logoSymbol}
+                    </span>
+                    <h4 className="font-bold text-sm text-white truncate">{item.store.name}</h4>
                   </div>
-                  <button
-                    onClick={() => onClearReceipt(voucher.id)}
-                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-                    title="Remove receipt"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono text-[10px] font-bold shrink-0">
+                    {item.store.discount}
+                  </span>
                 </div>
+                <p className="text-xs text-slate-300 font-medium leading-snug">
+                  {item.store.promo}
+                </p>
 
-                <p className="text-xs text-slate-300">{voucher.store.promo}</p>
-
-                {/* Voucher Token Bar */}
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900 border border-slate-800 font-mono text-xs">
+                <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[10px] font-mono text-slate-400">
+                  <span>Token: {item.qrToken}</span>
                   <div className="flex items-center gap-2">
-                    <QrCode className="w-4 h-4 text-amber-400" />
-                    <span className="font-bold text-white tracking-widest">{voucher.qrToken}</span>
+                    <button
+                      onClick={() => onClearReceipt(item.id)}
+                      className="text-slate-500 hover:text-rose-400 p-1"
+                      title="Clear receipt"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setSelectedVoucher(item)}
+                      className="py-1 px-2.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold hover:bg-amber-500/30 transition-colors flex items-center gap-1"
+                    >
+                      <QrCode className="w-3 h-3" />
+                      <span>Show POS Passkey QR</span>
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setSelectedVoucher(voucher)}
-                    className="text-[11px] text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>View QR</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </button>
                 </div>
               </div>
             ))
           )}
         </div>
 
-        {/* Modal: Enlarged QR Voucher Dialog */}
+        {/* Selected QR Passkey Modal overlay */}
         {selectedVoucher && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-md animate-in fade-in">
-            <div className="bg-slate-900 p-5 rounded-2xl border border-amber-500/50 shadow-2xl text-center space-y-3 max-w-xs w-full">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-white truncate">
-                  {selectedVoucher.store.name}
-                </span>
-                <button
-                  onClick={() => setSelectedVoucher(null)}
-                  className="p-1 text-slate-400 hover:text-white"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+          <div
+            className="absolute inset-0 z-30 bg-slate-950/95 p-6 flex flex-col items-center justify-center text-center space-y-4 animate-in fade-in"
+            onClick={() => setSelectedVoucher(null)}
+          >
+            <button
+              onClick={() => setSelectedVoucher(null)}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
 
-              {/* High Contrast QR Mock Box */}
-              <div className="w-44 h-44 mx-auto bg-white p-3 rounded-xl flex flex-col items-center justify-center shadow-inner">
-                <div className="w-full h-full border-4 border-black p-2 flex flex-col items-center justify-center bg-white">
-                  <QrCode className="w-24 h-24 text-black" />
-                  <span className="text-[10px] font-mono font-black text-black tracking-widest mt-1">
-                    {selectedVoucher.qrToken}
-                  </span>
-                </div>
-              </div>
-
-              <p className="text-xs text-amber-300 font-bold">
-                {selectedVoucher.store.discount} APPLIED
-              </p>
-              <p className="text-[10px] text-slate-400">
-                Present this QR token at the cashier counter
-              </p>
+            <div className="space-y-1">
+              <span
+                className="px-3 py-1 rounded-lg text-sm font-black font-mono inline-block mb-1"
+                style={{
+                  backgroundColor: selectedVoucher.store.brandBgColor,
+                  color: selectedVoucher.store.brandTextColor,
+                }}
+              >
+                {selectedVoucher.store.logoSymbol}
+              </span>
+              <h3 className="text-lg font-bold text-white">{selectedVoucher.store.name}</h3>
+              <p className="text-xs text-slate-400">WebAuthn Signed Biometric Passkey Voucher</p>
             </div>
+
+            <div className="p-4 rounded-2xl bg-white shadow-2xl space-y-2">
+              <div className="w-44 h-44 bg-slate-100 rounded-xl p-2 flex flex-col items-center justify-center border-2 border-slate-900">
+                <QrCode className="w-28 h-28 text-black" />
+                <span className="text-[10px] font-mono font-black text-black tracking-widest mt-1">
+                  {selectedVoucher.qrToken}
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-amber-300 font-bold">
+              {selectedVoucher.store.discount} APPLIED
+            </p>
+            <p className="text-[10px] text-slate-400">
+              Present this QR token at the cashier counter
+            </p>
           </div>
         )}
       </div>
@@ -891,201 +943,242 @@ export default function MallSimulator({
   onClaimOffer,
   onParkOffer,
   isFullScreen = false,
+  compactEmbed = false,
+  onLaunch3D,
 }: MallSimulatorProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // --- Low-Frequency React UI States ---
+  // Core Reactive States
+  const [simulationMode, setSimulationMode] = useState<"AUTO_WALK" | "HARDWARE">("AUTO_WALK");
+  const [walkScale, setWalkScale] = useState<number>(6); // Speed multiplier
   const [isIndoors, setIsIndoors] = useState<boolean>(true);
   const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [selectedTargetStore, setSelectedTargetStore] = useState<string>("");
+
+  // Telemetry & Offers State
   const [activeStepCount, setActiveStepCount] = useState<number>(0);
   const [activeCardStore, setActiveCardStore] = useState<MallStore | null>(null);
-  const [selectedTargetStore, setSelectedTargetStore] = useState<string>("");
-  const [simulationMode, setSimulationMode] = useState<"HARDWARE" | "AUTO_WALK">("AUTO_WALK");
-  const [walkScale, setWalkScale] = useState<number>(6);
-  const [currentNavAction, setCurrentNavAction] = useState<string>("Touring Mall Passages");
+  const [currentNavAction, setCurrentNavAction] = useState<string>(
+    "Touring Mall Corridor Passages",
+  );
 
-  // --- Parked & Bag Collection States ---
-  const [parkedStores, setParkedStores] = useState<MallStore[]>([]);
-  const [claimedVouchers, setClaimedVouchers] = useState<SimClaimedVoucher[]>([]);
+  // Local Parked Offers & Claimed Shopping Bag (Pre-seeded so initial counts are active)
+  const [parkedStores, setParkedStores] = useState<MallStore[]>([
+    MALL_DIRECTORY[1], // H&M Boutique 15% OFF
+  ]);
+  const [claimedVouchers, setClaimedVouchers] = useState<SimClaimedVoucher[]>([
+    {
+      id: "sim-seed-zara",
+      store: MALL_DIRECTORY[0], // Zara Fashion 30% OFF
+      timestamp: Date.now() - 60000,
+      qrToken: "VOUCHER-ZAR-89FA",
+    },
+  ]);
   const [isParkedModalOpen, setIsParkedModalOpen] = useState<boolean>(false);
   const [isBagModalOpen, setIsBagModalOpen] = useState<boolean>(false);
 
-  // --- High-Frequency Mutable References (Zero React Re-render Overhead) ---
-  const userMutable = useRef({
-    mallX: 175,
-    mallY: 270,
+  // User State Mutable Ref for High Frequency Canvas Animation Frame Loop (60 FPS)
+  const userMutable = useRef<{
+    mallX: number;
+    mallY: number;
+    heading: number;
+    tourIndex: number;
+    customRoute: NavigationWaypoint[] | null;
+    customIndex: number;
+    dwellStart: number;
+    dwellUntil: number;
+    currentStoreId: string | null;
+    currentShopAutoHandled: boolean;
+  }>({
+    mallX: DEFAULT_MALL_TOUR[0].x,
+    mallY: DEFAULT_MALL_TOUR[0].y,
     heading: 90,
-    lastUpdate: 0,
-    stepAccrual: 0,
-    waypointIndex: 0,
-    customRoute: null as NavigationWaypoint[] | null,
-    customRouteIndex: 0,
+    tourIndex: 0,
+    customRoute: null,
+    customIndex: 0,
+    dwellStart: 0,
     dwellUntil: 0,
-    currentStoreId: null as string | null,
+    currentStoreId: null,
+    currentShopAutoHandled: false,
   });
 
-  const stateBridge = useRef({
-    walkScale,
-    simulationMode,
+  // Keep latest state refs for render loop
+  const stateRef = useRef({
     isIndoors,
     isPaused,
+    walkScale,
+    simulationMode,
     selectedTargetStore,
-    activeCardStoreId: activeCardStore?.id || "",
+    activeCardStoreId: activeCardStore?.id || null,
   });
 
   useEffect(() => {
-    stateBridge.current = {
-      walkScale,
-      simulationMode,
+    stateRef.current = {
       isIndoors,
       isPaused,
+      walkScale,
+      simulationMode,
       selectedTargetStore,
-      activeCardStoreId: activeCardStore?.id || "",
+      activeCardStoreId: activeCardStore?.id || null,
     };
-  }, [walkScale, simulationMode, isIndoors, isPaused, selectedTargetStore, activeCardStore]);
+  }, [isIndoors, isPaused, walkScale, simulationMode, selectedTargetStore, activeCardStore?.id]);
 
-  // If a user selects a target store, calculate direct passage route to it
+  // Handle custom destination store route build
   useEffect(() => {
-    const user = userMutable.current;
-    if (selectedTargetStore) {
-      const store = MALL_DIRECTORY.find((s) => s.id === selectedTargetStore);
-      if (store) {
-        user.customRoute = buildRouteToStore(user.mallX, user.mallY, store);
-        user.customRouteIndex = 0;
-        user.dwellUntil = 0;
-      }
-    } else {
-      user.customRoute = null;
+    if (!selectedTargetStore) {
+      userMutable.current.customRoute = null;
+      userMutable.current.customIndex = 0;
+      return;
+    }
+
+    const targetStore = MALL_DIRECTORY.find((s) => s.id === selectedTargetStore);
+    if (targetStore) {
+      const u = userMutable.current;
+      u.customRoute = buildRouteToStore(u.mallX, u.mallY, targetStore);
+      u.customIndex = 0;
+      u.dwellStart = performance.now();
+      u.dwellUntil = 0;
+      u.currentShopAutoHandled = false;
     }
   }, [selectedTargetStore]);
 
-  // --- GPU-Accelerated Hardware Animation Loop with Grid-Aligned Navigation ---
+  // --- Main Canvas Render & Motion Loop (60 FPS GPU RequestAnimationFrame) ---
   useEffect(() => {
     let animationFrameId: number;
+    let lastTime = performance.now();
 
-    const renderLoop = (timestamp: number) => {
+    const renderLoop = (now: number) => {
+      const dt = Math.min((now - lastTime) / 1000, 0.1); // clamp delta
+      lastTime = now;
+
+      const canvas = canvasRef.current;
+      const ctx = canvas?.getContext("2d");
+      const config = stateRef.current;
       const user = userMutable.current;
-      const config = stateBridge.current;
 
-      // 1. Grid-Based Pathfinding & Movement Physics Engine
-      if (config.isIndoors && !config.isPaused && timestamp - user.lastUpdate > 20) {
-        const deltaMs = Math.min(timestamp - user.lastUpdate, 45);
-        user.lastUpdate = timestamp;
+      if (canvas && ctx) {
+        // --- 1. Physics Motion & Waypoint Traversal Update ---
+        if (config.isIndoors && !config.isPaused) {
+          const nowMs = performance.now();
 
-        if (config.simulationMode === "AUTO_WALK") {
-          // Check if currently pausing/browsing inside a shop
-          if (user.dwellUntil > timestamp) {
-            const sway = Math.sin(timestamp / 350) * 0.3;
-            user.heading = (user.heading + sway + 360) % 360;
+          // Check if in dwell state
+          if (nowMs < user.dwellUntil) {
+            // Dwelling inside shop or lounge area: Autonomous AI Agent Bargaining Trigger
+            if (
+              !user.currentShopAutoHandled &&
+              user.currentStoreId &&
+              nowMs - user.dwellStart >= 1000
+            ) {
+              user.currentShopAutoHandled = true;
+              const store = MALL_DIRECTORY.find((s) => s.id === user.currentStoreId);
+              if (store) {
+                // Autonomous AI Agent Negotiation Strategy
+                const autoClaimIds = ["s1", "s3", "k1", "s5", "s7"];
+                if (autoClaimIds.includes(store.id)) {
+                  setClaimedVouchers((prev) => {
+                    if (prev.some((v) => v.store.id === store.id)) return prev;
+                    return [
+                      {
+                        id: `sim-claim-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+                        store,
+                        timestamp: Date.now(),
+                        qrToken: `VOUCHER-${store.name.substring(0, 3).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+                      },
+                      ...prev,
+                    ];
+                  });
+                  setParkedStores((prev) => prev.filter((p) => p.id !== store.id));
+                  setCurrentNavAction(`🤖 AI Agent Bargained & Claimed ${store.discount} Voucher!`);
+                } else {
+                  setParkedStores((prev) => {
+                    if (prev.some((p) => p.id === store.id)) return prev;
+                    return [store, ...prev];
+                  });
+                  setCurrentNavAction(`🤖 AI Agent Saved ${store.discount} to Parked Deals!`);
+                }
+              }
+            }
           } else {
-            // If dwell period just finished while inside a shop, clear store card and proceed
-            if (user.currentStoreId && user.dwellUntil > 0) {
-              user.currentStoreId = null;
-              user.dwellUntil = 0;
-              setActiveCardStore(null);
-            }
-
-            let targetWp: NavigationWaypoint;
-            let isCustom = false;
-
-            if (user.customRoute && user.customRoute.length > 0) {
-              isCustom = true;
-              targetWp =
-                user.customRoute[user.customRouteIndex] ||
-                user.customRoute[user.customRoute.length - 1];
-            } else {
-              targetWp = DEFAULT_MALL_TOUR[user.waypointIndex % DEFAULT_MALL_TOUR.length];
-            }
+            // Select active waypoint route
+            const activeRoute = user.customRoute || DEFAULT_MALL_TOUR;
+            const activeIdx = user.customRoute ? user.customIndex : user.tourIndex;
+            const targetWp = activeRoute[activeIdx];
 
             if (targetWp) {
               const dx = targetWp.x - user.mallX;
               const dy = targetWp.y - user.mallY;
-              const distance = Math.hypot(dx, dy);
+              const dist = Math.hypot(dx, dy);
 
-              const moveStep = (config.walkScale * deltaMs) / 36;
-
-              if (distance <= Math.max(moveStep, 3)) {
+              if (dist < 4) {
+                // Waypoint Reached
                 user.mallX = targetWp.x;
                 user.mallY = targetWp.y;
 
-                if (targetWp.type === "inside_shop" && targetWp.storeId) {
+                if (targetWp.action) {
+                  setCurrentNavAction(targetWp.action);
+                }
+
+                // Check store entry & offer triggers
+                if (targetWp.storeId) {
                   const store = MALL_DIRECTORY.find((s) => s.id === targetWp.storeId);
                   if (store) {
                     user.currentStoreId = store.id;
-                    user.dwellUntil = timestamp + (targetWp.dwellMs || 3000);
-                    setActiveCardStore(store);
-                    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-                      navigator.vibrate?.([30, 40]);
+                    if (targetWp.type === "inside_shop") {
+                      setActiveCardStore(store);
                     }
                   }
-                } else if (targetWp.type === "lounge") {
-                  if (targetWp.dwellMs) {
-                    user.dwellUntil = timestamp + targetWp.dwellMs;
-                  }
+                } else {
+                  user.currentStoreId = null;
                 }
 
-                if (isCustom) {
-                  if (user.customRouteIndex < (user.customRoute?.length || 1) - 1) {
-                    user.customRouteIndex += 1;
-                  } else {
+                // Set dwell timer if specified
+                if (targetWp.dwellMs && targetWp.dwellMs > 0) {
+                  user.dwellStart = nowMs;
+                  user.dwellUntil = nowMs + targetWp.dwellMs;
+                  user.currentShopAutoHandled = false;
+                }
+
+                // Advance Waypoint Index
+                if (user.customRoute) {
+                  user.customIndex++;
+                  if (user.customIndex >= user.customRoute.length) {
+                    // Completed custom route, revert to main tour
                     user.customRoute = null;
+                    setSelectedTargetStore("");
                   }
                 } else {
-                  user.waypointIndex = (user.waypointIndex + 1) % DEFAULT_MALL_TOUR.length;
+                  user.tourIndex = (user.tourIndex + 1) % DEFAULT_MALL_TOUR.length;
                 }
-
-                setCurrentNavAction(targetWp.action);
               } else {
-                const unitX = dx / distance;
-                const unitY = dy / distance;
+                // Move towards target waypoint
+                const speed = 42 * config.walkScale; // pixels per second
+                const step = speed * dt;
+                const ratio = Math.min(step / dist, 1);
 
-                user.mallX += unitX * Math.min(moveStep, distance);
-                user.mallY += unitY * Math.min(moveStep, distance);
+                user.mallX += dx * ratio;
+                user.mallY += dy * ratio;
 
-                const targetHeading = (Math.atan2(dx, -dy) * (180 / Math.PI) + 360) % 360;
-                let diff = targetHeading - user.heading;
-                if (diff > 180) diff -= 360;
-                if (diff < -180) diff += 360;
-                user.heading =
-                  (user.heading + Math.sign(diff) * Math.min(Math.abs(diff), 25) + 360) % 360;
+                // Update heading angle
+                const angleRad = Math.atan2(dy, dx);
+                const targetHeading = Math.round((angleRad * 180) / Math.PI + 90);
+                user.heading = targetHeading;
 
-                user.stepAccrual += moveStep * 0.16;
-                const currentIntegerSteps = Math.floor(user.stepAccrual);
-                if (currentIntegerSteps > 0 && currentIntegerSteps % 2 === 0) {
-                  setActiveStepCount(currentIntegerSteps);
-                }
+                setActiveStepCount((prev) => prev + Math.round(step * 0.22));
               }
             }
           }
         }
-      }
 
-      // 2. High-Speed Native Canvas Rendering Pipeline with Dynamic Resolution Matching
-      const canvas = canvasRef.current;
-      const ctx = canvas?.getContext("2d", { alpha: false });
-
-      if (canvas && ctx) {
-        const rect = canvas.getBoundingClientRect();
-        if (rect.width > 0 && rect.height > 0) {
-          const dpr = Math.min(window.devicePixelRatio || 1, 2);
-          const targetWidth = Math.round(rect.width * dpr);
-          const targetHeight = Math.round(rect.height * dpr);
-          if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
-            canvas.width = targetWidth;
-            canvas.height = targetHeight;
-          }
-        }
-
+        // --- 2. Canvas Painting & Architectural Blueprint Render ---
         ctx.save();
-        const scale = canvas.width / MAP_SIZE;
-        ctx.scale(scale, scale);
+        ctx.clearRect(0, 0, MAP_SIZE, MAP_SIZE);
 
-        // Floor Base
+        // Blueprint Floor Background Fill
         ctx.fillStyle = "#f5f3ec";
         ctx.fillRect(0, 0, MAP_SIZE, MAP_SIZE);
 
-        // Tile Grid Lines
-        ctx.strokeStyle = "#e8e4d8";
+        // Subtle Architectural Grid Lines
+        ctx.strokeStyle = "#e2e8f0";
         ctx.lineWidth = 1;
         for (let x = 0; x <= MAP_SIZE; x += 40) {
           ctx.beginPath();
@@ -1096,7 +1189,7 @@ export default function MallSimulator({
         for (let y = 0; y <= MAP_SIZE; y += 40) {
           ctx.beginPath();
           ctx.moveTo(0, y);
-          ctx.lineTo(0, MAP_SIZE);
+          ctx.lineTo(MAP_SIZE, y);
           ctx.stroke();
         }
 
@@ -1178,9 +1271,10 @@ export default function MallSimulator({
         ctx.setLineDash([]);
         ctx.restore();
 
-        // Draw Stores
+        // Draw Stores with Official Logos & Center-Aligned Typography
         MALL_DIRECTORY.forEach((store) => {
           const isActive = config.activeCardStoreId === store.id;
+          const centerX = store.x + store.width / 2;
 
           ctx.save();
           ctx.beginPath();
@@ -1201,14 +1295,61 @@ export default function MallSimulator({
           ctx.stroke();
           ctx.restore();
 
-          // Typography
-          ctx.fillStyle = "#0f172a";
-          ctx.font = "bold 15px sans-serif";
-          ctx.fillText(store.name, store.x + 16, store.y + 32);
+          // Official Brand Logo Badge Centered
+          ctx.save();
+          const badgeWidth = Math.min(store.width - 24, 120);
+          const badgeHeight = 26;
+          const badgeX = centerX - badgeWidth / 2;
+          const badgeY = store.y + 16;
 
-          ctx.fillStyle = "#64748b";
-          ctx.font = "12px sans-serif";
-          ctx.fillText(store.category, store.x + 16, store.y + 50);
+          ctx.beginPath();
+          if (typeof ctx.roundRect === "function") {
+            ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 6);
+          } else {
+            ctx.rect(badgeX, badgeY, badgeWidth, badgeHeight);
+          }
+          ctx.fillStyle = store.brandBgColor;
+          ctx.fill();
+
+          ctx.fillStyle = store.brandTextColor;
+          ctx.font = "bold 11px sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(store.logoSymbol, centerX, badgeY + badgeHeight / 2);
+          ctx.restore();
+
+          // Centered Store Name & Category Typography
+          ctx.save();
+          ctx.textAlign = "center";
+          ctx.textBaseline = "top";
+
+          ctx.fillStyle = "#0f172a";
+          ctx.font = "bold 14px sans-serif";
+          ctx.fillText(store.name, centerX, store.y + 48);
+
+          ctx.fillStyle = "#334155";
+          ctx.font = "600 11px sans-serif";
+          ctx.fillText(store.category, centerX, store.y + 68);
+
+          // Centered Discount Pill Badge
+          const discY = store.y + store.height - 36;
+          const discWidth = Math.min(store.width - 32, 115);
+          const discX = centerX - discWidth / 2;
+          ctx.beginPath();
+          if (typeof ctx.roundRect === "function") {
+            ctx.roundRect(discX, discY, discWidth, 22, 10);
+          } else {
+            ctx.rect(discX, discY, discWidth, 22);
+          }
+          ctx.fillStyle = isActive ? "#2563eb" : "rgba(15, 23, 42, 0.85)";
+          ctx.fill();
+
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "bold 10px monospace";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(store.discount, centerX, discY + 11);
+          ctx.restore();
 
           // Door Entrance Node Indicator
           ctx.save();
@@ -1297,7 +1438,6 @@ export default function MallSimulator({
     setSelectedTargetStore(storeId);
   }, []);
 
-  // When card is claimed: add to bag, dismiss card, immediately end dwell so character leaves to next store
   const handleClaim = useCallback(
     (store: MallStore) => {
       setActiveCardStore(null);
@@ -1305,7 +1445,6 @@ export default function MallSimulator({
       user.dwellUntil = 0;
       user.currentStoreId = null;
 
-      // Add to claimed vouchers bag
       const newVoucher: SimClaimedVoucher = {
         id: `sim-claim-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
         store,
@@ -1313,8 +1452,6 @@ export default function MallSimulator({
         qrToken: `VOUCHER-${store.name.substring(0, 3).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
       };
       setClaimedVouchers((prev) => [newVoucher, ...prev]);
-
-      // Remove from parked if was parked
       setParkedStores((prev) => prev.filter((p) => p.id !== store.id));
 
       if (onClaimOffer) onClaimOffer(store);
@@ -1322,7 +1459,6 @@ export default function MallSimulator({
     [onClaimOffer],
   );
 
-  // When card is parked: add to parked list, dismiss card, immediately end dwell so character leaves to next store
   const handlePark = useCallback(
     (store: MallStore) => {
       setActiveCardStore(null);
@@ -1340,15 +1476,6 @@ export default function MallSimulator({
     [onParkOffer],
   );
 
-  const handleRemoveParked = useCallback((storeId: string) => {
-    setParkedStores((prev) => prev.filter((p) => p.id !== storeId));
-  }, []);
-
-  const handleClearReceipt = useCallback((receiptId: string) => {
-    setClaimedVouchers((prev) => prev.filter((v) => v.id !== receiptId));
-  }, []);
-
-  // When card is dismissed with X: immediately end dwell so character leaves to next store
   const handleDismiss = useCallback(() => {
     setActiveCardStore(null);
     const user = userMutable.current;
@@ -1356,17 +1483,26 @@ export default function MallSimulator({
     user.currentStoreId = null;
   }, []);
 
-  // Canvas Click / Tap: select a store from map
+  const handleRemoveParked = useCallback((storeId: string) => {
+    setParkedStores((prev) => prev.filter((p) => p.id !== storeId));
+  }, []);
+
+  const handleClearReceipt = useCallback((id: string) => {
+    setClaimedVouchers((prev) => prev.filter((v) => v.id !== id));
+  }, []);
+
   const handleCanvasPointerDown = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
+    const scaleX = MAP_SIZE / rect.width;
+    const scaleY = MAP_SIZE / rect.height;
 
     const clickX = (e.clientX - rect.left) * scaleX;
     const clickY = (e.clientY - rect.top) * scaleY;
 
+    // Check if clicked inside any store
     const clickedStore = MALL_DIRECTORY.find(
       (s) => clickX >= s.x && clickX <= s.x + s.width && clickY >= s.y && clickY <= s.y + s.height,
     );
@@ -1378,12 +1514,12 @@ export default function MallSimulator({
 
   const handleReset = useCallback(() => {
     const user = userMutable.current;
-    user.mallX = 175;
-    user.mallY = 270;
+    user.mallX = DEFAULT_MALL_TOUR[0].x;
+    user.mallY = DEFAULT_MALL_TOUR[0].y;
     user.heading = 90;
-    user.stepAccrual = 0;
-    user.waypointIndex = 0;
+    user.tourIndex = 0;
     user.customRoute = null;
+    user.customIndex = 0;
     user.dwellUntil = 0;
     user.currentStoreId = null;
     setActiveStepCount(0);
@@ -1392,6 +1528,157 @@ export default function MallSimulator({
     setCurrentNavAction("Touring Mall Passages");
   }, []);
 
+  // --- Hero Section Compact Embedding View ---
+  if (compactEmbed) {
+    return (
+      <div className="w-full bg-slate-950 text-slate-100 flex flex-col font-sans rounded-2xl overflow-hidden relative border border-slate-800 shadow-2xl">
+        {/* Sleek Minimal Header */}
+        <header className="bg-slate-900/90 border-b border-slate-800 px-3.5 py-2.5 flex items-center justify-between gap-2 z-10 backdrop-blur-md">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400 animate-pulse ring-1 ring-blue-500/40 shrink-0">
+              <Radio className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="font-extrabold text-xs sm:text-sm text-white truncate">
+                  IPS Indoor Grid Engine
+                </h3>
+                <span className="text-[9px] text-blue-400 font-mono border border-blue-500/30 px-1.5 py-0.2 rounded bg-blue-950/80 shrink-0 hidden xs:inline">
+                  v2.6-GridCorridor
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-400 truncate">
+                8 Outlets · Live Passage Walk Simulation
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={() => setIsPaused((prev) => !prev)}
+              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors cursor-pointer text-xs"
+              title={isPaused ? "Resume Walk Simulation" : "Pause Walk Simulation"}
+            >
+              {isPaused ? (
+                <Play className="w-3.5 h-3.5 text-emerald-400" />
+              ) : (
+                <Pause className="w-3.5 h-3.5 text-amber-400" />
+              )}
+            </button>
+            <button
+              onClick={handleReset}
+              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors cursor-pointer text-xs"
+              title="Reset Simulation"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+            {onLaunch3D && (
+              <button
+                onClick={onLaunch3D}
+                className="bg-primary text-primary-foreground font-bold text-[11px] px-2.5 py-1 rounded-lg shadow hover:bg-primary/90 transition-colors shrink-0 cursor-pointer hidden sm:flex items-center gap-1"
+              >
+                <span>Open 3D</span>
+                <span>→</span>
+              </button>
+            )}
+          </div>
+        </header>
+
+        {/* Blueprint Canvas Container: 100% Uncropped Responsive Square Scale */}
+        <div className="relative w-full aspect-square bg-[#f5f3ec] overflow-hidden flex items-center justify-center">
+          {/* Top-Left Parked Offers Button Overlay */}
+          <button
+            onClick={() => setIsParkedModalOpen(true)}
+            className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-900/95 hover:bg-slate-850 text-slate-100 border border-teal-500/50 shadow-lg shadow-teal-500/20 backdrop-blur-md transition-all active:scale-95 cursor-pointer ring-1 ring-teal-500/30"
+            title="Open Parked Offers"
+          >
+            <span className="text-sm">🅿️</span>
+            <span className="text-xs font-bold text-teal-300 hidden xs:inline">Parked</span>
+            <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-teal-500 text-slate-950 font-mono text-[10px] font-black flex items-center justify-center shadow">
+              {parkedStores.length}
+            </span>
+          </button>
+
+          {/* Top-Right Shopping Bag Button Overlay */}
+          <button
+            onClick={() => setIsBagModalOpen(true)}
+            className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-900/95 hover:bg-slate-850 text-slate-100 border border-amber-500/50 shadow-lg shadow-amber-500/20 backdrop-blur-md transition-all active:scale-95 cursor-pointer ring-1 ring-amber-500/30"
+            title="Open Shopping Bag & Vouchers"
+          >
+            <span className="text-sm">🛍️</span>
+            <span className="text-xs font-bold text-amber-300 hidden xs:inline">Bag</span>
+            <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-slate-950 font-mono text-[10px] font-black flex items-center justify-center shadow">
+              {claimedVouchers.length}
+            </span>
+          </button>
+
+          <canvas
+            ref={canvasRef}
+            width={MAP_SIZE}
+            height={MAP_SIZE}
+            onPointerDown={handleCanvasPointerDown}
+            className="w-full h-full aspect-square block cursor-pointer bg-[#f5f3ec] touch-none object-contain"
+          />
+
+          {/* Dynamic Offer Card Overlay with GPU Compositor Acceleration */}
+          {activeCardStore && (
+            <OfferCardOverlay
+              store={activeCardStore}
+              isClaimed={claimedVouchers.some((v) => v.store.id === activeCardStore.id)}
+              isParked={parkedStores.some((p) => p.id === activeCardStore.id)}
+              onClaim={handleClaim}
+              onPark={handlePark}
+              onDismiss={handleDismiss}
+            />
+          )}
+        </div>
+
+        {/* Dedicated Status Bar Below Canvas (NEVER blocks bottom row shops) */}
+        <div className="px-3.5 py-2.5 border-t border-slate-800 bg-slate-900/95 flex items-center justify-between gap-2 shadow-xl text-white">
+          <div className="flex items-center gap-2 min-w-0 text-left">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs font-bold text-white truncate">
+                {activeCardStore ? `Inside ${activeCardStore.name}` : currentNavAction}
+              </p>
+              <p className="text-[9px] sm:text-[10px] font-mono text-teal-300 truncate">
+                Auto Grid Tour · {activeStepCount} Steps Logged
+              </p>
+            </div>
+          </div>
+          {onLaunch3D && (
+            <button
+              onClick={onLaunch3D}
+              className="rounded-lg bg-primary px-3 py-1.5 text-[10px] sm:text-[11px] font-bold text-primary-foreground hover:bg-primary/90 transition-colors shrink-0 cursor-pointer shadow-md"
+            >
+              Open 3D
+            </button>
+          )}
+        </div>
+
+        {/* Embedded Modals for Parked Offers & Shopping Bag */}
+        <SimParkedModal
+          isOpen={isParkedModalOpen}
+          onClose={() => setIsParkedModalOpen(false)}
+          parkedStores={parkedStores}
+          onClaim={(store) => {
+            handleClaim(store);
+            setIsParkedModalOpen(false);
+          }}
+          onRemove={handleRemoveParked}
+        />
+
+        <SimBagModal
+          isOpen={isBagModalOpen}
+          onClose={() => setIsBagModalOpen(false)}
+          claimedVouchers={claimedVouchers}
+          onClearReceipt={handleClearReceipt}
+        />
+      </div>
+    );
+  }
+
+  // --- Full Standalone / Modal View ---
   return (
     <div
       className={`w-full ${
@@ -1418,7 +1705,7 @@ export default function MallSimulator({
               </span>
             </h1>
             <p className="text-xs text-slate-400 truncate">
-              Grid-Aligned Corridor Navigation & In-Shop Retail Traversal
+              Grid-Aligned Corridor Navigation &amp; In-Shop Retail Traversal
             </p>
           </div>
         </div>
@@ -1474,7 +1761,7 @@ export default function MallSimulator({
       <div className="p-3 sm:p-5 flex flex-col lg:flex-row gap-4 sm:gap-6 items-center lg:items-start justify-center">
         {/* 1. Left Viewport: Interactive Blueprint Canvas */}
         <div className="flex-1 w-full flex flex-col items-center min-w-0">
-          <div className="relative border-2 border-slate-700 rounded-2xl overflow-hidden bg-slate-950 shadow-2xl w-full max-w-[340px] xs:max-w-[400px] sm:max-w-[480px] lg:max-w-[450px] aspect-square">
+          <div className="relative border-2 border-slate-700 rounded-2xl overflow-hidden bg-slate-950 shadow-2xl w-full max-w-[500px] aspect-square">
             {/* Top-Left Parked Offers Button Overlay */}
             <button
               onClick={() => setIsParkedModalOpen(true)}
@@ -1492,7 +1779,7 @@ export default function MallSimulator({
             <button
               onClick={() => setIsBagModalOpen(true)}
               className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-900/95 hover:bg-slate-850 text-slate-100 border border-amber-500/50 shadow-lg shadow-amber-500/20 backdrop-blur-md transition-all active:scale-95 cursor-pointer ring-1 ring-amber-500/30"
-              title="Open Shopping Bag & Vouchers"
+              title="Open Shopping Bag &amp; Vouchers"
             >
               <span className="text-sm">🛍️</span>
               <span className="text-xs font-bold text-amber-300 hidden xs:inline">Bag</span>
@@ -1513,6 +1800,8 @@ export default function MallSimulator({
             {activeCardStore && (
               <OfferCardOverlay
                 store={activeCardStore}
+                isClaimed={claimedVouchers.some((v) => v.store.id === activeCardStore.id)}
+                isParked={parkedStores.some((p) => p.id === activeCardStore.id)}
                 onClaim={handleClaim}
                 onPark={handlePark}
                 onDismiss={handleDismiss}
