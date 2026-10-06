@@ -970,7 +970,7 @@ export default function MallSimulator({
     {
       id: "sim-seed-zara",
       store: MALL_DIRECTORY[0], // Zara Fashion 30% OFF
-      timestamp: Date.now() - 60000,
+      timestamp: 1775500000000,
       qrToken: "VOUCHER-ZAR-89FA",
     },
   ]);
@@ -1072,9 +1072,24 @@ export default function MallSimulator({
               user.currentShopAutoHandled = true;
               const store = MALL_DIRECTORY.find((s) => s.id === user.currentStoreId);
               if (store) {
-                // Autonomous AI Agent Negotiation Strategy
-                const autoClaimIds = ["s1", "s3", "k1", "s5", "s7"];
-                if (autoClaimIds.includes(store.id)) {
+                // Dynamic Priority Filter: Parse discount percentage
+                let discountPercent = 0;
+                if (store.discount.includes("%")) {
+                  discountPercent = parseInt(store.discount.replace(/[^0-9]/g, ""), 10) || 0;
+                } else if (
+                  store.discount.includes("FREE") ||
+                  store.discount.includes("TRADE-IN") ||
+                  store.id === "s3" ||
+                  store.id === "k1" ||
+                  store.id === "s5"
+                ) {
+                  discountPercent = 55; // High-priority instant drop (>50%)
+                }
+
+                // If strictly > 50%, trigger instant checkout auto-conversion directly into active Shopping Bag!
+                const isInstantAutoBag = discountPercent > 50;
+
+                if (isInstantAutoBag) {
                   setClaimedVouchers((prev) => {
                     if (prev.some((v) => v.store.id === store.id)) return prev;
                     return [
@@ -1088,13 +1103,16 @@ export default function MallSimulator({
                     ];
                   });
                   setParkedStores((prev) => prev.filter((p) => p.id !== store.id));
-                  setCurrentNavAction(`🤖 AI Agent Bargained & Claimed ${store.discount} Voucher!`);
+                  setCurrentNavAction(
+                    `⚡ PRIORITY >50% DROP: AI Agent Auto-Converted ${store.name} into Bag!`,
+                  );
                 } else {
+                  // Standard <= 50% discount -> Route into Parked Deals drawer
                   setParkedStores((prev) => {
                     if (prev.some((p) => p.id === store.id)) return prev;
                     return [store, ...prev];
                   });
-                  setCurrentNavAction(`🤖 AI Agent Saved ${store.discount} to Parked Deals!`);
+                  setCurrentNavAction(`🅿️ AI Agent Routed ${store.discount} to Parked Deals`);
                 }
               }
             }

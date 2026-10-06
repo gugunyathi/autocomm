@@ -6,7 +6,34 @@ import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { PitchDeckModal } from "@/components/PitchDeckModal";
 import MallSimulator from "@/components/MallSimulator";
 import { downloadPitchDeckPDF } from "@/lib/pitch-deck-pdf";
-import { Download, FileText, Sparkles, CheckCircle2 } from "lucide-react";
+import { MonetizationMatrix } from "@/components/home/MonetizationMatrix";
+import { AdLibraryView } from "@/components/adserver/AdLibraryView";
+import type {
+  Web3WalletState,
+  AgentApiCredential,
+  ArbitrageLedgerEntry,
+  ShopifyIntegrationConfig,
+  PriceElasticityPoint,
+  SyndicatedCampaign,
+  AttentionBiddingPool,
+  SpatialAdCampaign,
+  ChainNetwork,
+} from "@/types/autocom";
+import {
+  Download,
+  FileText,
+  Sparkles,
+  CheckCircle2,
+  Store,
+  Database,
+  CreditCard,
+  ShoppingBag,
+  Wallet,
+  Zap,
+  Radio,
+  Layers,
+  ArrowRight,
+} from "lucide-react";
 
 interface LandingPageProps {
   currentUser: PasskeyUser | null;
@@ -14,6 +41,54 @@ interface LandingPageProps {
   onLaunchLiveMesh: () => void;
   onOpenWalkthrough: () => void;
   onSignOut: () => void;
+  onOpenMerchantDashboard?: () => void;
+  onOpenOpenAdLibrary?: () => void;
+  onOpenAutoWallet?: () => void;
+  onOpenMarketplace?: () => void;
+  onOpenWeb3Wallet?: () => void;
+  walletUsdcBalance?: number;
+  activeChain?: string;
+  // Commercialization Engine & Ad Library Props
+  walletState?: Web3WalletState;
+  apiCredentials?: AgentApiCredential[];
+  arbitrageLedger?: ArbitrageLedgerEntry[];
+  shopifyIntegration?: ShopifyIntegrationConfig;
+  priceElasticityCurve?: PriceElasticityPoint[];
+  syndicatedCampaigns?: SyndicatedCampaign[];
+  attentionPools?: AttentionBiddingPool[];
+  campaigns?: SpatialAdCampaign[];
+  onGenerateApiKey?: (tier?: "DEVELOPER_SANDBOX" | "ENTERPRISE_QUANTUM") => AgentApiCredential;
+  onRecordArbitrageSavings?: (params: {
+    agentId: string;
+    merchantStore: string;
+    dealItem: string;
+    originalPriceZar: number;
+    negotiatedPriceZar: number;
+    settlementChain?: ChainNetwork;
+  }) => ArbitrageLedgerEntry;
+  onRunElasticitySimulation?: (params: {
+    targetProduct: string;
+    simulatedAgentCount: number;
+    minDiscount: number;
+    maxDiscount: number;
+  }) => PriceElasticityPoint[];
+  onClaimAffiliatePayout?: (campaignId: string) => number;
+  onUpdateAttentionBidPool?: (
+    poolId: string,
+    maxBidUsdc: number,
+    additionalBudgetUsdc: number,
+  ) => void;
+  onSponsorStorage?: (campaignId: string, amountUsdc: number) => void;
+  onUploadCampaign?: (
+    campaign: Omit<
+      SpatialAdCampaign,
+      | "id"
+      | "impressionsCount"
+      | "agentConversionsCount"
+      | "instantAutoBagCount"
+      | "spentAttentionUsdc"
+    >,
+  ) => void;
 }
 
 export function LandingPage({
@@ -22,6 +97,84 @@ export function LandingPage({
   onLaunchLiveMesh,
   onOpenWalkthrough,
   onSignOut,
+  onOpenMerchantDashboard,
+  onOpenOpenAdLibrary,
+  onOpenAutoWallet,
+  onOpenMarketplace,
+  onOpenWeb3Wallet,
+  walletUsdcBalance = 285.5,
+  activeChain = "base",
+  walletState = {
+    address: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+    chainId: 8453,
+    network: "base",
+    balances: { USDC: 285.5, ERC_X402: 1420.0, ZAR: 3450.0 },
+    isConnected: true,
+    isConnecting: false,
+    transactions: [],
+  },
+  apiCredentials = [],
+  arbitrageLedger = [],
+  shopifyIntegration = {
+    shopUrl: "https://sandton-retail-flagship.myshopify.com",
+    accessToken: "shpat_98fa7210b38c29188eaf",
+    merchantName: "Sandton Retail Flagship",
+    tier: "DYNAMIC_ENGINE",
+    isConnected: true,
+    lastSyncTimestamp: Date.now(),
+    syncedInventoryCount: 42,
+    maxInventoryLimit: "unlimited",
+    syntheticAgentPassesMonthly: 18450,
+    maxPassesMonthly: 50000,
+    autoPriceElasticityReports: true,
+    spatialFloorMapping: {
+      mallName: "Sandton City Mall",
+      storeNodeId: "node-zara-s1",
+      corridorAnchor: "Level 1 North Passage",
+      beaconUuid: "BEAC-SANDTON-01-N",
+    },
+  },
+  priceElasticityCurve = [],
+  syndicatedCampaigns = [],
+  attentionPools = [],
+  campaigns = [],
+  onGenerateApiKey = () => ({
+    id: "cred-default",
+    apiKey: "ac_dev_dummy",
+    apiSecret: "sec_dummy",
+    tier: "DEVELOPER_SANDBOX",
+    activeAgentBotsCount: 1,
+    totalCorridorTicksUsed: 0,
+    totalTicksLimit: 50000,
+    arbitrageFeeRate: 0.015,
+    totalValueSavedUsdc: 0,
+    protocolArbitrageFeesCollectedUsdc: 0,
+    createdAt: Date.now(),
+    lastActiveAt: Date.now(),
+    status: "ACTIVE",
+  }),
+  onRecordArbitrageSavings = () => ({
+    id: "arb-default",
+    txHash: "0x0",
+    timestamp: Date.now(),
+    agentId: "agent-0",
+    merchantStore: "Store",
+    dealItem: "Item",
+    originalPriceZar: 100,
+    negotiatedPriceZar: 80,
+    totalValueSavedZar: 20,
+    totalValueSavedUsdc: 1.1,
+    arbitrageFeeSlicePercent: 1.5,
+    arbitrageFeeCollectedUsdc: 0.01,
+    settlementChain: "base",
+    status: "CONFIRMED_ON_CHAIN",
+  }),
+  onRunElasticitySimulation = () => [],
+
+  onClaimAffiliatePayout = () => 0,
+  onUpdateAttentionBidPool = () => {},
+  onSponsorStorage = () => {},
+  onUploadCampaign,
 }: LandingPageProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -60,22 +213,34 @@ export function LandingPage({
           </button>
 
           {/* Zone 2: Clean Nav Links on Desktop */}
-          <nav className="hidden lg:flex items-center gap-5 text-xs font-medium text-muted-foreground">
-            <a href="#protocol" className="hover:text-foreground transition-colors">
-              Protocol
-            </a>
-            <a href="#passkey-security" className="hover:text-foreground transition-colors">
-              Passkey Security
-            </a>
-            <a href="#capabilities" className="hover:text-foreground transition-colors">
-              Capabilities
-            </a>
+          <nav className="hidden lg:flex items-center gap-4 xl:gap-5 text-xs font-medium text-muted-foreground">
             <button
-              onClick={onOpenWalkthrough}
-              className="text-primary hover:text-white transition-colors cursor-pointer flex items-center gap-1 font-bold"
+              onClick={onOpenMerchantDashboard}
+              className="hover:text-teal-300 transition-colors cursor-pointer flex items-center gap-1.5 font-bold"
             >
-              <span>💡</span>
-              <span>Walkthrough</span>
+              <Store className="w-3.5 h-3.5 text-teal-400" />
+              <span>Merchant &amp; Shopify</span>
+            </button>
+            <button
+              onClick={onOpenOpenAdLibrary}
+              className="hover:text-indigo-300 transition-colors cursor-pointer flex items-center gap-1.5 font-bold"
+            >
+              <Database className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Ad Library</span>
+            </button>
+            <button
+              onClick={onOpenAutoWallet}
+              className="hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1.5 font-bold"
+            >
+              <CreditCard className="w-3.5 h-3.5 text-amber-400" />
+              <span>Auto-Wallet</span>
+            </button>
+            <button
+              onClick={onOpenMarketplace}
+              className="hover:text-cyan-300 transition-colors cursor-pointer flex items-center gap-1.5 font-bold"
+            >
+              <ShoppingBag className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Hardware Store</span>
             </button>
             <button
               onClick={() => setPitchDeckOpen(true)}
@@ -88,11 +253,26 @@ export function LandingPage({
 
           {/* Zone 3: Action Buttons */}
           <div className="flex items-center gap-1.5 sm:gap-2.5">
+            {/* Web3 Multi-Chain Wallet Button */}
+            {onOpenWeb3Wallet && (
+              <button
+                onClick={onOpenWeb3Wallet}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-200 border border-teal-500/40 text-xs font-mono font-bold shadow-sm transition-all active:scale-95 cursor-pointer ring-1 ring-teal-500/20"
+                title="Open Web3 Multi-Chain Rail"
+              >
+                <Wallet className="w-3.5 h-3.5 text-teal-400" />
+                <span className="hidden sm:inline">${walletUsdcBalance.toFixed(1)} USDC</span>
+                <span className="px-1.5 py-0.2 rounded bg-teal-500/20 text-teal-300 text-[10px] font-mono capitalize">
+                  {activeChain}
+                </span>
+              </button>
+            )}
+
             {/* Direct PDF Download Quick Button */}
             <button
               onClick={handleDirectDownload}
               disabled={isDirectDownloading}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-teal-500/20 to-emerald-500/20 hover:from-teal-500/30 hover:to-emerald-500/30 text-teal-300 border border-teal-500/40 text-xs font-bold shadow-sm transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+              className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-teal-500/20 to-emerald-500/20 hover:from-teal-500/30 hover:to-emerald-500/30 text-teal-300 border border-teal-500/40 text-xs font-bold shadow-sm transition-all active:scale-95 cursor-pointer disabled:opacity-50"
               title="Direct Download Pitch Deck PDF"
             >
               {downloadSuccess ? (
@@ -158,71 +338,98 @@ export function LandingPage({
               </div>
             )}
 
-            {/* Mobile Navigation Toggle Button */}
+            {/* Mobile Hamburger Toggle */}
             <button
-              onClick={() => setMobileMenuOpen((o) => !o)}
-              className="lg:hidden flex h-10 w-10 items-center justify-center rounded-xl border border-border/70 text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors shrink-0 cursor-pointer"
-              aria-label="Toggle navigation menu"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              aria-label="Toggle menu"
             >
-              {mobileMenuOpen ? "✕" : "☰"}
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {mobileMenuOpen ? (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                ) : (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                )}
+              </svg>
             </button>
           </div>
         </div>
 
-        {/* Mobile Dropdown Navigation Menu */}
+        {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-border/60 bg-background/95 backdrop-blur-xl px-4 py-4 text-center space-y-2.5 animate-fade-in">
+          <div className="lg:hidden border-b border-border/50 bg-background/95 px-4 py-3 space-y-2 text-xs font-mono animate-in fade-in">
             <button
               onClick={() => {
                 setMobileMenuOpen(false);
-                setPitchDeckOpen(true);
+                if (onOpenMerchantDashboard) onOpenMerchantDashboard();
               }}
-              className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500/20 to-teal-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold flex items-center justify-center gap-2"
+              className="block w-full text-left py-2 text-teal-300 font-bold hover:text-white"
             >
-              <FileText className="w-4 h-4 text-amber-400" />
-              <span>View Pitch Deck (Interactive)</span>
+              🛍️ Merchant &amp; Shopify Hub
             </button>
-
             <button
-              onClick={(e) => {
+              onClick={() => {
                 setMobileMenuOpen(false);
-                handleDirectDownload(e);
+                if (onOpenOpenAdLibrary) onOpenOpenAdLibrary();
               }}
-              className="w-full py-2 px-3 rounded-xl bg-teal-500/20 text-teal-300 border border-teal-500/40 text-xs font-bold flex items-center justify-center gap-2"
+              className="block w-full text-left py-2 text-indigo-300 font-bold hover:text-white"
             >
-              <Download className="w-4 h-4 text-teal-400" />
-              <span>Direct Download Pitch Deck PDF</span>
+              📢 Open Ad &amp; Media Library
             </button>
-
-            <a
-              href="#protocol"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block py-1.5 text-sm font-medium text-foreground hover:text-primary transition-colors"
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                if (onOpenAutoWallet) onOpenAutoWallet();
+              }}
+              className="block w-full text-left py-2 text-amber-300 font-bold hover:text-white"
             >
-              Protocol Overview
-            </a>
-            <a
-              href="#passkey-security"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block py-1.5 text-sm font-medium text-foreground hover:text-primary transition-colors"
+              🎯 FinTech Auto-Wallet &amp; Wishlist
+            </button>
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                if (onOpenMarketplace) onOpenMarketplace();
+              }}
+              className="block w-full text-left py-2 text-cyan-300 font-bold hover:text-white"
             >
-              Passkey Biometric Security
-            </a>
-            <a
-              href="#capabilities"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block py-1.5 text-sm font-medium text-foreground hover:text-primary transition-colors"
+              📡 Hardware &amp; FinTech Store
+            </button>
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                if (onOpenWeb3Wallet) onOpenWeb3Wallet();
+              }}
+              className="block w-full text-left py-2 text-purple-300 font-bold hover:text-white"
             >
-              Core Capabilities
-            </a>
+              🔵 Web3 Multi-Chain Wallet (${walletUsdcBalance.toFixed(1)} USDC)
+            </button>
             <button
               onClick={() => {
                 setMobileMenuOpen(false);
                 onOpenWalkthrough();
               }}
-              className="block w-full text-left py-1.5 text-sm font-semibold text-primary hover:text-white transition-colors cursor-pointer"
+              className="block w-full text-left py-2 text-primary font-bold hover:text-white"
             >
               💡 Interactive Walkthrough Guide
+            </button>
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setPitchDeckOpen(true);
+              }}
+              className="block w-full text-left py-2 text-amber-400 font-bold hover:text-white"
+            >
+              📄 View Pitch Deck
             </button>
           </div>
         )}
@@ -422,6 +629,37 @@ export function LandingPage({
           <div className="pt-2 glass relative rounded-2xl sm:rounded-3xl p-2 sm:p-3 border border-border/80 shadow-2xl overflow-hidden group text-left">
             <MallSimulator compactEmbed={true} onLaunch3D={onLaunchLiveMesh} />
           </div>
+        </div>
+
+        {/* Commercialization Engine (Early-Stage Monetization Architectures) */}
+        <div className="mt-12 sm:mt-20 w-full max-w-7xl mx-auto text-left">
+          <MonetizationMatrix
+            walletState={walletState}
+            apiCredentials={apiCredentials}
+            arbitrageLedger={arbitrageLedger}
+            shopifyIntegration={shopifyIntegration}
+            priceElasticityCurve={priceElasticityCurve}
+            syndicatedCampaigns={syndicatedCampaigns}
+            attentionPools={attentionPools}
+            onGenerateApiKey={onGenerateApiKey}
+            onRecordArbitrageSavings={onRecordArbitrageSavings}
+            onRunElasticitySimulation={onRunElasticitySimulation}
+            onClaimAffiliatePayout={onClaimAffiliatePayout}
+            onUpdateAttentionBidPool={onUpdateAttentionBidPool}
+            onOpenAdUploader={onOpenMerchantDashboard}
+            onOpenAdLibrary={onOpenOpenAdLibrary}
+            onOpenMarketplace={onOpenMarketplace}
+          />
+        </div>
+
+        {/* Decentralized Open Ad & Media Library Public Showcase */}
+        <div className="mt-12 sm:mt-16 w-full max-w-7xl mx-auto text-left">
+          <AdLibraryView
+            campaigns={campaigns}
+            onSponsorStorage={onSponsorStorage}
+            onUploadCampaign={onUploadCampaign}
+            walletState={walletState}
+          />
         </div>
       </section>
 

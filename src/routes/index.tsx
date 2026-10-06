@@ -22,6 +22,12 @@ import { registerServiceWorker, useOnlineStatus } from "@/lib/pwa-service";
 import { saveSpecialOffersCache, loadSpecialOffersCache } from "@/lib/offers-cache";
 import { notificationManager } from "@/lib/notifications";
 import { useDeviceHeading } from "@/hooks/useDeviceHeading";
+import { useAutoComPayments } from "@/hooks/useAutoComPayments";
+import { MerchantDashboardModal } from "@/components/merchant/MerchantDashboardModal";
+import { OpenAdLibraryModal } from "@/components/adserver/OpenAdLibraryModal";
+import { AutoComMarketplaceModal } from "@/components/marketplace/AutoComMarketplaceModal";
+import { AutoWalletModal } from "@/components/marketplace/AutoWalletModal";
+import { Web3WalletModal } from "@/components/marketplace/Web3WalletModal";
 import {
   DEFAULT_USER_COORDS,
   isFacingTarget,
@@ -107,6 +113,46 @@ export function App() {
   const [boughtModalOpen, setBoughtModalOpen] = useState(false);
   const [mallSimulatorOpen, setMallSimulatorOpen] = useState(false);
   const [pitchDeckOpen, setPitchDeckOpen] = useState(false);
+  const [merchantDashboardOpen, setMerchantDashboardOpen] = useState(false);
+  const [openAdLibraryOpen, setOpenAdLibraryOpen] = useState(false);
+  const [autoWalletOpen, setAutoWalletOpen] = useState(false);
+  const [marketplaceOpen, setMarketplaceOpen] = useState(false);
+  const [web3WalletOpen, setWeb3WalletOpen] = useState(false);
+
+  // FinTech, Web3, Shopify, Attention Ads & Intent Wishlist Hook
+  const {
+    walletState,
+    handleSwitchNetwork,
+    handleFaucetTopup,
+    shopifyConfig,
+    shopifyProducts,
+    handleSyncShopify,
+    campaigns,
+    handleCreateCampaign,
+    handleToggleSyndicationChannel,
+    handleTriggerSyndicationSync,
+    handleSponsorStorage,
+    handleRouteOfferPayload,
+    autoDebitConfig,
+    handleUpdateAutoDebit,
+    wishlist,
+    handleAddWishlistItem,
+    handleRemoveWishlistItem,
+    handleCheckWishlistMatch,
+    handlePurchaseMarketplaceItem,
+    apiCredentials,
+    arbitrageLedger,
+    shopifyIntegration,
+    priceElasticityCurve,
+    syndicatedCampaigns,
+    attentionPools,
+    handleGenerateApiKey,
+    handleRecordArbitrageSavings,
+    handleRunElasticitySimulation,
+    handleClaimAffiliatePayout,
+    handleUpdateAttentionBidPool,
+  } = useAutoComPayments();
+
   const [parkedOffers, setParkedOffers] = useState<ParkedOffer[]>([]);
   const [boughtItems, setBoughtItems] = useState<BoughtItem[]>([]);
 
@@ -117,38 +163,12 @@ export function App() {
   const [autoDetectedAs, setAutoDetectedAs] = useState<"indoor" | "outdoor">("indoor");
 
   // Proximity Radius Preferences: 0.1 to 20m Indoor & 0.1 to 50m Outdoor
-  const [indoorRadius, setIndoorRadius] = useState<number>(() => {
-    if (typeof window !== "undefined") {
-      const v = localStorage.getItem("autocom_indoor_radius_v1");
-      if (v) return parseFloat(v);
-    }
-    return 20.0;
-  });
-
-  const [outdoorRadius, setOutdoorRadius] = useState<number>(() => {
-    if (typeof window !== "undefined") {
-      const v = localStorage.getItem("autocom_outdoor_radius_v1");
-      if (v) return parseFloat(v);
-    }
-    return 50.0;
-  });
+  const [indoorRadius, setIndoorRadius] = useState<number>(20.0);
+  const [outdoorRadius, setOutdoorRadius] = useState<number>(50.0);
 
   // Sound and Vibration Notification Toggles for High-Value (+50%) and Standard Deals
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      const v = localStorage.getItem("autocom_sound_alerts_v1");
-      if (v !== null) return v === "true";
-    }
-    return true;
-  });
-
-  const [vibrateEnabled, setVibrateEnabled] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      const v = localStorage.getItem("autocom_vibrate_alerts_v1");
-      if (v !== null) return v === "true";
-    }
-    return true;
-  });
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  const [vibrateEnabled, setVibrateEnabled] = useState<boolean>(true);
 
   // Auto-configured active proximity radius based on environment mode
   const activeProximityRadius = outdoor ? outdoorRadius : indoorRadius;
@@ -204,13 +224,7 @@ export function App() {
   };
 
   // Silence deal pop-ups toggle (so deals route directly to Deck without interrupting screen)
-  const [silencePopups, setSilencePopups] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      const v = localStorage.getItem("autocom_silence_popups_v1");
-      if (v !== null) return v === "true";
-    }
-    return false;
-  });
+  const [silencePopups, setSilencePopups] = useState<boolean>(false);
 
   const handleToggleSilencePopups = () => {
     setSilencePopups((prev) => {
@@ -494,6 +508,17 @@ export function App() {
         setBoughtItems(parsed);
         setClaimed(parsed.map((b) => b.store.id));
       }
+
+      const storedIndoorRad = localStorage.getItem("autocom_indoor_radius_v1");
+      if (storedIndoorRad) setIndoorRadius(parseFloat(storedIndoorRad));
+      const storedOutdoorRad = localStorage.getItem("autocom_outdoor_radius_v1");
+      if (storedOutdoorRad) setOutdoorRadius(parseFloat(storedOutdoorRad));
+      const storedSound = localStorage.getItem("autocom_sound_alerts_v1");
+      if (storedSound !== null) setSoundEnabled(storedSound === "true");
+      const storedVibrate = localStorage.getItem("autocom_vibrate_alerts_v1");
+      if (storedVibrate !== null) setVibrateEnabled(storedVibrate === "true");
+      const storedSilence = localStorage.getItem("autocom_silence_popups_v1");
+      if (storedSilence !== null) setSilencePopups(storedSilence === "true");
     } catch {
       // ignore storage errors
     }
@@ -1040,7 +1065,32 @@ export function App() {
             setWalkthroughOpen(true);
           }}
           onSignOut={() => setCurrentUser(null)}
+          onOpenMerchantDashboard={() => setMerchantDashboardOpen(true)}
+          onOpenOpenAdLibrary={() => setOpenAdLibraryOpen(true)}
+          onOpenAutoWallet={() => setAutoWalletOpen(true)}
+          onOpenMarketplace={() => setMarketplaceOpen(true)}
+          onOpenWeb3Wallet={() => setWeb3WalletOpen(true)}
+          walletUsdcBalance={walletState.balances.USDC}
+          activeChain={walletState.network}
+          walletState={walletState}
+          apiCredentials={apiCredentials}
+          arbitrageLedger={arbitrageLedger}
+          shopifyIntegration={shopifyIntegration}
+          priceElasticityCurve={priceElasticityCurve}
+          syndicatedCampaigns={syndicatedCampaigns}
+          attentionPools={attentionPools}
+          campaigns={campaigns}
+          onGenerateApiKey={handleGenerateApiKey}
+          onRecordArbitrageSavings={handleRecordArbitrageSavings}
+          onRunElasticitySimulation={handleRunElasticitySimulation}
+          onClaimAffiliatePayout={handleClaimAffiliatePayout}
+          onUpdateAttentionBidPool={handleUpdateAttentionBidPool}
+          onSponsorStorage={(campaignId, amount) => {
+            handleSponsorStorage(campaignId, amount, "USDC");
+          }}
+          onUploadCampaign={handleCreateCampaign}
         />
+
         <PasskeyModal
           isOpen={passkeyModalOpen}
           onClose={() => setPasskeyModalOpen(false)}
@@ -1051,6 +1101,66 @@ export function App() {
           isOpen={walkthroughOpen}
           onClose={() => setWalkthroughOpen(false)}
           onComplete={handleCompleteWalkthrough}
+        />
+        {/* Merchant & Shopify Modal */}
+        <MerchantDashboardModal
+          isOpen={merchantDashboardOpen}
+          onClose={() => setMerchantDashboardOpen(false)}
+          shopifyConfig={shopifyConfig}
+          shopifyProducts={shopifyProducts}
+          onSyncShopify={handleSyncShopify}
+          campaigns={campaigns}
+          onCreateCampaign={handleCreateCampaign}
+        />
+        {/* Decentralized Open Ad Library Modal */}
+        <OpenAdLibraryModal
+          isOpen={openAdLibraryOpen}
+          onClose={() => setOpenAdLibraryOpen(false)}
+          campaigns={campaigns}
+          onSponsorStorage={(campaignId, amount) => {
+            handlePurchaseMarketplaceItem(
+              {
+                id: `sponsor-${campaignId}`,
+                name: `IPFS Pinning Sponsorship (${campaignId})`,
+                category: "CLOUD_STORAGE",
+                priceZar: amount * 18,
+                priceUsdc: amount,
+                description: "Decentralized cloud pinning storage sponsorship",
+                specs: ["12 IPFS Validator Nodes", "Unlimited Bandwidth"],
+                inStock: true,
+                rating: 5,
+                reviewsCount: 1,
+                iconEmoji: "☁️",
+                gradient: "from-indigo-600 to-purple-600",
+              },
+              "USDC",
+            );
+          }}
+        />
+        {/* FinTech Auto-Wallet & Wishlist Modal */}
+        <AutoWalletModal
+          isOpen={autoWalletOpen}
+          onClose={() => setAutoWalletOpen(false)}
+          config={autoDebitConfig}
+          onUpdateConfig={handleUpdateAutoDebit}
+          wishlist={wishlist}
+          onAddWishlistItem={handleAddWishlistItem}
+          onRemoveWishlistItem={handleRemoveWishlistItem}
+        />
+        {/* Hardware & FinTech Marketplace Modal */}
+        <AutoComMarketplaceModal
+          isOpen={marketplaceOpen}
+          onClose={() => setMarketplaceOpen(false)}
+          onPurchaseItem={handlePurchaseMarketplaceItem}
+          walletUsdcBalance={walletState.balances.USDC}
+        />
+        {/* Web3 Multi-Chain Wallet Modal */}
+        <Web3WalletModal
+          isOpen={web3WalletOpen}
+          onClose={() => setWeb3WalletOpen(false)}
+          walletState={walletState}
+          onSwitchNetwork={handleSwitchNetwork}
+          onFaucetTopup={handleFaucetTopup}
         />
       </>
     );
@@ -2425,6 +2535,56 @@ export function App() {
 
       {/* Pitch Deck Presentation Modal & PDF Downloader */}
       <PitchDeckModal isOpen={pitchDeckOpen} onClose={() => setPitchDeckOpen(false)} />
+
+      {/* Merchant & Shopify Modal */}
+      <MerchantDashboardModal
+        isOpen={merchantDashboardOpen}
+        onClose={() => setMerchantDashboardOpen(false)}
+        shopifyConfig={shopifyConfig}
+        shopifyProducts={shopifyProducts}
+        onSyncShopify={handleSyncShopify}
+        campaigns={campaigns}
+        onCreateCampaign={handleCreateCampaign}
+        onToggleSyndicationChannel={handleToggleSyndicationChannel}
+        onTriggerSyndicationSync={handleTriggerSyndicationSync}
+        walletState={walletState}
+      />
+      {/* Decentralized Open Ad Library Modal */}
+      <OpenAdLibraryModal
+        isOpen={openAdLibraryOpen}
+        onClose={() => setOpenAdLibraryOpen(false)}
+        campaigns={campaigns}
+        onSponsorStorage={(campaignId, amount) => {
+          handleSponsorStorage(campaignId, amount, "USDC");
+        }}
+        onUploadCampaign={handleCreateCampaign}
+        walletState={walletState}
+      />
+      {/* FinTech Auto-Wallet & Wishlist Modal */}
+      <AutoWalletModal
+        isOpen={autoWalletOpen}
+        onClose={() => setAutoWalletOpen(false)}
+        config={autoDebitConfig}
+        onUpdateConfig={handleUpdateAutoDebit}
+        wishlist={wishlist}
+        onAddWishlistItem={handleAddWishlistItem}
+        onRemoveWishlistItem={handleRemoveWishlistItem}
+      />
+      {/* Hardware & FinTech Marketplace Modal */}
+      <AutoComMarketplaceModal
+        isOpen={marketplaceOpen}
+        onClose={() => setMarketplaceOpen(false)}
+        onPurchaseItem={handlePurchaseMarketplaceItem}
+        walletUsdcBalance={walletState.balances.USDC}
+      />
+      {/* Web3 Multi-Chain Wallet Modal */}
+      <Web3WalletModal
+        isOpen={web3WalletOpen}
+        onClose={() => setWeb3WalletOpen(false)}
+        walletState={walletState}
+        onSwitchNetwork={handleSwitchNetwork}
+        onFaucetTopup={handleFaucetTopup}
+      />
     </main>
   );
 }
