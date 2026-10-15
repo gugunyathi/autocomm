@@ -76,6 +76,18 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
+      { title: "LiveSpecial - Autonomous Commerce Network" },
+      {
+        name: "description",
+        content:
+          "A living sphere of nearby shops where your AI agent negotiates deals in real time.",
+      },
+      { property: "og:title", content: "LiveSpecial - Autonomous Commerce Network" },
+      {
+        property: "og:description",
+        content:
+          "A living sphere of nearby shops where your AI agent negotiates deals in real time.",
+      },
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "theme-color", content: "#05060a" },
@@ -108,11 +120,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         {children}
         <Scripts />
       </body>

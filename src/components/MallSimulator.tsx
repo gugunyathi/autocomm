@@ -15,7 +15,9 @@ import {
   CheckCircle2,
   Trash2,
   QrCode,
+  Zap,
 } from "lucide-react";
+import { getBitchatService } from "@/services/bitchat";
 
 // --- Domain Models & Data Schemas ---
 export interface MallStore {
@@ -462,6 +464,7 @@ export interface MallSimulatorProps {
   isFullScreen?: boolean;
   compactEmbed?: boolean;
   onLaunch3D?: () => void;
+  onOpenBitchat?: () => void;
 }
 
 // Memoized Sub-Component: Control Panel
@@ -945,6 +948,7 @@ export default function MallSimulator({
   isFullScreen = false,
   compactEmbed = false,
   onLaunch3D,
+  onOpenBitchat,
 }: MallSimulatorProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -1143,6 +1147,15 @@ export default function MallSimulator({
                     user.currentStoreId = store.id;
                     if (targetWp.type === "inside_shop") {
                       setActiveCardStore(store);
+                      try {
+                        getBitchatService().setSpatialLocation(
+                          store.name,
+                          -26.145 + store.entranceY / 10000,
+                          28.045 + store.entranceX / 10000,
+                        );
+                      } catch {
+                        // ignore
+                      }
                     }
                   }
                 } else {
@@ -1763,6 +1776,20 @@ export default function MallSimulator({
             <RotateCcw className="w-4 h-4" />
           </button>
 
+          {onOpenBitchat && (
+            <button
+              onClick={() => {
+                if (onClose) onClose();
+                onOpenBitchat();
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border border-teal-500/50 bg-teal-500/20 text-teal-300 hover:bg-teal-500/30 shadow-[0_0_10px_rgba(20,184,166,0.2)]"
+              title="Open BitChat BLE Mesh Radar & Spatial Geohashes"
+            >
+              <span>📡</span>
+              <span className="hidden sm:inline">BitChat Mesh</span>
+            </button>
+          )}
+
           {onClose && (
             <button
               onClick={onClose}
@@ -1891,6 +1918,35 @@ export default function MallSimulator({
                   <BellRing className="w-4 h-4" />
                 </span>
               )}
+            </div>
+          </div>
+
+          {/* BitChat P2P Mesh Telemetry Card */}
+          <div className="bg-slate-900/90 border border-teal-500/30 rounded-2xl p-3.5 space-y-2 shadow-lg ring-1 ring-teal-500/20">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono text-teal-300 uppercase tracking-wider flex items-center gap-1.5 font-bold">
+                <Radio className="w-3.5 h-3.5 text-teal-400 animate-pulse" />
+                BitChat BLE &amp; Nostr Mesh
+              </span>
+              <span className="text-[10px] font-mono text-teal-300 bg-teal-950/80 px-2 py-0.5 rounded border border-teal-500/40 font-bold">
+                P2P Active
+              </span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1 font-mono text-[11px]">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Corridor Geohash:</span>
+                <span className="text-teal-400 font-bold">
+                  {activeCardStore ? "k3v6v1w" : "k3v6v1x"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Mesh Propagation:</span>
+                <span className="text-white">1-Hop Sub-meter BLE</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">A2A Negotiation:</span>
+                <span className="text-purple-300 font-bold">NIP-04 ECDH Ready</span>
+              </div>
             </div>
           </div>
 

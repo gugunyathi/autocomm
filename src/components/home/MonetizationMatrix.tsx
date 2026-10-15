@@ -696,13 +696,10 @@ export function MonetizationMatrix({
                 <select
                   value={simAgentType}
                   onChange={(e) =>
-                    setSimAgentType(
-                      e.target.value as "Muse-ZA (Aggressive)" | "Nibble-ZA (Value)",
-                    )
+                    setSimAgentType(e.target.value as "Muse-ZA (Aggressive)" | "Nibble-ZA (Value)")
                   }
                   className="mt-1 w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-teal-500"
                 >
-
                   <option value="Muse-ZA (Aggressive)">Muse-ZA (High-Velocity / Multi-Turn)</option>
                   <option value="Nibble-ZA (Value)">Nibble-ZA (Value-Maxing / Micro-Spread)</option>
                 </select>

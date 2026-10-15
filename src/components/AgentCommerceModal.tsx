@@ -15,6 +15,7 @@ import {
   runAgentNegotiation,
 } from "@/lib/agent-commerce";
 import type { Store, BoughtItem } from "@/lib/acn-data";
+import { getBitchatService } from "@/services/bitchat";
 
 interface AgentCommerceModalProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ interface AgentCommerceModalProps {
   currentUser: { name?: string; displayName?: string } | null;
   availableStores: Store[];
   onClaimItem: (boughtItem: BoughtItem) => void;
+  onOpenBitchat?: () => void;
 }
 
 export function AgentCommerceModal({
@@ -30,6 +32,7 @@ export function AgentCommerceModal({
   currentUser,
   availableStores,
   onClaimItem,
+  onOpenBitchat,
 }: AgentCommerceModalProps) {
   // User & Bot Profile
   const [profile, setProfile] = useState<UserProfile>(() =>
@@ -366,6 +369,88 @@ export function AgentCommerceModal({
     }
   };
 
+  const handleExecuteBitchatLightningClearance = async () => {
+    if (settledPrice === null) return;
+    setIsProcessingPayment(true);
+    const amountSats = Math.round(settledPrice * 35);
+    try {
+      const service = getBitchatService();
+      const peer = service.getPeers().find((p) => p.role === "merchant") || {
+        id: "peer_nibble_za",
+        pubkey: "a1c9048f3224b1764d84f8849646b97b0f69a194c7b88e0b65fba0b925f69420",
+        npub: "npub1...",
+        alias: "Nibble-ZA (Merchant)",
+        role: "merchant" as const,
+        rssi: -45,
+        signalQuality: "excellent" as const,
+        hopCount: 1,
+        distanceMeters: 2.1,
+        geohash: service.currentGeohash,
+        corridorName: service.currentCorridor,
+        lastSeenTimestamp: Date.now(),
+        bleConnected: true,
+      };
+
+      const discountPercent = Math.round(
+        ((selectedProduct.originalPriceZAR - settledPrice) / selectedProduct.originalPriceZAR) *
+          100,
+      );
+      const session = await service.startA2ANegotiation(
+        peer,
+        selectedProduct.title,
+        amountSats,
+        discountPercent,
+      );
+
+      session.invoiceBolt11 = `lnbc${amountSats}n1p3v6v1wpp5${Date.now()}sp1bitchat9735`;
+      await service.settleWithLightning(session.sessionId);
+
+      const token = `VOUCHER-LN-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      const newTx: AgentTransaction = {
+        id: `tx_ln_${Date.now()}`,
+        type: "Wallet",
+        userId: profile.id,
+        merchantId: selectedProduct.merchantId,
+        amountZAR: settledPrice,
+        productTitle: `${selectedProduct.title} (BitChat Lightning: ${amountSats.toLocaleString()} Sats)`,
+        status: "COMPLETED",
+        qrToken: token,
+        timestamp: Date.now(),
+        negotiatedDiscountPercent: discountPercent,
+        originalPriceZAR: selectedProduct.originalPriceZAR,
+      };
+
+      saveA2ATransaction(newTx);
+      setCurrentTx(newTx);
+      setRecentTransactions((prev) => [newTx, ...prev]);
+
+      const bought: BoughtItem = {
+        id: `bought_ln_${Date.now()}`,
+        store: selectedProduct.storeRef || {
+          id: selectedProduct.merchantId,
+          name: selectedProduct.title.split("(")[0].trim(),
+          bearing: 0,
+          dist: 25,
+          icon: "⚡",
+          category: selectedProduct.category,
+          open: selectedProduct.originalPriceZAR,
+          color: "#f59e0b",
+          item: selectedProduct.title,
+        },
+        item: selectedProduct.title,
+        price: settledPrice,
+        open: selectedProduct.originalPriceZAR,
+        boughtAt: Date.now(),
+        qrToken: token,
+      };
+      onClaimItem(bought);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to settle with BitChat Lightning.");
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
   // Reversal / In-App Refund Trigger
   const handleRefundTransaction = (tx: AgentTransaction) => {
     if (tx.status === "REFUNDED") return;
@@ -419,6 +504,22 @@ export function AgentCommerceModal({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* BitChat Mesh Radar Pill */}
+            {onOpenBitchat && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenBitchat();
+                }}
+                className="glass flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono text-teal-300 border-teal-500/40 hover:bg-teal-500/20 transition-all cursor-pointer shadow-[0_0_10px_rgba(20,184,166,0.2)]"
+                title="Launch sovereign BitChat BLE Mesh Radar & Nostr Geohashes"
+              >
+                <span>📡</span>
+                <span className="hidden sm:inline">BitChat Mesh</span>
+                <span className="text-[10px] text-teal-400 font-bold">⚡ P2P</span>
+              </button>
+            )}
+
             {/* Wallet Quick Pill */}
             <button
               onClick={() => setTopUpModalOpen(true)}
@@ -713,6 +814,18 @@ export function AgentCommerceModal({
                             </span>
                           </>
                         )}
+                      </button>
+
+                      <button
+                        onClick={handleExecuteBitchatLightningClearance}
+                        disabled={isProcessingPayment}
+                        className="w-full sm:w-auto px-4 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black font-mono text-xs font-black shadow-amber transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
+                        title="Settle instantly over BitChat Lightning Mesh (Satoshis)"
+                      >
+                        <span>⚡</span>
+                        <span>
+                          BitChat Lightning ({Math.round(settledPrice * 35).toLocaleString()} Sats)
+                        </span>
                       </button>
                     </div>
                   </div>

@@ -28,6 +28,7 @@ import { OpenAdLibraryModal } from "@/components/adserver/OpenAdLibraryModal";
 import { AutoComMarketplaceModal } from "@/components/marketplace/AutoComMarketplaceModal";
 import { AutoWalletModal } from "@/components/marketplace/AutoWalletModal";
 import { Web3WalletModal } from "@/components/marketplace/Web3WalletModal";
+import { BitchatMeshModal } from "@/components/bitchat/BitchatMeshModal";
 import {
   DEFAULT_USER_COORDS,
   isFacingTarget,
@@ -118,6 +119,7 @@ export function App() {
   const [autoWalletOpen, setAutoWalletOpen] = useState(false);
   const [marketplaceOpen, setMarketplaceOpen] = useState(false);
   const [web3WalletOpen, setWeb3WalletOpen] = useState(false);
+  const [bitchatOpen, setBitchatOpen] = useState(false);
 
   // FinTech, Web3, Shopify, Attention Ads & Intent Wishlist Hook
   const {
@@ -1070,6 +1072,7 @@ export function App() {
           onOpenAutoWallet={() => setAutoWalletOpen(true)}
           onOpenMarketplace={() => setMarketplaceOpen(true)}
           onOpenWeb3Wallet={() => setWeb3WalletOpen(true)}
+          onOpenBitchat={() => setBitchatOpen(true)}
           walletUsdcBalance={walletState.balances.USDC}
           activeChain={walletState.network}
           walletState={walletState}
@@ -1162,6 +1165,8 @@ export function App() {
           onSwitchNetwork={handleSwitchNetwork}
           onFaucetTopup={handleFaucetTopup}
         />
+        {/* BitChat BLE Mesh & Nostr A2A Terminal Modal */}
+        <BitchatMeshModal isOpen={bitchatOpen} onClose={() => setBitchatOpen(false)} />
       </>
     );
   }
@@ -1192,6 +1197,20 @@ export function App() {
 
           {/* Quick Actions (User, Perimeter & Scan) */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* BitChat Mesh Badge */}
+            <button
+              onClick={() => setBitchatOpen(true)}
+              className="glass flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 text-[9.5px] sm:text-[10.5px] font-mono text-teal-300 border-teal-500/40 bg-teal-500/10 hover:border-teal-400 hover:bg-teal-500/20 transition-all cursor-pointer shadow-[0_0_8px_rgba(20,184,166,0.25)]"
+              title="Open BitChat BLE Mesh & Nostr A2A Terminal"
+            >
+              <span className="relative flex h-1.5 w-1.5 shrink-0">
+                <span className="absolute inset-0 animate-ping rounded-full bg-teal-400 opacity-75" />
+                <span className="relative h-1.5 w-1.5 rounded-full bg-teal-400" />
+              </span>
+              <span>📶</span>
+              <span className="font-bold hidden xs:inline">BitChat</span>
+            </button>
+
             {/* Quick Perimeter Badge */}
             <button
               onClick={() => setEnvModalOpen(true)}
@@ -1921,6 +1940,25 @@ export function App() {
               </span>
             </button>
 
+            {/* 5c. BitChat BLE Mesh & Nostr A2A Terminal Button */}
+            <button
+              onClick={() => safeBottomAction(() => setBitchatOpen(true))}
+              className="glass relative snap-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 rounded-2xl px-2.5 sm:px-4 py-2 sm:py-2.5 border border-teal-400/60 bg-gradient-to-r from-teal-500/25 to-emerald-400/20 hover:from-teal-500/35 hover:to-emerald-400/30 text-teal-300 shadow-[0_0_14px_rgba(20,184,166,0.35)] active:scale-95 transition-all cursor-pointer backdrop-blur-2xl ring-1 ring-teal-400/40 shrink-0 select-none"
+              aria-label="Open BitChat BLE Mesh & Nostr A2A Terminal"
+              title="Open BitChat BLE Mesh & Nostr A2A Terminal (NIP-04 + WebLN)"
+            >
+              <span className="text-base sm:text-lg shrink-0 pointer-events-none">📶</span>
+              <div className="text-center sm:text-left font-mono leading-none min-w-0 pointer-events-none">
+                <p className="text-[9.5px] sm:text-xs font-bold text-white">BitChat</p>
+                <p className="text-[7.5px] sm:text-[8.5px] text-teal-300 font-semibold mt-0.5 truncate">
+                  BLE Mesh
+                </p>
+              </div>
+              <span className="absolute -top-1 -right-1 sm:static rounded-full bg-teal-400 text-black font-mono text-[8px] font-black h-4 min-w-4 sm:h-4.5 sm:min-w-4.5 px-1 flex items-center justify-center shadow-md pointer-events-none">
+                P2P
+              </span>
+            </button>
+
             {/* 6. Settings & Telemetry Button */}
             <button
               onClick={() => safeBottomAction(() => setEnvModalOpen(true))}
@@ -2415,6 +2453,7 @@ export function App() {
         onClose={() => setAgentCommerceOpen(false)}
         currentUser={currentUser}
         availableStores={stores}
+        onOpenBitchat={() => setBitchatOpen(true)}
         onClaimItem={(boughtItem) => {
           saveBought([boughtItem, ...boughtItems]);
           setClaimed((prev) => [...prev, boughtItem.store.id]);
@@ -2443,6 +2482,7 @@ export function App() {
           <div className="w-full max-w-5xl my-auto">
             <MallSimulator
               onClose={() => setMallSimulatorOpen(false)}
+              onOpenBitchat={() => setBitchatOpen(true)}
               onClaimOffer={(mallStore) => {
                 const appStore = stores.find((s) => s.id === mallStore.id) || {
                   id: mallStore.id,
@@ -2585,6 +2625,8 @@ export function App() {
         onSwitchNetwork={handleSwitchNetwork}
         onFaucetTopup={handleFaucetTopup}
       />
+      {/* BitChat BLE Mesh & Nostr A2A Terminal Modal */}
+      <BitchatMeshModal isOpen={bitchatOpen} onClose={() => setBitchatOpen(false)} />
     </main>
   );
 }

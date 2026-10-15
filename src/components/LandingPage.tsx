@@ -46,6 +46,7 @@ interface LandingPageProps {
   onOpenAutoWallet?: () => void;
   onOpenMarketplace?: () => void;
   onOpenWeb3Wallet?: () => void;
+  onOpenBitchat?: () => void;
   walletUsdcBalance?: number;
   activeChain?: string;
   // Commercialization Engine & Ad Library Props
@@ -102,6 +103,7 @@ export function LandingPage({
   onOpenAutoWallet,
   onOpenMarketplace,
   onOpenWeb3Wallet,
+  onOpenBitchat,
   walletUsdcBalance = 285.5,
   activeChain = "base",
   walletState = {
@@ -121,7 +123,7 @@ export function LandingPage({
     merchantName: "Sandton Retail Flagship",
     tier: "DYNAMIC_ENGINE",
     isConnected: true,
-    lastSyncTimestamp: Date.now(),
+    lastSyncTimestamp: 1740000000000,
     syncedInventoryCount: 42,
     maxInventoryLimit: "unlimited",
     syntheticAgentPassesMonthly: 18450,
@@ -241,6 +243,14 @@ export function LandingPage({
             >
               <ShoppingBag className="w-3.5 h-3.5 text-cyan-400" />
               <span>Hardware Store</span>
+            </button>
+            <button
+              onClick={onOpenBitchat}
+              className="hover:text-teal-300 transition-colors cursor-pointer flex items-center gap-1.5 font-bold bg-teal-500/10 px-2.5 py-1 rounded-lg border border-teal-500/30 text-teal-300"
+              title="Open BitChat BLE Mesh & Nostr A2A Terminal"
+            >
+              <Radio className="w-3.5 h-3.5 text-teal-400 animate-pulse" />
+              <span>BitChat Mesh</span>
             </button>
             <button
               onClick={() => setPitchDeckOpen(true)}
