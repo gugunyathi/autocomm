@@ -1,4 +1,4 @@
-import React, { useState, useId } from "react";
+import React, { useState, useEffect, useId } from "react";
 import {
   X,
   Radio,
@@ -24,9 +24,25 @@ import {
   ExternalLink,
   Globe,
   Coins,
+  ShieldAlert,
+  Ticket,
+  BarChart3,
 } from "lucide-react";
 import { useBitchat } from "@/hooks/useBitchat";
 import { StablecoinPaymentEngine } from "./StablecoinPaymentEngine";
+import { AgentDealConsole } from "./AgentDealConsole";
+import {
+  SUPPORTED_CURRENCIES,
+  detectLocalCurrencyProfile,
+  setSelectedCurrency,
+  type CurrencyProfile,
+} from "@/utils/currencyRouter";
+import { InventoryOptimizer, type OptimizationNotice } from "@/services/Optimizer";
+import {
+  HandoverVerificationEngine,
+  type VerificationResult,
+} from "@/services/HandoverVerification";
+import { DB, GeoDB } from "@/services/database";
 import type { BitchatPeer, BitchatNegotiationSession } from "@/types/bitchat";
 
 interface BitchatMeshModalProps {
@@ -64,8 +80,21 @@ export function BitchatMeshModal({ isOpen, onClose, onEngageDealInSim }: Bitchat
   } = useBitchat();
 
   const [activeTab, setActiveTab] = useState<
-    "radar" | "negotiate" | "lightning" | "relays" | "guide"
+    "radar" | "negotiate" | "lightning" | "recovery" | "relays" | "guide"
   >("radar");
+
+  const [currentCurrency, setCurrentCurrency] = useState<CurrencyProfile>(SUPPORTED_CURRENCIES[0]);
+  const [cashierTicketInput, setCashierTicketInput] = useState<string>("");
+  const [cashierVerificationResult, setCashierVerificationResult] =
+    useState<VerificationResult | null>(null);
+  const [isVerifyingCashierTicket, setIsVerifyingCashierTicket] = useState(false);
+  const [optimizationReport, setOptimizationReport] = useState(() =>
+    InventoryOptimizer.optimizeStockAllocations(),
+  );
+
+  useEffect(() => {
+    detectLocalCurrencyProfile().then(setCurrentCurrency);
+  }, []);
 
   const [copiedKey, setCopiedKey] = useState(false);
   const [copiedInvoice, setCopiedInvoice] = useState(false);
@@ -302,6 +331,26 @@ export function BitchatMeshModal({ isOpen, onClose, onEngageDealInSim }: Bitchat
             <span className="rounded bg-teal-500/20 px-1.5 py-0.5 text-[10px] text-teal-300 uppercase">
               {identity.role}
             </span>
+
+            {/* Currency Locale Picker */}
+            <div className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded border border-white/10 ml-1">
+              <Globe className="h-3 w-3 text-cyan-400" />
+              <select
+                value={currentCurrency.code}
+                onChange={(e) => {
+                  const updated = setSelectedCurrency(e.target.value);
+                  setCurrentCurrency(updated);
+                }}
+                className="bg-transparent text-white text-[10px] font-mono font-bold focus:outline-none cursor-pointer"
+                title="Select localized fiat currency"
+              >
+                {SUPPORTED_CURRENCIES.map((c) => (
+                  <option key={c.code} value={c.code} className="bg-slate-900 text-white">
+                    {c.flag} {c.code} ({c.symbol})
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
@@ -369,6 +418,18 @@ export function BitchatMeshModal({ isOpen, onClose, onEngageDealInSim }: Bitchat
           >
             <Sparkles className="h-3.5 w-3.5 text-amber-400" />
             <span>Multi-Rail Settlements</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("recovery")}
+            className={`flex items-center gap-1.5 px-3.5 py-2 font-mono text-xs font-semibold rounded-t-xl transition-all cursor-pointer border-t border-x ${
+              activeTab === "recovery"
+                ? "bg-[#0c1222] text-rose-300 border-rose-500/40 shadow-sm"
+                : "text-muted-foreground border-transparent hover:text-white"
+            }`}
+          >
+            <ShieldAlert className="h-3.5 w-3.5 text-rose-400" />
+            <span>Recovery & Handoffs</span>
           </button>
 
           <button
@@ -1243,12 +1304,238 @@ export function BitchatMeshModal({ isOpen, onClose, onEngageDealInSim }: Bitchat
                 <div>
                   <span className="text-muted-foreground">Total Settled via Bitchat Rails: </span>
                   <span className="text-teal-300 font-bold">
-                    ⚡ {telemetry.totalSettledSats.toLocaleString()} Sats (≈ R
-                    {Math.round(telemetry.totalSettledSats / 35)} ZAR)
+                    ⚡ {telemetry.totalSettledSats.toLocaleString()} Sats (≈{" "}
+                    {currentCurrency.symbol}
+                    {Math.round(
+                      (telemetry.totalSettledSats / 35) *
+                        (currentCurrency.code === "ZAR" ? 1 : currentCurrency.multiplier || 1),
+                    )}{" "}
+                    {currentCurrency.code})
                   </span>
                 </div>
                 <div className="text-muted-foreground text-[11px]">
                   0% Intermediary Take Rate · Sovereign Mesh
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: CROSS-RAIL RECOVERY, OFF-GRID HANDOFF & OPTIMIZER */}
+          {activeTab === "recovery" && (
+            <div className="max-w-4xl mx-auto space-y-6">
+              {/* Header Banner */}
+              <div className="p-5 rounded-3xl bg-gradient-to-r from-rose-950/40 via-[#0b1122] to-purple-950/40 border border-rose-500/30 text-center space-y-2">
+                <div className="inline-flex h-12 w-12 rounded-2xl bg-rose-500/20 border border-rose-500/40 items-center justify-center text-rose-300 shadow-[0_0_20px_rgba(244,63,94,0.25)] mb-1">
+                  <ShieldAlert className="h-6 w-6" />
+                </div>
+                <h3 className="text-lg font-bold text-white">
+                  🛡️ Cross-Rail Recovery, Off-Grid Verification & Geo Optimizer
+                </h3>
+                <p className="text-xs font-mono text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                  Prevents cart abandonment by automatically converting failed traditional card
+                  charges into sovereign WebLN / Base USDC crypto settlements over Bitchat, with
+                  cryptographically signed BLE handover tickets.
+                </p>
+              </div>
+
+              {/* Grid: Checkout Station on Left, Cashier Verifier on Right */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                {/* 1. Agent Deal Console Component */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-xs font-mono font-bold text-rose-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <Zap className="h-3.5 w-3.5 text-rose-400" />
+                      Shopper Deal & Recovery Engine
+                    </span>
+                    <span className="text-[10px] font-mono text-muted-foreground">
+                      Client-Side Intercept
+                    </span>
+                  </div>
+                  <AgentDealConsole
+                    itemId="zara-leather-jacket-09"
+                    itemTitle="Zara Biker Leather Jacket"
+                    originalPriceZar={1199}
+                    onPaymentSuccess={(proof, rail) => {
+                      setOptimizationReport(InventoryOptimizer.optimizeStockAllocations());
+                    }}
+                  />
+                </div>
+
+                {/* 2. Store Counter: Off-Grid Handover Verifier (Kind 30079) */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-xs font-mono font-bold text-teal-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <QrCode className="h-3.5 w-3.5 text-teal-400" />
+                      Store Counter Handover Terminal
+                    </span>
+                    <span className="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+                      0% Internet Required
+                    </span>
+                  </div>
+
+                  <div className="p-5 rounded-3xl bg-slate-900/90 border border-teal-500/30 space-y-4 text-xs font-mono">
+                    <div>
+                      <h4 className="font-bold text-white text-sm">
+                        Offline BLE Ticket Authenticator
+                      </h4>
+                      <p className="text-muted-foreground text-[11px] mt-0.5">
+                        Cashier verifies cryptographic Nostr signatures (Kind 30079) locally over
+                        Bluetooth mesh with zero cloud or internet connectivity.
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] text-muted-foreground uppercase font-bold">
+                          Received BLE Ticket JSON:
+                        </label>
+                        <button
+                          onClick={async () => {
+                            // Seed a realistic valid test ticket
+                            const testSecretKey = new Uint8Array(32);
+                            for (let i = 0; i < 32; i++) testSecretKey[i] = (i * 3 + 7) % 256;
+                            const sampleTicket = await generateOfflineCollectionTicket(
+                              "zara-leather-jacket-09",
+                              `proof_hash_${Date.now()}`,
+                              testSecretKey,
+                            );
+                            setCashierTicketInput(sampleTicket);
+                          }}
+                          className="text-[10px] text-teal-300 hover:underline cursor-pointer"
+                        >
+                          Generate Sample Signed Ticket
+                        </button>
+                      </div>
+
+                      <textarea
+                        rows={4}
+                        value={cashierTicketInput}
+                        onChange={(e) => setCashierTicketInput(e.target.value)}
+                        placeholder="Paste Nostr Kind 30079 signed event JSON or intercept over Bluetooth mesh..."
+                        className="w-full p-2.5 rounded-xl bg-black/60 border border-white/10 text-white font-mono text-[10px] placeholder:text-muted-foreground focus:outline-none focus:border-teal-400"
+                      />
+                    </div>
+
+                    <button
+                      onClick={async () => {
+                        if (!cashierTicketInput.trim()) return;
+                        setIsVerifyingCashierTicket(true);
+                        try {
+                          const res =
+                            await HandoverVerificationEngine.verifyHandoverTicket(
+                              cashierTicketInput,
+                            );
+                          setCashierVerificationResult(res);
+                          setOptimizationReport(InventoryOptimizer.optimizeStockAllocations());
+                        } finally {
+                          setIsVerifyingCashierTicket(false);
+                        }
+                      }}
+                      disabled={isVerifyingCashierTicket || !cashierTicketInput.trim()}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-black font-bold text-xs transition-all shadow-md cursor-pointer"
+                    >
+                      <Ticket className="h-4 w-4" />
+                      <span>
+                        {isVerifyingCashierTicket
+                          ? "Authenticating Cryptographic Key..."
+                          : "Authenticate Ticket & Authorize Handover"}
+                      </span>
+                    </button>
+
+                    {cashierVerificationResult && (
+                      <div
+                        className={`p-3.5 rounded-2xl border text-xs font-mono space-y-1.5 ${
+                          cashierVerificationResult.success
+                            ? "bg-emerald-950/70 border-emerald-500/50 text-emerald-200"
+                            : "bg-rose-950/70 border-rose-500/50 text-rose-200"
+                        }`}
+                      >
+                        <div className="font-bold flex items-center gap-1.5">
+                          {cashierVerificationResult.success
+                            ? "✓ HANDOVER AUTHORIZED"
+                            : "❌ REDEMPTION REJECTED"}
+                        </div>
+                        <p className="text-[11px] leading-relaxed">
+                          {cashierVerificationResult.message}
+                        </p>
+                        {cashierVerificationResult.proofHash && (
+                          <p className="text-[9px] text-muted-foreground break-all">
+                            Proof: {cashierVerificationResult.proofHash}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. SQLite Location History Aggregation & Inventory Optimizer View */}
+              <div className="p-5 rounded-3xl bg-[#0b1020] border border-white/10 space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-cyan-400" />
+                    <div>
+                      <h4 className="font-bold text-white text-sm">
+                        SQLite Regional Demand & Inventory Optimizer
+                      </h4>
+                      <p className="text-[11px] text-muted-foreground font-mono">
+                        Automated stock allocation and floor price protection heuristics grouped by
+                        localized currency.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setOptimizationReport(InventoryOptimizer.optimizeStockAllocations());
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-mono text-xs font-bold transition-all border border-white/20 cursor-pointer"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    <span>Run Optimization Heuristics</span>
+                  </button>
+                </div>
+
+                {/* Metrics Breakdown Cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 font-mono">
+                  {optimizationReport.metrics.map((m) => (
+                    <div
+                      key={m.currencyCode}
+                      className="p-3 rounded-2xl bg-black/40 border border-white/5 space-y-1"
+                    >
+                      <div className="text-[10px] text-muted-foreground flex items-center justify-between">
+                        <span className="font-bold text-white">{m.currencyCode}</span>
+                        <span>{m.volume} orders</span>
+                      </div>
+                      <div className="text-cyan-300 font-bold text-xs truncate">
+                        {m.totalRevenue.toLocaleString()} {m.currencyCode}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Optimization Notices / Strategic Recommendations */}
+                <div className="space-y-2 pt-2">
+                  <span className="text-[11px] font-mono font-bold uppercase text-muted-foreground tracking-wider">
+                    Automated Restock & Strategy Notices:
+                  </span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 font-mono text-xs">
+                    {optimizationReport.notices.map((n, idx) => (
+                      <div
+                        key={idx}
+                        className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1"
+                      >
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="font-bold text-amber-400">{n.type}</span>
+                          <span className="text-muted-foreground">{n.currencyCode}</span>
+                        </div>
+                        <p className="text-white text-[11px] font-semibold">{n.message}</p>
+                        <p className="text-teal-300 text-[10px] leading-relaxed">
+                          💡 Action: {n.recommendedAction}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

@@ -33,6 +33,8 @@ import {
   Radio,
   Layers,
   ArrowRight,
+  Terminal,
+  Menu,
 } from "lucide-react";
 
 interface LandingPageProps {
@@ -47,6 +49,7 @@ interface LandingPageProps {
   onOpenMarketplace?: () => void;
   onOpenWeb3Wallet?: () => void;
   onOpenBitchat?: () => void;
+  onOpenAgentPortal?: () => void;
   walletUsdcBalance?: number;
   activeChain?: string;
   // Commercialization Engine & Ad Library Props
@@ -104,6 +107,7 @@ export function LandingPage({
   onOpenMarketplace,
   onOpenWeb3Wallet,
   onOpenBitchat,
+  onOpenAgentPortal,
   walletUsdcBalance = 285.5,
   activeChain = "base",
   walletState = {
@@ -215,7 +219,17 @@ export function LandingPage({
           </button>
 
           {/* Zone 2: Clean Nav Links on Desktop */}
-          <nav className="hidden lg:flex items-center gap-4 xl:gap-5 text-xs font-medium text-muted-foreground">
+          <nav className="hidden lg:flex items-center gap-3.5 xl:gap-4.5 text-xs font-medium text-muted-foreground">
+            {onOpenAgentPortal && (
+              <button
+                onClick={onOpenAgentPortal}
+                className="hover:text-teal-300 transition-colors cursor-pointer flex items-center gap-1.5 font-bold text-teal-300 bg-teal-500/10 px-2.5 py-1 rounded-lg border border-teal-500/30"
+                title="Agent API Tokens, 1.5% Arbitrage Ledger, Live Playground & How-To Guide"
+              >
+                <Terminal className="w-3.5 h-3.5 text-teal-400" />
+                <span>Agent API &amp; Dev</span>
+              </button>
+            )}
             <button
               onClick={onOpenMerchantDashboard}
               className="hover:text-teal-300 transition-colors cursor-pointer flex items-center gap-1.5 font-bold"
@@ -348,11 +362,12 @@ export function LandingPage({
               </div>
             )}
 
-            {/* Mobile Hamburger Toggle */}
+            {/* Hamburger / Navigation Menu Toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-              aria-label="Toggle menu"
+              className="p-2 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors flex items-center gap-1.5 cursor-pointer"
+              aria-label="Toggle navigation menu"
+              title="Navigation Menu"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 {mobileMenuOpen ? (
@@ -371,76 +386,115 @@ export function LandingPage({
                   />
                 )}
               </svg>
+              <span className="hidden sm:inline text-xs font-mono font-medium">Menu</span>
             </button>
           </div>
         </div>
 
-        {/* Mobile Dropdown Menu */}
+        {/* Navigation Dropdown Menu (Burger Menu Tab) */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-b border-border/50 bg-background/95 px-4 py-3 space-y-2 text-xs font-mono animate-in fade-in">
+          <div className="border-b border-border/50 bg-background/95 backdrop-blur-xl px-4 py-3.5 space-y-2.5 text-xs font-mono animate-in fade-in max-w-7xl mx-auto">
+            {/* 1. AGENT API & DEVELOPER PORTAL (Tokens, Ledger, Playground, Guide) */}
             <button
               onClick={() => {
                 setMobileMenuOpen(false);
-                if (onOpenMerchantDashboard) onOpenMerchantDashboard();
+                if (onOpenAgentPortal) onOpenAgentPortal();
               }}
-              className="block w-full text-left py-2 text-teal-300 font-bold hover:text-white"
+              className="flex items-center justify-between w-full text-left py-2.5 px-3.5 rounded-2xl bg-teal-500/15 hover:bg-teal-500/25 text-teal-300 font-bold border border-teal-500/40 transition-all shadow-sm group cursor-pointer"
             >
-              🛍️ Merchant &amp; Shopify Hub
+              <div className="flex items-center gap-2.5">
+                <span className="p-1.5 rounded-xl bg-teal-500/20 text-teal-300 group-hover:scale-105 transition-transform">
+                  <Terminal className="w-4 h-4 text-teal-400" />
+                </span>
+                <div>
+                  <div className="text-white text-xs font-black flex items-center gap-2">
+                    <span>Agent API &amp; Dev Hub</span>
+                    <span className="px-1.5 py-0.2 rounded-full bg-teal-400 text-slate-950 font-mono text-[9px] font-black uppercase tracking-wider">
+                      Separate Page
+                    </span>
+                  </div>
+                  <p className="text-[10.5px] text-teal-200/80 font-normal">
+                    Agent API Tokens · 1.5% Arbitrage Ledger · Live Playground · How-To Guide
+                  </p>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-teal-400 group-hover:translate-x-1 transition-transform" />
             </button>
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                if (onOpenOpenAdLibrary) onOpenOpenAdLibrary();
-              }}
-              className="block w-full text-left py-2 text-indigo-300 font-bold hover:text-white"
-            >
-              📢 Open Ad &amp; Media Library
-            </button>
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                if (onOpenAutoWallet) onOpenAutoWallet();
-              }}
-              className="block w-full text-left py-2 text-amber-300 font-bold hover:text-white"
-            >
-              🎯 FinTech Auto-Wallet &amp; Wishlist
-            </button>
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                if (onOpenMarketplace) onOpenMarketplace();
-              }}
-              className="block w-full text-left py-2 text-cyan-300 font-bold hover:text-white"
-            >
-              📡 Hardware &amp; FinTech Store
-            </button>
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                if (onOpenWeb3Wallet) onOpenWeb3Wallet();
-              }}
-              className="block w-full text-left py-2 text-purple-300 font-bold hover:text-white"
-            >
-              🔵 Web3 Multi-Chain Wallet (${walletUsdcBalance.toFixed(1)} USDC)
-            </button>
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onOpenWalkthrough();
-              }}
-              className="block w-full text-left py-2 text-primary font-bold hover:text-white"
-            >
-              💡 Interactive Walkthrough Guide
-            </button>
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                setPitchDeckOpen(true);
-              }}
-              className="block w-full text-left py-2 text-amber-400 font-bold hover:text-white"
-            >
-              📄 View Pitch Deck
-            </button>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-1 border-t border-border/40">
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (onOpenMerchantDashboard) onOpenMerchantDashboard();
+                }}
+                className="block w-full text-left py-2 px-2.5 rounded-xl hover:bg-muted/40 text-teal-300 font-bold hover:text-white transition-colors cursor-pointer"
+              >
+                🛍️ Merchant &amp; Shopify Hub
+              </button>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (onOpenOpenAdLibrary) onOpenOpenAdLibrary();
+                }}
+                className="block w-full text-left py-2 px-2.5 rounded-xl hover:bg-muted/40 text-indigo-300 font-bold hover:text-white transition-colors cursor-pointer"
+              >
+                📢 Open Ad &amp; Media Library
+              </button>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (onOpenAutoWallet) onOpenAutoWallet();
+                }}
+                className="block w-full text-left py-2 px-2.5 rounded-xl hover:bg-muted/40 text-amber-300 font-bold hover:text-white transition-colors cursor-pointer"
+              >
+                🎯 FinTech Auto-Wallet &amp; Wishlist
+              </button>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (onOpenMarketplace) onOpenMarketplace();
+                }}
+                className="block w-full text-left py-2 px-2.5 rounded-xl hover:bg-muted/40 text-cyan-300 font-bold hover:text-white transition-colors cursor-pointer"
+              >
+                📡 Hardware &amp; FinTech Store
+              </button>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (onOpenBitchat) onOpenBitchat();
+                }}
+                className="block w-full text-left py-2 px-2.5 rounded-xl hover:bg-muted/40 text-teal-300 font-bold hover:text-white transition-colors cursor-pointer"
+              >
+                📶 BitChat BLE Mesh Terminal
+              </button>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (onOpenWeb3Wallet) onOpenWeb3Wallet();
+                }}
+                className="block w-full text-left py-2 px-2.5 rounded-xl hover:bg-muted/40 text-purple-300 font-bold hover:text-white transition-colors cursor-pointer"
+              >
+                🔵 Web3 Wallet (${walletUsdcBalance.toFixed(1)} USDC)
+              </button>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenWalkthrough();
+                }}
+                className="block w-full text-left py-2 px-2.5 rounded-xl hover:bg-muted/40 text-primary font-bold hover:text-white transition-colors cursor-pointer"
+              >
+                💡 Interactive Walkthrough Guide
+              </button>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setPitchDeckOpen(true);
+                }}
+                className="block w-full text-left py-2 px-2.5 rounded-xl hover:bg-muted/40 text-amber-400 font-bold hover:text-white transition-colors cursor-pointer"
+              >
+                📄 View Pitch Deck
+              </button>
+            </div>
           </div>
         )}
       </header>
@@ -636,8 +690,11 @@ export function LandingPage({
             trigger real-time micro-deal negotiations.
           </p>
 
-          <div className="pt-2 glass relative rounded-2xl sm:rounded-3xl p-2 sm:p-3 border border-border/80 shadow-2xl overflow-hidden group text-left">
-            <MallSimulator compactEmbed={true} onLaunch3D={onLaunchLiveMesh} />
+          {/* Sized 100% on mobile screens, reduced in size by 50% for desktop and tablet screens */}
+          <div className="pt-2 w-full sm:w-1/2 sm:max-w-[430px] md:w-1/2 md:max-w-[430px] lg:w-1/2 lg:max-w-[440px] mx-auto">
+            <div className="glass relative rounded-2xl sm:rounded-3xl p-2 sm:p-2.5 border border-border/80 shadow-2xl overflow-hidden group text-left">
+              <MallSimulator compactEmbed={true} onLaunch3D={onLaunchLiveMesh} />
+            </div>
           </div>
         </div>
 
@@ -659,6 +716,7 @@ export function LandingPage({
             onOpenAdUploader={onOpenMerchantDashboard}
             onOpenAdLibrary={onOpenOpenAdLibrary}
             onOpenMarketplace={onOpenMarketplace}
+            onOpenAgentPortal={onOpenAgentPortal}
           />
         </div>
 

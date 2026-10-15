@@ -29,6 +29,7 @@ import { AutoComMarketplaceModal } from "@/components/marketplace/AutoComMarketp
 import { AutoWalletModal } from "@/components/marketplace/AutoWalletModal";
 import { Web3WalletModal } from "@/components/marketplace/Web3WalletModal";
 import { BitchatMeshModal } from "@/components/bitchat/BitchatMeshModal";
+import { AgentDevPortalModal } from "@/components/developer/AgentDevPortalModal";
 import {
   DEFAULT_USER_COORDS,
   isFacingTarget,
@@ -69,9 +70,37 @@ const STORAGE_PARKED_KEY = "acn_parked_offers_v1";
 const STORAGE_BOUGHT_KEY = "acn_bought_items_v1";
 const STORAGE_WALKTHROUGH_KEY = "autocom_walkthrough_seen_v1";
 
-export function App() {
+export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) {
   const [mounted, setMounted] = useState(false);
-  const [view, setView] = useState<"landing" | "mesh">("landing");
+  const [view, setView] = useState<"landing" | "mesh">(() => {
+    if (initialView) return initialView;
+    if (typeof window !== "undefined" && window.location.pathname.startsWith("/mesh")) {
+      return "mesh";
+    }
+    return "landing";
+  });
+
+  const handleNavigateView = useCallback((newView: "landing" | "mesh") => {
+    setView(newView);
+    if (typeof window !== "undefined") {
+      const targetPath = newView === "mesh" ? "/mesh" : "/";
+      if (window.location.pathname !== targetPath) {
+        window.history.pushState(null, "", targetPath);
+      }
+    }
+  }, []);
+
+  // Listen to browser Back/Forward navigation
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handlePopState = () => {
+      const isMesh = window.location.pathname.startsWith("/mesh");
+      setView(isMesh ? "mesh" : "landing");
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
   const [currentUser, setCurrentUser] = useState<PasskeyUser | null>(null);
   const [passkeyModalOpen, setPasskeyModalOpen] = useState(false);
   const [passkeyModalMode, setPasskeyModalMode] = useState<"signin" | "signup">("signin");
@@ -120,6 +149,7 @@ export function App() {
   const [marketplaceOpen, setMarketplaceOpen] = useState(false);
   const [web3WalletOpen, setWeb3WalletOpen] = useState(false);
   const [bitchatOpen, setBitchatOpen] = useState(false);
+  const [agentDevPortalOpen, setAgentDevPortalOpen] = useState(false);
 
   // FinTech, Web3, Shopify, Attention Ads & Intent Wishlist Hook
   const {
@@ -1061,9 +1091,9 @@ export function App() {
         <LandingPage
           currentUser={currentUser}
           onOpenPasskeyModal={openPasskeyModal}
-          onLaunchLiveMesh={() => setView("mesh")}
+          onLaunchLiveMesh={() => handleNavigateView("mesh")}
           onOpenWalkthrough={() => {
-            setView("mesh");
+            handleNavigateView("mesh");
             setWalkthroughOpen(true);
           }}
           onSignOut={() => setCurrentUser(null)}
@@ -1073,6 +1103,7 @@ export function App() {
           onOpenMarketplace={() => setMarketplaceOpen(true)}
           onOpenWeb3Wallet={() => setWeb3WalletOpen(true)}
           onOpenBitchat={() => setBitchatOpen(true)}
+          onOpenAgentPortal={() => setAgentDevPortalOpen(true)}
           walletUsdcBalance={walletState.balances.USDC}
           activeChain={walletState.network}
           walletState={walletState}
@@ -1104,6 +1135,16 @@ export function App() {
           isOpen={walkthroughOpen}
           onClose={() => setWalkthroughOpen(false)}
           onComplete={handleCompleteWalkthrough}
+        />
+        {/* Agent API & Developer Portal Modal */}
+        <AgentDevPortalModal
+          isOpen={agentDevPortalOpen}
+          onClose={() => setAgentDevPortalOpen(false)}
+          walletState={walletState}
+          apiCredentials={apiCredentials}
+          arbitrageLedger={arbitrageLedger}
+          onGenerateApiKey={handleGenerateApiKey}
+          onRecordArbitrageSavings={handleRecordArbitrageSavings}
         />
         {/* Merchant & Shopify Modal */}
         <MerchantDashboardModal
@@ -1176,8 +1217,13 @@ export function App() {
       {/* Dynamic Header */}
       <header className="relative z-30 w-full px-3 pt-2.5 sm:px-6 sm:pt-4 md:px-10">
         <div className="flex items-center justify-between gap-2 min-w-0 w-full">
-          {/* App Logo & Name */}
-          <div className="flex items-center gap-2 min-w-0">
+          {/* App Logo & Name (Clickable to return to Landing Overview) */}
+          <button
+            onClick={() => handleNavigateView("landing")}
+            className="flex items-center gap-2 min-w-0 text-left hover:opacity-80 transition-opacity cursor-pointer group"
+            title="Return to Home / Overview Landing Page"
+            aria-label="Return to Home Overview"
+          >
             <AutoComLogo size="sm" />
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
@@ -1185,7 +1231,7 @@ export function App() {
                   <span className="absolute inset-0 animate-ping rounded-full bg-primary opacity-75" />
                   <span className="relative h-1.5 w-1.5 rounded-full bg-primary" />
                 </span>
-                <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.2em] sm:tracking-[0.25em] text-primary truncate">
+                <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.2em] sm:tracking-[0.25em] text-primary truncate group-hover:underline">
                   LIVE MESH
                 </p>
               </div>
@@ -1193,7 +1239,7 @@ export function App() {
                 AutoCom
               </h1>
             </div>
-          </div>
+          </button>
 
           {/* Quick Actions (User, Perimeter & Scan) */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -1959,6 +2005,22 @@ export function App() {
               </span>
             </button>
 
+            {/* 5d. Agent API & Dev Hub Carousel Button */}
+            <button
+              onClick={() => safeBottomAction(() => setAgentDevPortalOpen(true))}
+              className="glass relative snap-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 rounded-2xl px-2.5 sm:px-4 py-2 sm:py-2.5 border border-teal-500/50 bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 shadow-teal active:scale-95 transition-all cursor-pointer backdrop-blur-2xl ring-1 ring-teal-500/30 shrink-0 select-none"
+              aria-label="Open Agent API & Developer Portal"
+              title="Open Agent API Tokens, 1.5% Arbitrage Ledger, Playground & How-To Guides"
+            >
+              <span className="text-base sm:text-lg shrink-0 pointer-events-none">🤖</span>
+              <div className="text-center sm:text-left font-mono leading-none min-w-0 pointer-events-none">
+                <p className="text-[9.5px] sm:text-xs font-bold text-white">Dev Hub</p>
+                <p className="text-[7.5px] sm:text-[8.5px] text-teal-300 font-semibold mt-0.5 truncate">
+                  API &amp; Tools
+                </p>
+              </div>
+            </button>
+
             {/* 6. Settings & Telemetry Button */}
             <button
               onClick={() => safeBottomAction(() => setEnvModalOpen(true))}
@@ -2001,7 +2063,7 @@ export function App() {
 
             {/* 8. Overview / Landing Page Button (Far Right End of Carousel) */}
             <button
-              onClick={() => safeBottomAction(() => setView("landing"))}
+              onClick={() => safeBottomAction(() => handleNavigateView("landing"))}
               className="glass relative snap-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 rounded-2xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 border border-white/20 bg-[#090d19]/92 hover:bg-white/15 hover:border-primary shadow-xl active:scale-95 transition-all cursor-pointer backdrop-blur-2xl ring-1 ring-white/10 shrink-0 select-none"
               aria-label="Return to Overview Landing Page"
               title="Return to Overview Landing Page"
@@ -2627,6 +2689,16 @@ export function App() {
       />
       {/* BitChat BLE Mesh & Nostr A2A Terminal Modal */}
       <BitchatMeshModal isOpen={bitchatOpen} onClose={() => setBitchatOpen(false)} />
+      {/* Agent API & Developer Portal Modal */}
+      <AgentDevPortalModal
+        isOpen={agentDevPortalOpen}
+        onClose={() => setAgentDevPortalOpen(false)}
+        walletState={walletState}
+        apiCredentials={apiCredentials}
+        arbitrageLedger={arbitrageLedger}
+        onGenerateApiKey={handleGenerateApiKey}
+        onRecordArbitrageSavings={handleRecordArbitrageSavings}
+      />
     </main>
   );
 }

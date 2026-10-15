@@ -47,6 +47,15 @@ function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      const url = new URL(request.url);
+      if (
+        request.method === "POST" &&
+        (url.pathname === "/webhooks/payments" || url.pathname === "/api/webhooks/payments")
+      ) {
+        const { handleIncomingHttpTraffic } = await import("./services/webhookRecovery");
+        return await handleIncomingHttpTraffic(request);
+      }
+
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);

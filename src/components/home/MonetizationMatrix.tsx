@@ -78,6 +78,7 @@ export interface MonetizationMatrixProps {
   onOpenAdUploader?: () => void;
   onOpenAdLibrary?: () => void;
   onOpenMarketplace?: () => void;
+  onOpenAgentPortal?: () => void;
 }
 
 const MONETIZATION_TIERS: Record<MonetizationStreamKey, MonetizationTier[]> = {
@@ -284,6 +285,7 @@ export function MonetizationMatrix({
   onOpenAdUploader,
   onOpenAdLibrary,
   onOpenMarketplace,
+  onOpenAgentPortal,
 }: MonetizationMatrixProps) {
   const [activeStream, setActiveStream] = useState<MonetizationStreamKey>("DEVELOPER_API_SANDBOX");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -554,13 +556,17 @@ export function MonetizationMatrix({
                   </div>
 
                   <button
-                    onClick={() =>
-                      onGenerateApiKey(
-                        tier.id === "tier-enterprise-quantum"
-                          ? "ENTERPRISE_QUANTUM"
-                          : "DEVELOPER_SANDBOX",
-                      )
-                    }
+                    onClick={() => {
+                      if (onOpenAgentPortal) {
+                        onOpenAgentPortal();
+                      } else {
+                        onGenerateApiKey(
+                          tier.id === "tier-enterprise-quantum"
+                            ? "ENTERPRISE_QUANTUM"
+                            : "DEVELOPER_SANDBOX",
+                        );
+                      }
+                    }}
                     className="w-full py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-extrabold text-xs font-mono shadow-md transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2"
                   >
                     <Zap className="w-4 h-4" />
@@ -571,241 +577,39 @@ export function MonetizationMatrix({
             </div>
           </div>
 
-          {/* Interactive Token Generation & Arbitrage Protocol Ledger */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Active Credentials Panel */}
-            <div className="lg:col-span-5 p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-4 font-mono text-xs">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-white flex items-center gap-2">
-                  <Terminal className="w-4 h-4 text-teal-400" />
-                  <span>Agent API Tokens</span>
-                </span>
-                <button
-                  onClick={() => onGenerateApiKey("DEVELOPER_SANDBOX")}
-                  className="px-2.5 py-1 rounded-lg bg-teal-500/20 text-teal-300 hover:bg-teal-500/30 text-[10px] font-bold border border-teal-500/40 cursor-pointer"
-                >
-                  + Generate Key
-                </button>
-              </div>
-
-              <div className="space-y-2.5">
-                {apiCredentials.map((cred) => (
-                  <div
-                    key={cred.id}
-                    className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2"
-                  >
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-bold text-teal-300">{cred.tier}</span>
-                      <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[9px]">
-                        {cred.status}
-                      </span>
-                    </div>
-
-                    <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/80 flex items-center justify-between text-[10px]">
-                      <span className="text-slate-400 truncate max-w-[180px]">{cred.apiKey}</span>
-                      <button
-                        onClick={() => handleCopyText(cred.apiKey, cred.id)}
-                        className="text-slate-400 hover:text-white p-1"
-                      >
-                        {copiedKey === cred.id ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-400" />
-                        ) : (
-                          <Copy className="w-3.5 h-3.5" />
-                        )}
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-400 pt-1">
-                      <div>
-                        <span>Ticks Used: </span>
-                        <strong className="text-slate-200">
-                          {cred.totalCorridorTicksUsed.toLocaleString()}
-                        </strong>
-                      </div>
-                      <div>
-                        <span>1.5% Tolls: </span>
-                        <strong className="text-teal-300">
-                          ${cred.protocolArbitrageFeesCollectedUsdc.toFixed(2)}
-                        </strong>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Arbitrage Protocol Fee Ledger */}
-            <div className="lg:col-span-7 p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-4 font-mono text-xs">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-white flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-emerald-400" />
-                  <span>1.5% Arbitrage Protocol Fee Ledger (Web3 On-Chain)</span>
-                </span>
-                <span className="text-[10px] text-teal-400 font-bold">Live Settlement</span>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-[11px]">
-                  <thead>
-                    <tr className="text-[10px] text-slate-400 uppercase border-b border-slate-800">
-                      <th className="pb-2">Agent ID</th>
-                      <th className="pb-2">Merchant &amp; Item</th>
-                      <th className="pb-2">Value Saved</th>
-                      <th className="pb-2 text-right">1.5% Protocol Toll</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60">
-                    {arbitrageLedger.slice(0, 5).map((entry) => (
-                      <tr key={entry.id} className="hover:bg-slate-800/30">
-                        <td className="py-2.5 text-teal-300 font-bold">{entry.agentId}</td>
-                        <td className="py-2.5 text-slate-300">
-                          <p className="font-bold text-white">{entry.merchantStore}</p>
-                          <p className="text-[10px] text-slate-400">{entry.dealItem}</p>
-                        </td>
-                        <td className="py-2.5 text-emerald-400">
-                          +R{entry.totalValueSavedZar} (${entry.totalValueSavedUsdc.toFixed(2)})
-                        </td>
-                        <td className="py-2.5 text-right font-bold text-teal-300">
-                          ${entry.arbitrageFeeCollectedUsdc.toFixed(2)} USDC
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          {/* Interactive Live Demo Playground */}
-          <div className="p-6 rounded-2xl bg-slate-900/90 border border-teal-500/40 space-y-5 font-mono text-xs">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          {/* Clean Visual Showcase Callout Card (Developer Tools Moved to Dedicated Page) */}
+          <div className="p-6 rounded-3xl bg-gradient-to-r from-teal-950/70 via-slate-900/90 to-slate-950 border border-teal-500/40 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2 max-w-2xl text-left font-mono">
               <div className="flex items-center gap-2">
-                <Play className="w-4 h-4 text-teal-400" />
-                <h4 className="font-black text-sm text-white">
-                  Live Demo Playground: Autonomous Agent Negotiation &amp; 1.5% Toll Split
-                </h4>
-              </div>
-              <span className="px-2 py-0.5 rounded bg-teal-500/20 text-teal-300 text-[10px]">
-                Interactive Simulation
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="text-[10px] text-slate-400 uppercase">Agent Bot Model</label>
-                <select
-                  value={simAgentType}
-                  onChange={(e) =>
-                    setSimAgentType(e.target.value as "Muse-ZA (Aggressive)" | "Nibble-ZA (Value)")
-                  }
-                  className="mt-1 w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-teal-500"
-                >
-                  <option value="Muse-ZA (Aggressive)">Muse-ZA (High-Velocity / Multi-Turn)</option>
-                  <option value="Nibble-ZA (Value)">Nibble-ZA (Value-Maxing / Micro-Spread)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-[10px] text-slate-400 uppercase">
-                  Original Deal Price (ZAR)
-                </label>
-                <input
-                  type="number"
-                  value={simOriginalPrice}
-                  onChange={(e) => setSimOriginalPrice(Number(e.target.value))}
-                  className="mt-1 w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-teal-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] text-slate-400 uppercase">
-                  Target Discount: <strong className="text-teal-400">{simTargetDiscount}%</strong>
-                </label>
-                <input
-                  type="range"
-                  min="20"
-                  max="65"
-                  value={simTargetDiscount}
-                  onChange={(e) => setSimTargetDiscount(Number(e.target.value))}
-                  className="mt-2 w-full accent-teal-500 cursor-pointer"
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-              <button
-                onClick={handleExecuteBotNegotiation}
-                disabled={simSimulatingBot}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-400 text-slate-950 font-bold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
-              >
-                {simSimulatingBot ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Zap className="w-4 h-4" />
-                )}
-                <span>Simulate Agent Deal Negotiation</span>
-              </button>
-
-              {lastSimResult && (
-                <div className="p-2.5 rounded-xl bg-slate-950 border border-emerald-500/40 text-[11px] text-slate-300 flex items-center gap-3">
-                  <span>
-                    Saved:{" "}
-                    <strong className="text-emerald-400">
-                      R{lastSimResult.totalValueSavedZar}
-                    </strong>
-                  </span>
-                  <span>•</span>
-                  <span>
-                    1.5% AutoCom Toll:{" "}
-                    <strong className="text-teal-300">
-                      ${lastSimResult.arbitrageFeeCollectedUsdc} USDC
-                    </strong>
-                  </span>
+                <span className="p-2 rounded-xl bg-teal-500/20 text-teal-300 border border-teal-500/40">
+                  <Terminal className="w-5 h-5 text-teal-400" />
+                </span>
+                <div>
+                  <h4 className="text-base sm:text-lg font-black text-white">
+                    Agent API Tokens, 1.5% Arbitrage Ledger &amp; Live Playground
+                  </h4>
+                  <p className="text-xs text-teal-300 font-bold">
+                    Now accessible via the Navigation Menu in the dedicated Developer Portal.
+                  </p>
                 </div>
-              )}
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                To keep the landing page optimized for visually selling the app, all programmatic
+                agent token generation, live 1.5% Web3 toll split ledgers, bot negotiation
+                playgrounds, and WebSocket how-to guides have been organized into the dedicated
+                Developer Hub.
+              </p>
             </div>
-          </div>
 
-          {/* Technical How-To Guide */}
-          <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 font-mono text-xs">
-            <div className="flex items-center gap-2 text-teal-400 font-bold">
-              <FileCode className="w-4 h-4" />
-              <span>
-                How-To Guide: Connecting Your Autonomous Agent to the AutoCom Grid API over Web3
-                Websockets
-              </span>
+            <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0">
+              <button
+                onClick={onOpenAgentPortal}
+                className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 text-slate-950 font-black text-xs font-mono shadow-lg transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Code2 className="w-4 h-4" />
+                <span>Launch Developer Portal →</span>
+              </button>
             </div>
-            <pre className="p-4 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-slate-300 overflow-x-auto">
-              {`// 1. Initialize WebSocket connection to the AutoCom Grid Engine
-const ws = new WebSocket("wss://grid.autocom.network/v1/stream?token=ac_live_7f89ab12cd34ef5601");
-
-ws.onopen = () => {
-  // Subscribe to sub-meter corridor ticks in Sandton City Mall
-  ws.send(JSON.stringify({
-    action: "SUBSCRIBE_CORRIDOR",
-    mallId: "sandton_city",
-    corridorId: "level1_north",
-    beaconRadiusMeters: 35,
-    agentModel: "MUSE_ZA_V3"
-  }));
-};
-
-// 2. Handle live spatial micro-deal negotiation payloads
-ws.onmessage = (event) => {
-  const deal = JSON.parse(event.data);
-  if (deal.type === "DEAL_PAYLOAD_AVAILABLE") {
-    // Autonomous counter-offer negotiation
-    const counterOfferZar = deal.originalPriceZar * 0.55;
-    ws.send(JSON.stringify({
-      action: "SUBMIT_COUNTER_OFFER",
-      dealId: deal.id,
-      proposedPriceZar: counterOfferZar,
-      settlementToken: "USDC",
-      chain: "base"
-    }));
-  }
-};`}
-            </pre>
           </div>
         </div>
       )}
@@ -984,28 +788,28 @@ ws.onmessage = (event) => {
             </div>
           </div>
 
-          {/* Technical How-To Guide */}
-          <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 font-mono text-xs">
-            <div className="flex items-center gap-2 text-emerald-400 font-bold">
-              <FileCode className="w-4 h-4" />
-              <span>How-To Guide: Syncing Shopify Inventory to Sub-Meter Indoor Mall Nodes</span>
+          {/* Technical Guide Callout */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs">
+            <div className="flex items-center gap-3">
+              <span className="p-2 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                <FileCode className="w-4 h-4 text-emerald-400" />
+              </span>
+              <div>
+                <p className="font-bold text-white">Shopify Spatial Node Sync Webhooks</p>
+                <p className="text-[11px] text-slate-400 font-sans">
+                  Automated webhooks mapping real-time catalog SKUs to sub-meter indoor beacons.
+                </p>
+              </div>
             </div>
-            <pre className="p-4 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-slate-300 overflow-x-auto">
-              {`// 1. Initialize AutoCom Shopify Spatial Sync Webhook
-POST /api/v1/shopify/sync-spatial-matrix
-Headers: { "X-AutoCom-Key": "shpat_98fa7210b38c29188eaf" }
-Body: {
-  "shopUrl": "sandton-flagship.myshopify.com",
-  "storeCoordinates": {
-    "mallId": "sandton_city_mall",
-    "corridorNode": "level1_north_passage",
-    "beaconUuid": "BEAC-SANDTON-01-N"
-  },
-  "enableDynamicElasticity": true
-}
-
-// 2. Automated elasticity trigger executes discount adjustment when agent passes surge`}
-            </pre>
+            {onOpenAgentPortal && (
+              <button
+                onClick={onOpenAgentPortal}
+                className="shrink-0 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+              >
+                <span>View Webhook Docs in Dev Portal</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </div>
       )}
