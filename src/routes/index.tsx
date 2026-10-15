@@ -198,8 +198,8 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
   const [indoorRadius, setIndoorRadius] = useState<number>(20.0);
   const [outdoorRadius, setOutdoorRadius] = useState<number>(50.0);
 
-  // Sound and Vibration Notification Toggles for High-Value (+50%) and Standard Deals
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  // Sound and Vibration Notification Toggles for High-Value (+50%) and Standard Deals (Muted by default until user unmutes)
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(false);
   const [vibrateEnabled, setVibrateEnabled] = useState<boolean>(true);
 
   // Auto-configured active proximity radius based on environment mode
@@ -229,7 +229,7 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
     setSoundEnabled((prev) => {
       const next = !prev;
       try {
-        localStorage.setItem("autocom_sound_alerts_v1", next.toString());
+        localStorage.setItem("autocom_sound_alerts_v2", next.toString());
       } catch {
         // ignore
       }
@@ -545,7 +545,7 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
       if (storedIndoorRad) setIndoorRadius(parseFloat(storedIndoorRad));
       const storedOutdoorRad = localStorage.getItem("autocom_outdoor_radius_v1");
       if (storedOutdoorRad) setOutdoorRadius(parseFloat(storedOutdoorRad));
-      const storedSound = localStorage.getItem("autocom_sound_alerts_v1");
+      const storedSound = localStorage.getItem("autocom_sound_alerts_v2");
       if (storedSound !== null) setSoundEnabled(storedSound === "true");
       const storedVibrate = localStorage.getItem("autocom_vibrate_alerts_v1");
       if (storedVibrate !== null) setVibrateEnabled(storedVibrate === "true");
@@ -1139,7 +1139,12 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
         {/* Agent API & Developer Portal Modal */}
         <AgentDevPortalModal
           isOpen={agentDevPortalOpen}
-          onClose={() => setAgentDevPortalOpen(false)}
+          onClose={() => {
+            setAgentDevPortalOpen(false);
+            if (typeof window !== "undefined" && window.location.pathname === "/developer") {
+              window.history.pushState(null, "", "/");
+            }
+          }}
           walletState={walletState}
           apiCredentials={apiCredentials}
           arbitrageLedger={arbitrageLedger}

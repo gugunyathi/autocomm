@@ -398,6 +398,9 @@ export function LandingPage({
             <button
               onClick={() => {
                 setMobileMenuOpen(false);
+                if (typeof window !== "undefined") {
+                  window.history.pushState(null, "", "/developer");
+                }
                 if (onOpenAgentPortal) onOpenAgentPortal();
               }}
               className="flex items-center justify-between w-full text-left py-2.5 px-3.5 rounded-2xl bg-teal-500/15 hover:bg-teal-500/25 text-teal-300 font-bold border border-teal-500/40 transition-all shadow-sm group cursor-pointer"
@@ -419,6 +422,33 @@ export function LandingPage({
                 </div>
               </div>
               <ArrowRight className="w-4 h-4 text-teal-400 group-hover:translate-x-1 transition-transform" />
+            </button>
+
+            {/* 2. 3D PROXIMITY MESH (/mesh Route) */}
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onLaunchLiveMesh();
+              }}
+              className="flex items-center justify-between w-full text-left py-2.5 px-3.5 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 font-bold border border-amber-500/40 transition-all shadow-sm group cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="p-1.5 rounded-xl bg-amber-500/20 text-amber-300 group-hover:scale-105 transition-transform text-sm">
+                  🌐
+                </span>
+                <div>
+                  <div className="text-white text-xs font-black flex items-center gap-2">
+                    <span>3D Proximity Mesh Network</span>
+                    <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 font-mono text-[9px] font-black uppercase tracking-wider">
+                      /mesh
+                    </span>
+                  </div>
+                  <p className="text-[10.5px] text-amber-200/80 font-normal">
+                    Interactive 3D spatial node sphere, agent deal radar &amp; live A2A negotiations
+                  </p>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-amber-400 group-hover:translate-x-1 transition-transform" />
             </button>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-1 border-t border-border/40">
@@ -676,8 +706,156 @@ export function LandingPage({
           </div>
         </div>
 
+        {/* Value Proposition Grid: Consumers, Merchants & Brands */}
+        <div className="mt-14 sm:mt-20 w-full max-w-7xl mx-auto text-center space-y-8 pt-8 border-t border-border/40">
+          <div className="max-w-3xl mx-auto space-y-2">
+            <span className="text-xs font-mono text-primary uppercase tracking-widest font-bold">
+              Tri-Sided Autonomous Marketplace
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-foreground tracking-tight">
+              Why Consumers, Merchants &amp; Brands Win with AutoCom
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl mx-auto">
+              Converting passive impressions and lost foot traffic into guaranteed spatial commerce.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 text-left">
+            {/* 1. Consumer Pillar */}
+            <div className="glass p-5 sm:p-6 rounded-3xl border border-teal-500/30 space-y-3.5 relative overflow-hidden flex flex-col justify-between shadow-xl">
+              <div>
+                <div className="w-10 h-10 rounded-2xl bg-teal-500/20 text-teal-400 flex items-center justify-center text-xl font-bold mb-3">
+                  🛍️
+                </div>
+                <h3 className="text-lg sm:text-xl font-bold text-foreground">Consumers</h3>
+                <p className="text-xs font-semibold text-teal-300 mt-1 mb-3">
+                  Never miss any brand specials, discounts, or promotions again.
+                </p>
+                <ul className="space-y-2 text-xs text-muted-foreground">
+                  <li className="flex items-start gap-2">
+                    <span className="text-teal-400 font-bold">✓</span>
+                    <span>
+                      <strong>+50% Algorithmic Discounts:</strong> Personal AI agent negotiates deep
+                      bargains for items you love before you step inside.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-teal-400 font-bold">✓</span>
+                    <span>
+                      <strong>Everything You Walk Past:</strong> Spatial radar captures live in-store
+                      flash markdowns within 20m–50m.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-teal-400 font-bold">✓</span>
+                    <span>
+                      <strong>Shops You Never Walk Into:</strong> Discovers boutique hidden gems and
+                      secures unlisted vouchers automatically.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-teal-400 font-bold">✓</span>
+                    <span>
+                      <strong>Passkey QR Checkout:</strong> Biometric checkout vouchers ready
+                      instantly for the cashier.
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* 2. Merchant Pillar */}
+            <div className="glass p-5 sm:p-6 rounded-3xl border border-amber-500/30 space-y-3.5 relative overflow-hidden flex flex-col justify-between shadow-xl">
+              <div>
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl font-bold mb-3">
+                  🏬
+                </div>
+                <h3 className="text-lg sm:text-xl font-bold text-foreground">Merchants</h3>
+                <p className="text-xs font-semibold text-amber-300 mt-1 mb-3">
+                  An agentic salesman that never sleeps—monetizing all foot &amp; drive-by traffic.
+                </p>
+                <ul className="space-y-2 text-xs text-muted-foreground">
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-400 font-bold">✓</span>
+                    <span>
+                      <strong>Foot &amp; Commuter Drive-By:</strong> Pushes dynamic promos to walkers
+                      and vehicles within 50m of your storefront 24/7/365.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-400 font-bold">✓</span>
+                    <span>
+                      <strong>Dynamic Sales Targets:</strong> Pricing engine adjusts discounts based
+                      on time of day, inventory surplus, and daily revenue quotas.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-400 font-bold">✓</span>
+                    <span>
+                      <strong>Guaranteed Foot Traffic:</strong> Turns passive mall passersby into
+                      paying walk-in customers with verified conversion.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-400 font-bold">✓</span>
+                    <span>
+                      <strong>Zero POS Friction:</strong> Compatible with any existing retail POS
+                      scanner via standard 2D QR token verification.
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* 3. Brand Pillar */}
+            <div className="glass p-5 sm:p-6 rounded-3xl border border-purple-500/30 space-y-3.5 relative overflow-hidden flex flex-col justify-between shadow-xl">
+              <div>
+                <div className="w-10 h-10 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-xl font-bold mb-3">
+                  🏷️
+                </div>
+                <h3 className="text-lg sm:text-xl font-bold text-foreground">
+                  Brands &amp; Advertisers
+                </h3>
+                <p className="text-xs font-semibold text-purple-300 mt-1 mb-3">
+                  Converts billboard and digital adverts directly into closed in-store sales.
+                </p>
+                <ul className="space-y-2 text-xs text-muted-foreground">
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400 font-bold">✓</span>
+                    <span>
+                      <strong>Never Miss Promotional Ads:</strong> Replaces unseen desktop ads with
+                      direct, transactional pushes to nearby consumer AI agents.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400 font-bold">✓</span>
+                    <span>
+                      <strong>Billboard-to-Sale Conversion:</strong> Connected outdoor road network
+                      billboards broadcast instant micro-deals to commuters.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400 font-bold">✓</span>
+                    <span>
+                      <strong>100% Attribution &amp; High ROI:</strong> Pay strictly on verified
+                      redemptions and in-store basket sales rather than empty clicks.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400 font-bold">✓</span>
+                    <span>
+                      <strong>Co-Op Marketing Power:</strong> Brands co-fund localized retailer
+                      promotions with real-time budget allocation controls.
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Visual Showcase: Live Mall Simulator Auto Grid Walk */}
-        <div className="mt-10 sm:mt-14 w-full max-w-4xl mx-auto text-center space-y-2.5">
+        <div className="mt-14 sm:mt-18 w-full max-w-4xl mx-auto text-center space-y-2.5">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary text-xs font-mono font-bold">
             <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
             <span>Interactive Live Simulation</span>
@@ -731,153 +909,7 @@ export function LandingPage({
         </div>
       </section>
 
-      {/* Value Proposition Grid: Consumers, Merchants & Brands */}
-      <section className="py-12 sm:py-20 px-3.5 sm:px-6 max-w-7xl mx-auto border-t border-border/40">
-        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-16">
-          <span className="text-xs font-mono text-primary uppercase tracking-widest font-bold">
-            Tri-Sided Autonomous Marketplace
-          </span>
-          <h2 className="text-2xl sm:text-4xl font-extrabold text-foreground mt-2">
-            Why Consumers, Merchants &amp; Brands Win with AutoCom
-          </h2>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-2">
-            Converting passive impressions and lost foot traffic into guaranteed spatial commerce.
-          </p>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-6">
-          {/* 1. Consumer Pillar */}
-          <div className="glass p-5 sm:p-6 rounded-3xl border border-teal-500/30 space-y-3.5 relative overflow-hidden flex flex-col justify-between">
-            <div>
-              <div className="w-10 h-10 rounded-2xl bg-teal-500/20 text-teal-400 flex items-center justify-center text-xl font-bold mb-3">
-                🛍️
-              </div>
-              <h3 className="text-lg sm:text-xl font-bold text-foreground">Consumers</h3>
-              <p className="text-xs font-semibold text-teal-300 mt-1 mb-3">
-                Never miss any brand specials, discounts, or promotions again.
-              </p>
-              <ul className="space-y-2 text-xs text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <span className="text-teal-400 font-bold">✓</span>
-                  <span>
-                    <strong>+50% Algorithmic Discounts:</strong> Personal AI agent negotiates deep
-                    bargains for items you love before you step inside.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-teal-400 font-bold">✓</span>
-                  <span>
-                    <strong>Everything You Walk Past:</strong> Spatial radar captures live in-store
-                    flash markdowns within 20m–50m.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-teal-400 font-bold">✓</span>
-                  <span>
-                    <strong>Shops You Never Walk Into:</strong> Discovers boutique hidden gems and
-                    secures unlisted vouchers automatically.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-teal-400 font-bold">✓</span>
-                  <span>
-                    <strong>Passkey QR Checkout:</strong> Biometric checkout vouchers ready
-                    instantly for the cashier.
-                  </span>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          {/* 2. Merchant Pillar */}
-          <div className="glass p-5 sm:p-6 rounded-3xl border border-amber-500/30 space-y-3.5 relative overflow-hidden flex flex-col justify-between">
-            <div>
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl font-bold mb-3">
-                🏬
-              </div>
-              <h3 className="text-lg sm:text-xl font-bold text-foreground">Merchants</h3>
-              <p className="text-xs font-semibold text-amber-300 mt-1 mb-3">
-                An agentic salesman that never sleeps—monetizing all foot &amp; drive-by traffic.
-              </p>
-              <ul className="space-y-2 text-xs text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <span className="text-amber-400 font-bold">✓</span>
-                  <span>
-                    <strong>Foot &amp; Commuter Drive-By:</strong> Pushes dynamic promos to walkers
-                    and vehicles within 50m of your storefront 24/7/365.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-amber-400 font-bold">✓</span>
-                  <span>
-                    <strong>Dynamic Sales Targets:</strong> Pricing engine adjusts discounts based
-                    on time of day, inventory surplus, and daily revenue quotas.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-amber-400 font-bold">✓</span>
-                  <span>
-                    <strong>Guaranteed Foot Traffic:</strong> Turns passive mall passersby into
-                    paying walk-in customers with verified conversion.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-amber-400 font-bold">✓</span>
-                  <span>
-                    <strong>Zero POS Friction:</strong> Compatible with any existing retail POS
-                    scanner via standard 2D QR token verification.
-                  </span>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          {/* 3. Brand Pillar */}
-          <div className="glass p-5 sm:p-6 rounded-3xl border border-purple-500/30 space-y-3.5 relative overflow-hidden flex flex-col justify-between">
-            <div>
-              <div className="w-10 h-10 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-xl font-bold mb-3">
-                🏷️
-              </div>
-              <h3 className="text-lg sm:text-xl font-bold text-foreground">
-                Brands &amp; Advertisers
-              </h3>
-              <p className="text-xs font-semibold text-purple-300 mt-1 mb-3">
-                Converts billboard and digital adverts directly into closed in-store sales.
-              </p>
-              <ul className="space-y-2 text-xs text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <span className="text-purple-400 font-bold">✓</span>
-                  <span>
-                    <strong>Never Miss Promotional Ads:</strong> Replaces unseen desktop ads with
-                    direct, transactional pushes to nearby consumer AI agents.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-purple-400 font-bold">✓</span>
-                  <span>
-                    <strong>Billboard-to-Sale Conversion:</strong> Connected outdoor road network
-                    billboards broadcast instant micro-deals to commuters.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-purple-400 font-bold">✓</span>
-                  <span>
-                    <strong>100% Attribution &amp; High ROI:</strong> Pay strictly on verified
-                    redemptions and in-store basket sales rather than empty clicks.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-purple-400 font-bold">✓</span>
-                  <span>
-                    <strong>Co-Op Marketing Power:</strong> Brands co-fund localized retailer
-                    promotions with real-time budget allocation controls.
-                  </span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Leadership Team Section */}
       <section className="py-12 sm:py-16 px-3.5 sm:px-6 max-w-5xl mx-auto border-t border-border/40">
