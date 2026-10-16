@@ -61,18 +61,18 @@ export const MALL_DIRECTORY: MallStore[] = [
     logoSymbol: "ZARA",
     brandBgColor: "#000000",
     brandTextColor: "#ffffff",
-    x: 70,
+    x: 60,
     y: 70,
-    width: 210,
+    width: 270,
     height: 170,
     color: "#f87171",
     lightColor: "#fef2f2",
     glowColor: "rgba(248, 113, 113, 0.45)",
-    corridorJunctionX: 175,
+    corridorJunctionX: 195,
     corridorJunctionY: 270,
-    entranceX: 175,
+    entranceX: 195,
     entranceY: 240,
-    interiorX: 175,
+    interiorX: 195,
     interiorY: 150,
     discount: "30% OFF",
     promo: "Exclusive Runway Collection: Buy 2 get 1 free on winter coats & outerwear!",
@@ -85,18 +85,18 @@ export const MALL_DIRECTORY: MallStore[] = [
     logoSymbol: "H&M",
     brandBgColor: "#e11d48",
     brandTextColor: "#ffffff",
-    x: 320,
+    x: 370,
     y: 70,
-    width: 200,
+    width: 250,
     height: 170,
     color: "#fbbf24",
     lightColor: "#fffbeb",
     glowColor: "rgba(251, 191, 36, 0.45)",
-    corridorJunctionX: 420,
+    corridorJunctionX: 495,
     corridorJunctionY: 270,
-    entranceX: 420,
+    entranceX: 495,
     entranceY: 240,
-    interiorX: 420,
+    interiorX: 495,
     interiorY: 150,
     discount: "15% OFF",
     promo: "15% off student discount code active inside store across all casual lines.",
@@ -109,18 +109,18 @@ export const MALL_DIRECTORY: MallStore[] = [
     logoSymbol: " iStore",
     brandBgColor: "#0f172a",
     brandTextColor: "#ffffff",
-    x: 550,
+    x: 680,
     y: 70,
-    width: 170,
+    width: 220,
     height: 170,
     color: "#cbd5e1",
     lightColor: "#f8fafc",
     glowColor: "rgba(203, 213, 225, 0.5)",
-    corridorJunctionX: 635,
+    corridorJunctionX: 790,
     corridorJunctionY: 270,
-    entranceX: 635,
+    entranceX: 790,
     entranceY: 240,
-    interiorX: 635,
+    interiorX: 790,
     interiorY: 150,
     discount: "R8,000 TRADE-IN",
     promo: "iPhone 16 Pro Upgrade Offer: Get up to R8,000 trade-in value on eligible devices.",
@@ -133,18 +133,18 @@ export const MALL_DIRECTORY: MallStore[] = [
     logoSymbol: "📚 EB",
     brandBgColor: "#15803d",
     brandTextColor: "#ffffff",
-    x: 750,
+    x: 960,
     y: 70,
-    width: 180,
+    width: 280,
     height: 170,
     color: "#4ade80",
     lightColor: "#f0fdf4",
     glowColor: "rgba(74, 222, 128, 0.45)",
-    corridorJunctionX: 840,
+    corridorJunctionX: 1100,
     corridorJunctionY: 270,
-    entranceX: 840,
+    entranceX: 1100,
     entranceY: 240,
-    interiorX: 840,
+    interiorX: 1100,
     interiorY: 150,
     discount: "2X POINTS",
     promo: "Coffee Club Members receive double points on all Sunday Times bestsellers today.",
@@ -157,18 +157,18 @@ export const MALL_DIRECTORY: MallStore[] = [
     logoSymbol: "☕ M&B",
     brandBgColor: "#78350f",
     brandTextColor: "#fef3c7",
-    x: 440,
+    x: 575,
     y: 440,
-    width: 130,
+    width: 150,
     height: 120,
     color: "#d97706",
     lightColor: "#fffbe2",
     glowColor: "rgba(217, 119, 6, 0.5)",
-    corridorJunctionX: 505,
+    corridorJunctionX: 650,
     corridorJunctionY: 380,
-    entranceX: 505,
+    entranceX: 650,
     entranceY: 440,
-    interiorX: 505,
+    interiorX: 650,
     interiorY: 490,
     discount: "FREE MUFFIN",
     promo: "Muffin Combo: Get a giant freshly baked sweet muffin with any mega cappuccino.",
@@ -181,18 +181,18 @@ export const MALL_DIRECTORY: MallStore[] = [
     logoSymbol: "WOOLWORTHS",
     brandBgColor: "#000000",
     brandTextColor: "#ffffff",
-    x: 70,
+    x: 60,
     y: 690,
-    width: 280,
+    width: 320,
     height: 230,
     color: "#6366f1",
     lightColor: "#e0e7ff",
     glowColor: "rgba(99, 102, 241, 0.45)",
-    corridorJunctionX: 210,
+    corridorJunctionX: 220,
     corridorJunctionY: 660,
-    entranceX: 210,
+    entranceX: 220,
     entranceY: 690,
-    interiorX: 210,
+    interiorX: 220,
     interiorY: 800,
     discount: "SAVE R50",
     promo: "Daily Difference: Save R50 instantly when spending R350 or more on fresh produce.",
@@ -205,18 +205,18 @@ export const MALL_DIRECTORY: MallStore[] = [
     logoSymbol: "✔️ NIKE",
     brandBgColor: "#0f172a",
     brandTextColor: "#ffffff",
-    x: 390,
+    x: 500,
     y: 730,
-    width: 195,
+    width: 300,
     height: 190,
     color: "#c084fc",
     lightColor: "#fae8ff",
     glowColor: "rgba(192, 132, 252, 0.45)",
-    corridorJunctionX: 487,
+    corridorJunctionX: 650,
     corridorJunctionY: 660,
-    entranceX: 487,
+    entranceX: 650,
     entranceY: 730,
-    interiorX: 487,
+    interiorX: 650,
     interiorY: 820,
     discount: "20% EXTRA",
     promo: "Air Max Week Special: Extra 20% off all performance footwear and dri-fit apparel.",
@@ -229,18 +229,18 @@ export const MALL_DIRECTORY: MallStore[] = [
     logoSymbol: "💊 CLICKS",
     brandBgColor: "#0284c7",
     brandTextColor: "#ffffff",
-    x: 630,
+    x: 920,
     y: 730,
-    width: 290,
+    width: 320,
     height: 190,
     color: "#14b8a6",
     lightColor: "#ccfbf1",
     glowColor: "rgba(20, 184, 166, 0.45)",
-    corridorJunctionX: 775,
+    corridorJunctionX: 1080,
     corridorJunctionY: 660,
-    entranceX: 775,
+    entranceX: 1080,
     entranceY: 730,
-    interiorX: 775,
+    interiorX: 1080,
     interiorY: 820,
     discount: "3-FOR-2",
     promo:
@@ -249,7 +249,8 @@ export const MALL_DIRECTORY: MallStore[] = [
   },
 ];
 
-const MAP_SIZE = 1000;
+const MAP_WIDTH = 1300;
+const MAP_HEIGHT = 1000;
 
 export interface NavigationWaypoint {
   x: number;
@@ -262,124 +263,124 @@ export interface NavigationWaypoint {
 
 const DEFAULT_MALL_TOUR: NavigationWaypoint[] = [
   // 1. Zara Fashion
-  { x: 175, y: 270, type: "corridor", action: "Walking Top Passage to Zara" },
-  { x: 175, y: 240, type: "door", storeId: "s1", action: "Entering Zara" },
+  { x: 195, y: 270, type: "corridor", action: "Walking Top Passage to Zara" },
+  { x: 195, y: 240, type: "door", storeId: "s1", action: "Entering Zara" },
   {
-    x: 175,
+    x: 195,
     y: 150,
     type: "inside_shop",
     storeId: "s1",
     dwellMs: 3000,
     action: "Browsing Zara Runway Outerwear",
   },
-  { x: 175, y: 240, type: "door", storeId: "s1", action: "Exiting Zara" },
-  { x: 175, y: 270, type: "corridor", action: "Walking East on Top Passage" },
+  { x: 195, y: 240, type: "door", storeId: "s1", action: "Exiting Zara" },
+  { x: 195, y: 270, type: "corridor", action: "Walking East on Top Passage" },
 
   // 2. H&M Boutique
-  { x: 420, y: 270, type: "corridor", action: "Approaching H&M Boutique" },
-  { x: 420, y: 240, type: "door", storeId: "s2", action: "Entering H&M" },
+  { x: 495, y: 270, type: "corridor", action: "Approaching H&M Boutique" },
+  { x: 495, y: 240, type: "door", storeId: "s2", action: "Entering H&M" },
   {
-    x: 420,
+    x: 495,
     y: 150,
     type: "inside_shop",
     storeId: "s2",
     dwellMs: 3000,
     action: "Browsing H&M Casual Lines",
   },
-  { x: 420, y: 240, type: "door", storeId: "s2", action: "Exiting H&M" },
-  { x: 420, y: 270, type: "corridor", action: "Continuing East on Top Passage" },
+  { x: 495, y: 240, type: "door", storeId: "s2", action: "Exiting H&M" },
+  { x: 495, y: 270, type: "corridor", action: "Continuing East on Top Passage" },
 
   // 3. iStore Apple
-  { x: 635, y: 270, type: "corridor", action: "Approaching iStore Apple" },
-  { x: 635, y: 240, type: "door", storeId: "s3", action: "Entering iStore" },
+  { x: 790, y: 270, type: "corridor", action: "Approaching iStore Apple" },
+  { x: 790, y: 240, type: "door", storeId: "s3", action: "Entering iStore" },
   {
-    x: 635,
+    x: 790,
     y: 150,
     type: "inside_shop",
     storeId: "s3",
     dwellMs: 3000,
     action: "Testing iPhone 16 Pro Demo Units",
   },
-  { x: 635, y: 240, type: "door", storeId: "s3", action: "Exiting iStore" },
-  { x: 635, y: 270, type: "corridor", action: "Walking to Exclusive Books" },
+  { x: 790, y: 240, type: "door", storeId: "s3", action: "Exiting iStore" },
+  { x: 790, y: 270, type: "corridor", action: "Walking to Exclusive Books" },
 
   // 4. Exclusive Books
-  { x: 840, y: 270, type: "corridor", action: "Approaching Exclusive Books" },
-  { x: 840, y: 240, type: "door", storeId: "s4", action: "Entering Exclusive Books" },
+  { x: 1100, y: 270, type: "corridor", action: "Approaching Exclusive Books" },
+  { x: 1100, y: 240, type: "door", storeId: "s4", action: "Entering Exclusive Books" },
   {
-    x: 840,
+    x: 1100,
     y: 150,
     type: "inside_shop",
     storeId: "s4",
     dwellMs: 3000,
     action: "Browsing Bestsellers & Coffee Club",
   },
-  { x: 840, y: 240, type: "door", storeId: "s4", action: "Exiting Exclusive Books" },
-  { x: 840, y: 270, type: "corridor", action: "Walking West to Central Avenue" },
+  { x: 1100, y: 240, type: "door", storeId: "s4", action: "Exiting Exclusive Books" },
+  { x: 1100, y: 270, type: "corridor", action: "Walking West to Central Avenue" },
 
   // 5. Central Avenue & Mugg & Bean Kiosk
-  { x: 505, y: 270, type: "corridor", action: "Turning onto Central Concourse Avenue" },
-  { x: 505, y: 380, type: "corridor", action: "Approaching Mugg & Bean Kiosk" },
-  { x: 505, y: 440, type: "door", storeId: "k1", action: "Entering Mugg & Bean" },
+  { x: 650, y: 270, type: "corridor", action: "Turning onto Central Concourse Avenue" },
+  { x: 650, y: 380, type: "corridor", action: "Approaching Mugg & Bean Kiosk" },
+  { x: 650, y: 440, type: "door", storeId: "k1", action: "Entering Mugg & Bean" },
   {
-    x: 505,
+    x: 650,
     y: 490,
     type: "inside_shop",
     storeId: "k1",
     dwellMs: 3000,
     action: "Enjoying Coffee Kiosk & Bakery",
   },
-  { x: 505, y: 560, type: "door", storeId: "k1", action: "Exiting Mugg & Bean" },
-  { x: 505, y: 600, type: "corridor", action: "Walking South Concourse" },
+  { x: 650, y: 560, type: "door", storeId: "k1", action: "Exiting Mugg & Bean" },
+  { x: 650, y: 600, type: "corridor", action: "Walking South Concourse" },
 
   // 6. Atrium Lounge & Bottom Corridor
-  { x: 250, y: 490, type: "lounge", dwellMs: 1200, action: "Passing Circular Atrium Lounge" },
-  { x: 210, y: 660, type: "corridor", action: "Walking West on Bottom Passage" },
+  { x: 380, y: 490, type: "lounge", dwellMs: 1200, action: "Passing Circular Atrium Lounge" },
+  { x: 220, y: 660, type: "corridor", action: "Walking West on Bottom Passage" },
 
   // 7. Woolworths Food
-  { x: 210, y: 690, type: "door", storeId: "s5", action: "Entering Woolworths Food" },
+  { x: 220, y: 690, type: "door", storeId: "s5", action: "Entering Woolworths Food" },
   {
-    x: 210,
+    x: 220,
     y: 800,
     type: "inside_shop",
     storeId: "s5",
     dwellMs: 3000,
     action: "Browsing Woolies Bakery & Produce",
   },
-  { x: 210, y: 690, type: "door", storeId: "s5", action: "Exiting Woolworths" },
-  { x: 210, y: 660, type: "corridor", action: "Walking East on Bottom Passage" },
+  { x: 220, y: 690, type: "door", storeId: "s5", action: "Exiting Woolworths" },
+  { x: 220, y: 660, type: "corridor", action: "Walking East on Bottom Passage" },
 
   // 8. Nike Performance
-  { x: 487, y: 660, type: "corridor", action: "Approaching Nike Performance" },
-  { x: 487, y: 730, type: "door", storeId: "s6", action: "Entering Nike Performance" },
+  { x: 650, y: 660, type: "corridor", action: "Approaching Nike Performance" },
+  { x: 650, y: 730, type: "door", storeId: "s6", action: "Entering Nike Performance" },
   {
-    x: 487,
+    x: 650,
     y: 820,
     type: "inside_shop",
     storeId: "s6",
     dwellMs: 3000,
     action: "Browsing Air Max Performance Shoes",
   },
-  { x: 487, y: 730, type: "door", storeId: "s6", action: "Exiting Nike" },
-  { x: 487, y: 660, type: "corridor", action: "Continuing East on Bottom Passage" },
+  { x: 650, y: 730, type: "door", storeId: "s6", action: "Exiting Nike" },
+  { x: 650, y: 660, type: "corridor", action: "Continuing East on Bottom Passage" },
 
   // 9. Clicks Pharmacy
-  { x: 775, y: 660, type: "corridor", action: "Approaching Clicks Pharmacy" },
-  { x: 775, y: 730, type: "door", storeId: "s7", action: "Entering Clicks Pharmacy" },
+  { x: 1080, y: 660, type: "corridor", action: "Approaching Clicks Pharmacy" },
+  { x: 1080, y: 730, type: "door", storeId: "s7", action: "Entering Clicks Pharmacy" },
   {
-    x: 775,
+    x: 1080,
     y: 820,
     type: "inside_shop",
     storeId: "s7",
     dwellMs: 3000,
     action: "Browsing Health, Skincare & Vitamins",
   },
-  { x: 775, y: 730, type: "door", storeId: "s7", action: "Exiting Clicks Pharmacy" },
-  { x: 775, y: 660, type: "corridor", action: "Returning to Central Concourse" },
+  { x: 1080, y: 730, type: "door", storeId: "s7", action: "Exiting Clicks Pharmacy" },
+  { x: 1080, y: 660, type: "corridor", action: "Returning to Central Concourse" },
 
   // 10. Loop back up Central Concourse Avenue
-  { x: 505, y: 660, type: "corridor", action: "Walking Central Concourse North" },
-  { x: 505, y: 270, type: "corridor", action: "Completing Mall Tour Loop" },
+  { x: 650, y: 660, type: "corridor", action: "Walking Central Concourse North" },
+  { x: 650, y: 270, type: "corridor", action: "Completing Mall Tour Loop" },
 ];
 
 function buildRouteToStore(
@@ -402,13 +403,13 @@ function buildRouteToStore(
   const targetPassageY = targetStore.corridorJunctionY;
   if (passageY !== targetPassageY) {
     route.push({
-      x: 505,
+      x: 650,
       y: passageY,
       type: "corridor",
       action: "Walking to Central Concourse",
     });
     route.push({
-      x: 505,
+      x: 650,
       y: targetPassageY,
       type: "corridor",
       action: "Navigating Central Concourse",
@@ -1202,25 +1203,25 @@ export default function MallSimulator({
 
         // --- 2. Canvas Painting & Architectural Blueprint Render ---
         ctx.save();
-        ctx.clearRect(0, 0, MAP_SIZE, MAP_SIZE);
+        ctx.clearRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
 
         // Blueprint Floor Background Fill
         ctx.fillStyle = "#f5f3ec";
-        ctx.fillRect(0, 0, MAP_SIZE, MAP_SIZE);
+        ctx.fillRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
 
         // Subtle Architectural Grid Lines
         ctx.strokeStyle = "#e2e8f0";
         ctx.lineWidth = 1;
-        for (let x = 0; x <= MAP_SIZE; x += 40) {
+        for (let x = 0; x <= MAP_WIDTH; x += 40) {
           ctx.beginPath();
           ctx.moveTo(x, 0);
-          ctx.lineTo(x, MAP_SIZE);
+          ctx.lineTo(x, MAP_HEIGHT);
           ctx.stroke();
         }
-        for (let y = 0; y <= MAP_SIZE; y += 40) {
+        for (let y = 0; y <= MAP_HEIGHT; y += 40) {
           ctx.beginPath();
           ctx.moveTo(0, y);
-          ctx.lineTo(MAP_SIZE, y);
+          ctx.lineTo(MAP_WIDTH, y);
           ctx.stroke();
         }
 
@@ -1229,29 +1230,29 @@ export default function MallSimulator({
         gradTopPassage.addColorStop(0, "rgba(226, 232, 240, 0.6)");
         gradTopPassage.addColorStop(1, "rgba(203, 213, 225, 0.4)");
         ctx.fillStyle = gradTopPassage;
-        ctx.fillRect(140, 250, 740, 40);
+        ctx.fillRect(40, 250, 1220, 40);
         ctx.strokeStyle = "rgba(148, 163, 184, 0.4)";
         ctx.lineWidth = 1.5;
-        ctx.strokeRect(140, 250, 740, 40);
+        ctx.strokeRect(40, 250, 1220, 40);
 
-        const gradCenterPassage = ctx.createLinearGradient(485, 0, 525, 0);
+        const gradCenterPassage = ctx.createLinearGradient(630, 0, 670, 0);
         gradCenterPassage.addColorStop(0, "rgba(226, 232, 240, 0.6)");
         gradCenterPassage.addColorStop(1, "rgba(203, 213, 225, 0.4)");
         ctx.fillStyle = gradCenterPassage;
-        ctx.fillRect(485, 250, 40, 430);
-        ctx.strokeRect(485, 250, 40, 430);
+        ctx.fillRect(630, 250, 40, 430);
+        ctx.strokeRect(630, 250, 40, 430);
 
         const gradBotPassage = ctx.createLinearGradient(0, 640, 0, 680);
         gradBotPassage.addColorStop(0, "rgba(226, 232, 240, 0.6)");
         gradBotPassage.addColorStop(1, "rgba(203, 213, 225, 0.4)");
         ctx.fillStyle = gradBotPassage;
-        ctx.fillRect(170, 640, 640, 40);
-        ctx.strokeRect(170, 640, 640, 40);
+        ctx.fillRect(60, 640, 1180, 40);
+        ctx.strokeRect(60, 640, 1180, 40);
 
         // Circular Atrium Lounge
         ctx.save();
         ctx.beginPath();
-        ctx.arc(250, 490, 50, 0, 2 * Math.PI);
+        ctx.arc(380, 490, 50, 0, 2 * Math.PI);
         ctx.fillStyle = "#ded8c8";
         ctx.fill();
         ctx.strokeStyle = "#c8c2b0";
@@ -1259,13 +1260,13 @@ export default function MallSimulator({
         ctx.stroke();
 
         ctx.beginPath();
-        ctx.arc(250, 490, 36, 0.2 * Math.PI, 1.8 * Math.PI);
+        ctx.arc(380, 490, 36, 0.2 * Math.PI, 1.8 * Math.PI);
         ctx.lineWidth = 14;
         ctx.strokeStyle = "#e8e3d3";
         ctx.stroke();
 
         ctx.beginPath();
-        ctx.arc(250, 490, 16, 0, 2 * Math.PI);
+        ctx.arc(380, 490, 16, 0, 2 * Math.PI);
         ctx.fillStyle = "#cfc9b8";
         ctx.fill();
         ctx.restore();
@@ -1527,8 +1528,8 @@ export default function MallSimulator({
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const scaleX = MAP_SIZE / rect.width;
-    const scaleY = MAP_SIZE / rect.height;
+    const scaleX = MAP_WIDTH / rect.width;
+    const scaleY = MAP_HEIGHT / rect.height;
 
     const clickX = (e.clientX - rect.left) * scaleX;
     const clickY = (e.clientY - rect.top) * scaleY;
@@ -1615,8 +1616,8 @@ export default function MallSimulator({
           </div>
         </header>
 
-        {/* Blueprint Canvas Container: 100% Uncropped Responsive Square Scale */}
-        <div className="relative w-full aspect-square bg-[#f5f3ec] overflow-hidden flex items-center justify-center">
+        {/* Blueprint Canvas Container: Fixed Compact Height Banner Format */}
+        <div className="relative w-full h-[420px] sm:h-[460px] bg-[#f5f3ec] overflow-hidden flex items-center justify-center">
           {/* Top-Left Parked Offers Button Overlay */}
           <button
             onClick={() => setIsParkedModalOpen(true)}
@@ -1645,10 +1646,10 @@ export default function MallSimulator({
 
           <canvas
             ref={canvasRef}
-            width={MAP_SIZE}
-            height={MAP_SIZE}
+            width={MAP_WIDTH}
+            height={MAP_HEIGHT}
             onPointerDown={handleCanvasPointerDown}
-            className="w-full h-full aspect-square block cursor-pointer bg-[#f5f3ec] touch-none object-contain"
+            className="w-full h-full block cursor-pointer bg-[#f5f3ec] touch-none object-contain"
           />
 
           {/* Dynamic Offer Card Overlay with GPU Compositor Acceleration */}
@@ -1835,8 +1836,8 @@ export default function MallSimulator({
 
             <canvas
               ref={canvasRef}
-              width={MAP_SIZE}
-              height={MAP_SIZE}
+              width={MAP_WIDTH}
+              height={MAP_HEIGHT}
               onPointerDown={handleCanvasPointerDown}
               className="w-full h-auto aspect-square block cursor-pointer bg-[#f5f3ec] touch-none"
             />

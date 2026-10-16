@@ -742,8 +742,8 @@ export function LandingPage({
                   <li className="flex items-start gap-2">
                     <span className="text-teal-400 font-bold">✓</span>
                     <span>
-                      <strong>Everything You Walk Past:</strong> Spatial radar captures live in-store
-                      flash markdowns within 20m–50m.
+                      <strong>Everything You Walk Past:</strong> Spatial radar captures live
+                      in-store flash markdowns within 20m–50m.
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
@@ -778,8 +778,8 @@ export function LandingPage({
                   <li className="flex items-start gap-2">
                     <span className="text-amber-400 font-bold">✓</span>
                     <span>
-                      <strong>Foot &amp; Commuter Drive-By:</strong> Pushes dynamic promos to walkers
-                      and vehicles within 50m of your storefront 24/7/365.
+                      <strong>Foot &amp; Commuter Drive-By:</strong> Pushes dynamic promos to
+                      walkers and vehicles within 50m of your storefront 24/7/365.
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
@@ -854,8 +854,18 @@ export function LandingPage({
           </div>
         </div>
 
+        {/* Decentralized Open Ad & Media Library Public Showcase */}
+        <div id="ad-library" className="mt-12 sm:mt-16 w-full max-w-7xl mx-auto text-left">
+          <AdLibraryView
+            campaigns={campaigns}
+            onSponsorStorage={onSponsorStorage}
+            onUploadCampaign={onUploadCampaign}
+            walletState={walletState}
+          />
+        </div>
+
         {/* Visual Showcase: Live Mall Simulator Auto Grid Walk */}
-        <div className="mt-14 sm:mt-18 w-full max-w-4xl mx-auto text-center space-y-2.5">
+        <div className="mt-14 sm:mt-18 w-full max-w-7xl mx-auto text-center space-y-2.5">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary text-xs font-mono font-bold">
             <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
             <span>Interactive Live Simulation</span>
@@ -868,9 +878,9 @@ export function LandingPage({
             trigger real-time micro-deal negotiations.
           </p>
 
-          {/* Sized 100% on mobile screens, reduced in size by 50% for desktop and tablet screens */}
-          <div className="pt-2 w-full sm:w-1/2 sm:max-w-[430px] md:w-1/2 md:max-w-[430px] lg:w-1/2 lg:max-w-[440px] mx-auto">
-            <div className="glass relative rounded-2xl sm:rounded-3xl p-2 sm:p-2.5 border border-border/80 shadow-2xl overflow-hidden group text-left">
+          {/* Extended to match full width of other cards like media and ad library */}
+          <div className="pt-2 w-full max-w-7xl mx-auto">
+            <div className="glass relative rounded-2xl sm:rounded-3xl p-2 sm:p-3 border border-border/80 shadow-2xl overflow-hidden group text-left">
               <MallSimulator compactEmbed={true} onLaunch3D={onLaunchLiveMesh} />
             </div>
           </div>
@@ -897,19 +907,7 @@ export function LandingPage({
             onOpenAgentPortal={onOpenAgentPortal}
           />
         </div>
-
-        {/* Decentralized Open Ad & Media Library Public Showcase */}
-        <div className="mt-12 sm:mt-16 w-full max-w-7xl mx-auto text-left">
-          <AdLibraryView
-            campaigns={campaigns}
-            onSponsorStorage={onSponsorStorage}
-            onUploadCampaign={onUploadCampaign}
-            walletState={walletState}
-          />
-        </div>
       </section>
-
-
 
       {/* Leadership Team Section */}
       <section className="py-12 sm:py-16 px-3.5 sm:px-6 max-w-5xl mx-auto border-t border-border/40">
