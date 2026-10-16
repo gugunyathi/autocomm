@@ -157,19 +157,19 @@ export const MALL_DIRECTORY: MallStore[] = [
     logoSymbol: "☕ M&B",
     brandBgColor: "#78350f",
     brandTextColor: "#fef3c7",
-    x: 575,
-    y: 440,
-    width: 150,
-    height: 120,
+    x: 685,
+    y: 430,
+    width: 260,
+    height: 140,
     color: "#d97706",
     lightColor: "#fffbe2",
     glowColor: "rgba(217, 119, 6, 0.5)",
     corridorJunctionX: 650,
-    corridorJunctionY: 380,
-    entranceX: 650,
-    entranceY: 440,
-    interiorX: 650,
-    interiorY: 490,
+    corridorJunctionY: 500,
+    entranceX: 685,
+    entranceY: 500,
+    interiorX: 815,
+    interiorY: 500,
     discount: "FREE MUFFIN",
     promo: "Muffin Combo: Get a giant freshly baked sweet muffin with any mega cappuccino.",
     perks: ["Power Outlets at Tables", "Bottomless Brews", "Free Ultra-Fast Wi-Fi"],
@@ -320,17 +320,17 @@ const DEFAULT_MALL_TOUR: NavigationWaypoint[] = [
 
   // 5. Central Avenue & Mugg & Bean Kiosk
   { x: 650, y: 270, type: "corridor", action: "Turning onto Central Concourse Avenue" },
-  { x: 650, y: 380, type: "corridor", action: "Approaching Mugg & Bean Kiosk" },
-  { x: 650, y: 440, type: "door", storeId: "k1", action: "Entering Mugg & Bean" },
+  { x: 650, y: 500, type: "corridor", action: "Approaching Mugg & Bean Kiosk" },
+  { x: 685, y: 500, type: "door", storeId: "k1", action: "Entering Mugg & Bean" },
   {
-    x: 650,
-    y: 490,
+    x: 815,
+    y: 500,
     type: "inside_shop",
     storeId: "k1",
     dwellMs: 3000,
     action: "Enjoying Coffee Kiosk & Bakery",
   },
-  { x: 650, y: 560, type: "door", storeId: "k1", action: "Exiting Mugg & Bean" },
+  { x: 685, y: 500, type: "door", storeId: "k1", action: "Exiting Mugg & Bean" },
   { x: 650, y: 600, type: "corridor", action: "Walking South Concourse" },
 
   // 6. Atrium Lounge & Bottom Corridor
@@ -1329,14 +1329,14 @@ export default function MallSimulator({
 
           // Official Brand Logo Badge Centered
           ctx.save();
-          const badgeWidth = Math.min(store.width - 24, 120);
-          const badgeHeight = 26;
+          const badgeWidth = Math.min(store.width - 20, 160);
+          const badgeHeight = 36;
           const badgeX = centerX - badgeWidth / 2;
-          const badgeY = store.y + 16;
+          const badgeY = store.y + 14;
 
           ctx.beginPath();
           if (typeof ctx.roundRect === "function") {
-            ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 6);
+            ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 8);
           } else {
             ctx.rect(badgeX, badgeY, badgeWidth, badgeHeight);
           }
@@ -1344,7 +1344,7 @@ export default function MallSimulator({
           ctx.fill();
 
           ctx.fillStyle = store.brandTextColor;
-          ctx.font = "bold 11px sans-serif";
+          ctx.font = "bold 16px sans-serif";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
           ctx.fillText(store.logoSymbol, centerX, badgeY + badgeHeight / 2);
@@ -1356,31 +1356,31 @@ export default function MallSimulator({
           ctx.textBaseline = "top";
 
           ctx.fillStyle = "#0f172a";
-          ctx.font = "bold 14px sans-serif";
-          ctx.fillText(store.name, centerX, store.y + 48);
+          ctx.font = "bold 22px sans-serif";
+          ctx.fillText(store.name, centerX, store.y + 58);
 
           ctx.fillStyle = "#334155";
-          ctx.font = "600 11px sans-serif";
-          ctx.fillText(store.category, centerX, store.y + 68);
+          ctx.font = "600 15px sans-serif";
+          ctx.fillText(store.category, centerX, store.y + 88);
 
           // Centered Discount Pill Badge
-          const discY = store.y + store.height - 36;
-          const discWidth = Math.min(store.width - 32, 115);
+          const discY = store.y + store.height - 44;
+          const discWidth = Math.min(store.width - 24, 150);
           const discX = centerX - discWidth / 2;
           ctx.beginPath();
           if (typeof ctx.roundRect === "function") {
-            ctx.roundRect(discX, discY, discWidth, 22, 10);
+            ctx.roundRect(discX, discY, discWidth, 32, 14);
           } else {
-            ctx.rect(discX, discY, discWidth, 22);
+            ctx.rect(discX, discY, discWidth, 32);
           }
-          ctx.fillStyle = isActive ? "#2563eb" : "rgba(15, 23, 42, 0.85)";
+          ctx.fillStyle = isActive ? "#2563eb" : "rgba(15, 23, 42, 0.9)";
           ctx.fill();
 
           ctx.fillStyle = "#ffffff";
-          ctx.font = "bold 10px monospace";
+          ctx.font = "bold 14px monospace";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
-          ctx.fillText(store.discount, centerX, discY + 11);
+          ctx.fillText(store.discount, centerX, discY + 16);
           ctx.restore();
 
           // Door Entrance Node Indicator
@@ -1807,7 +1807,7 @@ export default function MallSimulator({
       <div className="p-3 sm:p-5 flex flex-col lg:flex-row gap-4 sm:gap-6 items-center lg:items-start justify-center">
         {/* 1. Left Viewport: Interactive Blueprint Canvas */}
         <div className="flex-1 w-full flex flex-col items-center min-w-0">
-          <div className="relative border-2 border-slate-700 rounded-2xl overflow-hidden bg-slate-950 shadow-2xl w-full max-w-[500px] aspect-square">
+          <div className="relative border-2 border-slate-700 rounded-2xl overflow-hidden bg-slate-950 shadow-2xl w-full max-w-4xl h-[450px] sm:h-[520px] flex items-center justify-center">
             {/* Top-Left Parked Offers Button Overlay */}
             <button
               onClick={() => setIsParkedModalOpen(true)}
@@ -1839,7 +1839,7 @@ export default function MallSimulator({
               width={MAP_WIDTH}
               height={MAP_HEIGHT}
               onPointerDown={handleCanvasPointerDown}
-              className="w-full h-auto aspect-square block cursor-pointer bg-[#f5f3ec] touch-none"
+              className="w-full h-full block cursor-pointer bg-[#f5f3ec] touch-none object-contain"
             />
 
             {/* Dynamic Offer Card Overlay with GPU Layer Compositing */}
