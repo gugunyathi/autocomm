@@ -184,6 +184,7 @@ export function LandingPage({
 }: LandingPageProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const SHOW_PITCH_DECK = false;
   const [pitchDeckOpen, setPitchDeckOpen] = useState(false);
   const [isDirectDownloading, setIsDirectDownloading] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
@@ -266,13 +267,16 @@ export function LandingPage({
               <Radio className="w-3.5 h-3.5 text-teal-400 animate-pulse" />
               <span>BitChat Mesh</span>
             </button>
-            <button
-              onClick={() => setPitchDeckOpen(true)}
-              className="text-amber-400 hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1 font-bold bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/30"
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>Pitch Deck</span>
-            </button>
+            {/* Hidden Pitch Deck button */}
+            {SHOW_PITCH_DECK && (
+              <button
+                onClick={() => setPitchDeckOpen(true)}
+                className="text-amber-400 hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1 font-bold bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/30"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Pitch Deck</span>
+              </button>
+            )}
           </nav>
 
           {/* Zone 3: Action Buttons */}
@@ -292,30 +296,32 @@ export function LandingPage({
               </button>
             )}
 
-            {/* Direct PDF Download Quick Button */}
-            <button
-              onClick={handleDirectDownload}
-              disabled={isDirectDownloading}
-              className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-teal-500/20 to-emerald-500/20 hover:from-teal-500/30 hover:to-emerald-500/30 text-teal-300 border border-teal-500/40 text-xs font-bold shadow-sm transition-all active:scale-95 cursor-pointer disabled:opacity-50"
-              title="Direct Download Pitch Deck PDF"
-            >
-              {downloadSuccess ? (
-                <>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-teal-400" />
-                  <span>PDF Downloaded</span>
-                </>
-              ) : isDirectDownloading ? (
-                <>
-                  <div className="w-3.5 h-3.5 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" />
-                  <span>Generating…</span>
-                </>
-              ) : (
-                <>
-                  <Download className="w-3.5 h-3.5 text-teal-400" />
-                  <span>Pitch Deck (PDF)</span>
-                </>
-              )}
-            </button>
+            {/* Hidden Direct PDF Download Quick Button */}
+            {SHOW_PITCH_DECK && (
+              <button
+                onClick={handleDirectDownload}
+                disabled={isDirectDownloading}
+                className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-teal-500/20 to-emerald-500/20 hover:from-teal-500/30 hover:to-emerald-500/30 text-teal-300 border border-teal-500/40 text-xs font-bold shadow-sm transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                title="Direct Download Pitch Deck PDF"
+              >
+                {downloadSuccess ? (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-teal-400" />
+                    <span>PDF Downloaded</span>
+                  </>
+                ) : isDirectDownloading ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" />
+                    <span>Generating…</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-3.5 h-3.5 text-teal-400" />
+                    <span>Pitch Deck (PDF)</span>
+                  </>
+                )}
+              </button>
+            )}
 
             <PWAInstallButton className="hidden md:flex" />
 
@@ -515,15 +521,17 @@ export function LandingPage({
               >
                 💡 Interactive Walkthrough Guide
               </button>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  setPitchDeckOpen(true);
-                }}
-                className="block w-full text-left py-2 px-2.5 rounded-xl hover:bg-muted/40 text-amber-400 font-bold hover:text-white transition-colors cursor-pointer"
-              >
-                📄 View Pitch Deck
-              </button>
+              {SHOW_PITCH_DECK && (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setPitchDeckOpen(true);
+                  }}
+                  className="block w-full text-left py-2 px-2.5 rounded-xl hover:bg-muted/40 text-amber-400 font-bold hover:text-white transition-colors cursor-pointer"
+                >
+                  📄 View Pitch Deck
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -573,39 +581,43 @@ export function LandingPage({
             <span>→</span>
           </button>
 
-          {/* Interactive Pitch Deck Button */}
-          <button
-            onClick={() => setPitchDeckOpen(true)}
-            className="rounded-2xl border border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/20 px-5 sm:px-6 py-3.5 text-sm sm:text-base font-bold text-amber-300 transition-all flex items-center justify-center gap-2 cursor-pointer min-h-[48px] w-full sm:w-auto shadow-lg shadow-amber-500/10"
-          >
-            <FileText className="w-4 h-4 text-amber-400" />
-            <span>View Pitch Deck</span>
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          </button>
+          {/* Hidden Interactive Pitch Deck Button */}
+          {SHOW_PITCH_DECK && (
+            <button
+              onClick={() => setPitchDeckOpen(true)}
+              className="rounded-2xl border border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/20 px-5 sm:px-6 py-3.5 text-sm sm:text-base font-bold text-amber-300 transition-all flex items-center justify-center gap-2 cursor-pointer min-h-[48px] w-full sm:w-auto shadow-lg shadow-amber-500/10"
+            >
+              <FileText className="w-4 h-4 text-amber-400" />
+              <span>View Pitch Deck</span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            </button>
+          )}
 
-          {/* Direct Download Pitch Deck PDF */}
-          <button
-            onClick={handleDirectDownload}
-            disabled={isDirectDownloading}
-            className="rounded-2xl border border-teal-500/50 bg-teal-500/10 hover:bg-teal-500/20 px-5 sm:px-6 py-3.5 text-sm sm:text-base font-bold text-teal-300 transition-all flex items-center justify-center gap-2 cursor-pointer min-h-[48px] w-full sm:w-auto shadow-lg shadow-teal-500/10 disabled:opacity-50"
-          >
-            {downloadSuccess ? (
-              <>
-                <CheckCircle2 className="w-4 h-4 text-teal-400" />
-                <span>PDF Downloaded!</span>
-              </>
-            ) : isDirectDownloading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" />
-                <span>Generating PDF…</span>
-              </>
-            ) : (
-              <>
-                <Download className="w-4 h-4 text-teal-400" />
-                <span>Download Deck (PDF)</span>
-              </>
-            )}
-          </button>
+          {/* Hidden Direct Download Pitch Deck PDF */}
+          {SHOW_PITCH_DECK && (
+            <button
+              onClick={handleDirectDownload}
+              disabled={isDirectDownloading}
+              className="rounded-2xl border border-teal-500/50 bg-teal-500/10 hover:bg-teal-500/20 px-5 sm:px-6 py-3.5 text-sm sm:text-base font-bold text-teal-300 transition-all flex items-center justify-center gap-2 cursor-pointer min-h-[48px] w-full sm:w-auto shadow-lg shadow-teal-500/10 disabled:opacity-50"
+            >
+              {downloadSuccess ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4 text-teal-400" />
+                  <span>PDF Downloaded!</span>
+                </>
+              ) : isDirectDownloading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" />
+                  <span>Generating PDF…</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 text-teal-400" />
+                  <span>Download Deck (PDF)</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
 
         {/* Quick Proof Metrics */}
@@ -974,22 +986,26 @@ export function LandingPage({
       {/* Footer */}
       <footer className="border-t border-border/50 bg-background/80 py-8 px-4 text-center text-xs text-muted-foreground space-y-3">
         <div className="flex items-center justify-center gap-4 flex-wrap">
-          <button
-            onClick={() => setPitchDeckOpen(true)}
-            className="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 cursor-pointer"
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span>Pitch Deck</span>
-          </button>
-          <span>·</span>
-          <button
-            onClick={handleDirectDownload}
-            className="text-teal-400 hover:text-teal-300 font-bold flex items-center gap-1 cursor-pointer"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Download Deck PDF</span>
-          </button>
-          <span>·</span>
+          {SHOW_PITCH_DECK && (
+            <>
+              <button
+                onClick={() => setPitchDeckOpen(true)}
+                className="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 cursor-pointer"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Pitch Deck</span>
+              </button>
+              <span>·</span>
+              <button
+                onClick={handleDirectDownload}
+                className="text-teal-400 hover:text-teal-300 font-bold flex items-center gap-1 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Download Deck PDF</span>
+              </button>
+              <span>·</span>
+            </>
+          )}
           <a href="mailto:hello@ribbonprotocol.org" className="hover:text-foreground">
             Contact: hello@ribbonprotocol.org
           </a>
