@@ -147,8 +147,22 @@ function SwipableCard({ deal, nowTime, onBuy, onPark, onDiscard }: SwipableCardP
               loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0c101c] via-transparent to-black/25" />
+
+            {/* Official Company Logo Badge */}
+            {deal.store.companyLogoSymbol && (
+              <div
+                className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 rounded-md sm:rounded-lg px-2 sm:px-2.5 py-0.5 sm:py-1 shadow-md border border-white/20 font-bold tracking-wider text-[9px] sm:text-[10px] font-sans flex items-center gap-1"
+                style={{
+                  backgroundColor: deal.store.brandBgColor || "#0f172a",
+                  color: deal.store.brandTextColor || "#ffffff",
+                }}
+              >
+                <span>{deal.store.companyLogoSymbol}</span>
+              </div>
+            )}
+
             {deal.store.specialBadge && (
-              <span className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 rounded-full bg-accent text-accent-foreground font-mono text-[8.5px] sm:text-[9.5px] font-black px-2 py-0.5 shadow-md">
+              <span className="absolute bottom-1.5 left-1.5 sm:bottom-2 sm:left-2 rounded-full bg-accent text-accent-foreground font-mono text-[8.5px] sm:text-[9.5px] font-black px-2 py-0.5 shadow-md">
                 ⚡ {deal.store.specialBadge}
               </span>
             )}
@@ -158,14 +172,42 @@ function SwipableCard({ deal, nowTime, onBuy, onPark, onDiscard }: SwipableCardP
           </div>
         )}
 
+        {/* Mall Location Header */}
+        <div className="mt-1.5 flex items-center justify-between font-mono text-[9px] text-slate-300">
+          <a
+            href={deal.store.mallUrl || "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-primary hover:underline font-semibold"
+            title="Open in Google Maps"
+          >
+            <span>📍</span>
+            <span>{deal.store.mallName || "Bel Air Shopping Centre"}</span>
+            <span className="text-[8px]">↗</span>
+          </a>
+          <span className="text-emerald-400 font-bold">Matched in Range</span>
+        </div>
+
         {/* Item Header */}
-        <div className="mt-2.5 sm:mt-3 flex items-start justify-between gap-2">
+        <div className="mt-2 flex items-start justify-between gap-2">
           <div className="min-w-0">
             <h3 className="text-sm sm:text-base md:text-lg font-bold text-white truncate">
               {deal.store.item}
             </h3>
             <p className="text-[11px] sm:text-xs text-muted-foreground truncate flex items-center gap-1 mt-0.5">
-              <span>{deal.store.icon}</span>
+              {deal.store.companyLogoSymbol ? (
+                <span
+                  className="px-1.5 py-0.5 rounded text-[9px] font-bold"
+                  style={{
+                    backgroundColor: deal.store.brandBgColor || "#0f172a",
+                    color: deal.store.brandTextColor || "#ffffff",
+                  }}
+                >
+                  {deal.store.companyLogoSymbol}
+                </span>
+              ) : (
+                <span>{deal.store.icon}</span>
+              )}
               <span className="font-semibold text-white/90 truncate">{deal.store.name}</span>
               <span>·</span>
               <span className="text-primary font-mono shrink-0">{deal.store.cat}</span>

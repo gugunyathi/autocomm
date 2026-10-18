@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { INDOOR, OUTDOOR, TICKS, fill, hueVar, type Store } from "@/lib/acn-data";
+import { INDOOR, OUTDOOR, BEL_AIR_STORES, TICKS, fill, hueVar, type Store } from "@/lib/acn-data";
 import { LandingPage } from "@/components/LandingPage";
 import { PasskeyModal } from "@/components/PasskeyModal";
 import { ParkingLotModal, type ParkedOffer } from "@/components/ParkingLotModal";
@@ -32,6 +32,9 @@ import { BitchatMeshModal } from "@/components/bitchat/BitchatMeshModal";
 import { AgentDevPortalModal } from "@/components/developer/AgentDevPortalModal";
 import {
   DEFAULT_USER_COORDS,
+  BEL_AIR_SHOPPING_CENTRE,
+  BEL_AIR_USER_COORDS,
+  checkIsAtBelAir,
   isFacingTarget,
   type SpatialCoordinates,
 } from "@/lib/spatial-sensors";
@@ -280,7 +283,13 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
   );
   const [gpsSpeed, setGpsSpeed] = useState<number | null>(null);
 
-  // Geolocation auto-detection of Indoor vs. Outdoor and Speed Tracking
+  // Bel Air Shopping Centre Geolocation & Geofence detection state
+  const [isAtBelAir, setIsAtBelAir] = useState<boolean>(true); // Active by default so user can immediately experience Bel Air Shopping Centre matches
+  const [userCoords, setUserCoords] = useState<SpatialCoordinates>(BEL_AIR_USER_COORDS);
+  const [distanceToBelAir, setDistanceToBelAir] = useState<number>(0);
+  const [isGpsInsideBelAir, setIsGpsInsideBelAir] = useState<boolean>(true);
+
+  // Geolocation auto-detection of Indoor vs. Outdoor, Speed Tracking & Bel Air Geofence
   useEffect(() => {
     if (typeof window === "undefined" || !("geolocation" in navigator)) return;
 
@@ -300,10 +309,28 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
           const speedKmh = Math.max(0, Math.round(pos.coords.speed * 3.6 * 10) / 10);
           setGpsSpeed(speedKmh);
         }
+
+        // Check if user is physically located at Bel Air Shopping Centre
+        const { latitude, longitude } = pos.coords;
+        const { isAtBelAir: inMallGeofence, distanceMeters } = checkIsAtBelAir(latitude, longitude);
+        setDistanceToBelAir(distanceMeters);
+        setIsGpsInsideBelAir(inMallGeofence);
+
+        // If physically at Bel Air, lock coordinates & set mall active
+        if (inMallGeofence) {
+          setIsAtBelAir(true);
+          setUserCoords({
+            latitude,
+            longitude,
+            accuracy: acc,
+            altitude: pos.coords.altitude,
+          });
+        }
       },
       () => {
-        // Fallback or permission blocked: default to indoor mall mesh
+        // Fallback or permission blocked: default to indoor mall mesh at Bel Air
         setAutoDetectedAs("indoor");
+        setUserCoords(BEL_AIR_USER_COORDS);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 10000 },
     );
@@ -318,7 +345,13 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
     else if (mode === "auto") setOutdoor(autoDetectedAs === "outdoor");
   };
 
-  const stores = outdoor ? OUTDOOR : INDOOR;
+  // Dynamic store directory: when at Bel Air Shopping Centre, loads the 8 Bel Air retail outlets
+  const stores = useMemo(() => {
+    if (isAtBelAir) {
+      return BEL_AIR_STORES;
+    }
+    return outdoor ? OUTDOOR : INDOOR;
+  }, [isAtBelAir, outdoor]);
 
   // Effective speed & dynamic mobility state inference
   const effectiveSpeed = useMemo(() => {
@@ -506,7 +539,7 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
     turnHeadingBy,
   } = useDeviceHeading(45);
 
-  const [userCoords] = useState<SpatialCoordinates>(DEFAULT_USER_COORDS);
+  // userCoords is statefully managed at top level (Bel Air Shopping Centre coordinates & live GPS)
 
   // Compute store currently being faced based on device heading & bearing geometry
   const facingStore = useMemo(() => {
@@ -1337,6 +1370,71 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
         />
       </div>
 
+      {/* Bel Air Shopping Centre Location & Active Geofence HUD Strip */}
+      <div className="relative z-30 w-full max-w-lg sm:max-w-xl mx-auto px-3 sm:px-4 mt-1.5 pointer-events-auto">
+        <div className="glass rounded-2xl px-3 py-2 border border-primary/50 bg-[#090d19]/95 shadow-xl backdrop-blur-2xl flex items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="relative flex h-2.5 w-2.5 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+            </span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 font-bold text-white text-xs leading-tight truncate">
+                <span className="truncate">📍 Bel Air Shopping Centre</span>
+                <span className="rounded-full bg-emerald-500/20 text-emerald-400 font-mono text-[8.5px] px-1.5 py-0.2 border border-emerald-500/40 shrink-0 font-extrabold">
+                  {isAtBelAir ? "IN MALL GEOFENCE" : "NEARBY"}
+                </span>
+              </div>
+              <div className="font-mono text-[9px] text-slate-300 flex items-center gap-1.5 mt-0.5 truncate">
+                <span>-26.0594, 27.9583</span>
+                <span>·</span>
+                <a
+                  href="https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline font-semibold flex items-center gap-0.5"
+                  title="Open Bel Air Shopping Centre in Google Maps"
+                >
+                  <span>Google Maps</span>
+                  <span className="text-[8px]">↗</span>
+                </a>
+                <span>·</span>
+                <span className="text-accent font-bold">8 Stores Match</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={() => {
+                const randBelAirStore =
+                  BEL_AIR_STORES[Math.floor(Math.random() * BEL_AIR_STORES.length)];
+                if (randBelAirStore) trigger(randBelAirStore);
+              }}
+              className="rounded-xl bg-accent text-accent-foreground px-2.5 py-1 text-[10px] font-mono font-extrabold shadow-amber hover:bg-accent/90 active:scale-95 transition-all cursor-pointer flex items-center gap-1"
+              title="Pop up live sale offer cards of Bel Air shops to Buy or Park"
+            >
+              <span>⚡ Pop-Up Match</span>
+            </button>
+            <button
+              onClick={() => {
+                const next = !isAtBelAir;
+                setIsAtBelAir(next);
+                if (next) setUserCoords(BEL_AIR_USER_COORDS);
+              }}
+              className={`rounded-xl px-2 py-1 text-[10px] font-mono font-bold transition-all cursor-pointer border ${
+                isAtBelAir
+                  ? "bg-primary/20 text-primary border-primary/40 shadow-teal"
+                  : "bg-white/10 text-white/80 border-white/15 hover:bg-white/20"
+              }`}
+              title="Toggle Bel Air Shopping Centre geofence mode"
+            >
+              {isAtBelAir ? "✓ Mall Active" : "GPS"}
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Independent Floating Quick Controls: Park (Left), Volume & Silence (Center), Bag (Right) */}
       <div className="relative z-30 w-full max-w-lg sm:max-w-xl md:max-w-2xl mx-auto px-3 sm:px-4 mt-1.5 -mb-2 flex justify-between items-center pointer-events-auto">
         {/* Far Left: Park 🅿️ Floating Button */}
@@ -1496,8 +1594,16 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
                       opacity: isPulled ? 0.5 : isMobile ? 0.85 + p * 0.15 : 0.88 + p * 0.12,
                     }}
                   >
-                    <button
+                    <div
+                      role="button"
+                      tabIndex={0}
                       onClick={() => handleCardClick(s)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleCardClick(s);
+                        }
+                      }}
                       onDoubleClick={(e) => {
                         e.stopPropagation();
                         handlePullOutCard(s);
@@ -1542,8 +1648,22 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
                             loading="lazy"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-[#0f1423] via-transparent to-black/30" />
+
+                          {/* Official Company Brand Logo Badge */}
+                          {s.companyLogoSymbol && (
+                            <div
+                              className="absolute top-1.5 left-1.5 rounded-md px-2 py-0.5 shadow-lg border border-white/20 font-bold tracking-wider text-[9px] font-sans flex items-center gap-1 z-10"
+                              style={{
+                                backgroundColor: s.brandBgColor || "#0f172a",
+                                color: s.brandTextColor || "#ffffff",
+                              }}
+                            >
+                              <span>{s.companyLogoSymbol}</span>
+                            </div>
+                          )}
+
                           {s.specialBadge && (
-                            <span className="absolute top-1.5 left-1.5 rounded-full bg-accent text-accent-foreground font-mono text-[8px] font-black px-1.5 py-0.5 shadow-sm">
+                            <span className="absolute bottom-1.5 left-1.5 rounded-full bg-accent text-accent-foreground font-mono text-[8px] font-black px-1.5 py-0.5 shadow-sm">
                               ⚡ {s.specialBadge}
                             </span>
                           )}
@@ -1572,9 +1692,20 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
                             {s.item}
                           </p>
                           <p className="font-mono text-[10px] sm:text-[11px] text-slate-200 truncate font-medium flex items-center gap-1">
-                            <span className="text-white/90 font-semibold">{s.name}</span>
+                            {s.companyLogoSymbol && (
+                              <span
+                                className="px-1 py-0.2 rounded text-[8px] font-bold shrink-0"
+                                style={{
+                                  backgroundColor: s.brandBgColor || "#0f172a",
+                                  color: s.brandTextColor || "#ffffff",
+                                }}
+                              >
+                                {s.companyLogoSymbol}
+                              </span>
+                            )}
+                            <span className="text-white/90 font-semibold truncate">{s.name}</span>
                             <span>·</span>
-                            <span className="text-primary">{s.cat}</span>
+                            <span className="text-primary truncate">{s.cat}</span>
                           </p>
                         </div>
                       </div>
@@ -1601,7 +1732,9 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
                                 ? "Parked in Lot 🅿️"
                                 : isFacing
                                   ? "Facing Store 🎯"
-                                  : "Live Agent"}
+                                  : isAtBelAir
+                                    ? "Bel Air Match"
+                                    : "Live Agent"}
                           </span>
                         </div>
                         <span className="font-extrabold text-white shrink-0 text-xs sm:text-sm">
@@ -1615,21 +1748,50 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
                         </p>
                       </div>
 
-                      {/* Pull out button overlay on card */}
-                      <div className="mt-2 pt-1.5 border-t border-white/15 flex items-center justify-between text-[9.5px] font-mono">
-                        <span className="text-slate-300 font-medium">Tap: Enlarge</span>
+                      {/* Pull out & Quick Action button overlay on card */}
+                      <div className="mt-2 pt-1.5 border-t border-white/15 flex items-center justify-between text-[9.5px] font-mono gap-1">
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleParkDeal({
+                                store: s,
+                                price: Math.round(s.open * 0.7),
+                                counter: Math.round(s.open * 0.65),
+                                expires: Date.now() + 465000,
+                                total: 465,
+                              });
+                            }}
+                            className="rounded-md bg-white/10 hover:bg-primary/25 border border-white/15 hover:border-primary/40 px-1.5 py-0.5 text-white/90 font-bold transition-all cursor-pointer"
+                            title="Park this offer in Holding Lot"
+                          >
+                            🅿️ Park
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              trigger(s);
+                            }}
+                            className="rounded-md bg-accent/25 hover:bg-accent/40 border border-accent/40 px-1.5 py-0.5 text-accent font-bold transition-all cursor-pointer"
+                            title="Pop up sale deal match to Buy or Park"
+                          >
+                            🛍️ Buy
+                          </button>
+                        </div>
                         <span
                           onClick={(e) => {
                             e.stopPropagation();
                             handlePullOutCard(s);
                           }}
-                          className="rounded-lg bg-primary/25 border border-primary/40 px-2 py-0.5 text-primary font-bold hover:bg-primary/40 transition-colors cursor-pointer"
+                          className="rounded-lg bg-primary/25 border border-primary/40 px-2 py-0.5 text-primary font-bold hover:bg-primary/40 transition-colors cursor-pointer shrink-0"
                           title="Pull this card out to float freely or deck stack"
                         >
                           + Pull 📑
                         </span>
                       </div>
-                    </button>
+                    </div>
                   </div>
                 );
               })}
@@ -1722,12 +1884,20 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
         />
       ))}
 
-      {/* 2-Second Non-Intrusive Deal Match Pop-Up (Auto-disappears to Matched Deck) */}
+      {/* Pop-Up Deal Match Card with Instant Buy and Park Actions */}
       <DealMatchPopup
         deal={activePopupDeal}
         onAutoDismissToDeck={handleAutoDismissToDeck}
         onOpenDeck={() => setMatchedDeckOpen(true)}
         onDismiss={() => setActivePopupDeal(null)}
+        onBuy={(d) => {
+          handleBuyDeal(d);
+          setActivePopupDeal(null);
+        }}
+        onPark={(d) => {
+          handleParkDeal(d);
+          setActivePopupDeal(null);
+        }}
       />
 
       {/* Matched Deals Deck Modal (Browse, Scroll, Swipe Buy/Park/Discard) */}
@@ -2490,6 +2660,14 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
         onSetMobilityMode={setMobilityMode}
         currentSpeedKmh={effectiveSpeed}
         currentCadenceSec={Math.round(currentCadenceMs / 1000)}
+        isAtBelAir={isAtBelAir}
+        onToggleBelAir={(val) => {
+          setIsAtBelAir(val);
+          if (val) {
+            setUserCoords(BEL_AIR_USER_COORDS);
+          }
+        }}
+        distanceToBelAir={distanceToBelAir}
       />
 
       {/* Passkey Authentication Modal */}

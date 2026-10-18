@@ -271,19 +271,54 @@ export const FloatingDeckCard = React.memo(function FloatingDeckCard({
             loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0f1423] via-transparent to-black/30" />
+
+          {/* Official Company Logo Badge */}
+          {store.companyLogoSymbol && (
+            <div
+              className="absolute top-1.5 left-1.5 rounded-md px-2 py-0.5 shadow-md border border-white/20 font-bold tracking-wider text-[9px] font-sans flex items-center gap-1"
+              style={{
+                backgroundColor: store.brandBgColor || "#0f172a",
+                color: store.brandTextColor || "#ffffff",
+              }}
+            >
+              <span>{store.companyLogoSymbol}</span>
+            </div>
+          )}
+
           {store.specialBadge && (
-            <span className="absolute top-1.5 left-1.5 rounded-full bg-accent text-accent-foreground font-mono text-[8.5px] font-black px-1.5 py-0.5 shadow-md">
+            <span className="absolute bottom-1.5 left-1.5 rounded-full bg-accent text-accent-foreground font-mono text-[8.5px] font-black px-1.5 py-0.5 shadow-md">
               ⚡ {store.specialBadge}
             </span>
           )}
         </div>
       )}
 
-      <div className="mt-2 flex items-center justify-between gap-2">
+      {/* Bel Air Location Indicator */}
+      <div className="mt-1 flex items-center justify-between font-mono text-[8.5px] text-slate-300">
+        <span className="text-primary font-medium flex items-center gap-0.5">
+          <span>📍</span>
+          <span>{store.mallName || "Bel Air Shopping Centre"}</span>
+        </span>
+        <span className="text-white/60">{store.dist}m away</span>
+      </div>
+
+      <div className="mt-1.5 flex items-center justify-between gap-2">
         <div className="min-w-0">
           <h3 className="text-sm sm:text-base font-bold text-foreground truncate">{store.item}</h3>
           <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1">
-            <span>{store.icon}</span>
+            {store.companyLogoSymbol ? (
+              <span
+                className="px-1.5 py-0.5 rounded text-[9px] font-bold"
+                style={{
+                  backgroundColor: store.brandBgColor || "#0f172a",
+                  color: store.brandTextColor || "#ffffff",
+                }}
+              >
+                {store.companyLogoSymbol}
+              </span>
+            ) : (
+              <span>{store.icon}</span>
+            )}
             <span className="font-semibold text-foreground/90">{store.name}</span>
             <span>·</span>
             <span className="text-primary font-mono">{store.dist}m</span>

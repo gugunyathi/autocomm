@@ -17,6 +17,8 @@ interface DealMatchPopupProps {
   onAutoDismissToDeck: (deal: MatchedDeal) => void;
   onOpenDeck: () => void;
   onDismiss: () => void;
+  onBuy?: (deal: MatchedDeal) => void;
+  onPark?: (deal: MatchedDeal) => void;
 }
 
 export const DealMatchPopup = React.memo(function DealMatchPopup({
@@ -24,6 +26,8 @@ export const DealMatchPopup = React.memo(function DealMatchPopup({
   onAutoDismissToDeck,
   onOpenDeck,
   onDismiss,
+  onBuy,
+  onPark,
 }: DealMatchPopupProps) {
   const [progress, setProgress] = useState(100);
   const [isHovered, setIsHovered] = useState(false);
@@ -36,11 +40,11 @@ export const DealMatchPopup = React.memo(function DealMatchPopup({
 
     setProgress(100);
     let start = Date.now();
-    const duration = 2000; // 2 seconds
+    const duration = 2800; // 2.8 seconds window with pause on hover
 
     const timer = setInterval(() => {
       if (isHovered) {
-        start += 40; // pause progress while hovering
+        start += 40; // pause progress while hovering or deciding to buy/park
         return;
       }
       const elapsed = Date.now() - start;
@@ -70,15 +74,15 @@ export const DealMatchPopup = React.memo(function DealMatchPopup({
       aria-label="New deal matched notification"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="fixed top-16 right-3 sm:top-20 sm:right-6 z-50 w-[88vw] max-w-[310px] select-none animate-slideup"
+      className="fixed top-16 right-3 sm:top-20 sm:right-6 z-50 w-[92vw] max-w-[340px] select-none animate-slideup"
     >
       <div
-        className={`glass relative rounded-2xl border p-3 shadow-2xl backdrop-blur-2xl overflow-hidden text-foreground ${
+        className={`glass relative rounded-2xl border p-3.5 shadow-2xl backdrop-blur-2xl overflow-hidden text-foreground ${
           isFree
-            ? "border-emerald-500 bg-[#081812]/95 ring-2 ring-emerald-500/60 animate-giveaway-flash"
+            ? "border-emerald-500 bg-[#081812]/98 ring-2 ring-emerald-500/60 animate-giveaway-flash"
             : isSuperDeal
-              ? "border-rose-500 bg-[#140810]/95 ring-2 ring-rose-500/60 animate-mega-flash"
-              : "border-accent bg-[#0c101c]/95 ring-2 ring-accent/60 animate-deal-flash"
+              ? "border-rose-500 bg-[#140810]/98 ring-2 ring-rose-500/60 animate-mega-flash"
+              : "border-accent bg-[#0c101c]/98 ring-2 ring-accent/60 animate-deal-flash"
         }`}
       >
         {/* Subtle glow accent */}
@@ -88,7 +92,7 @@ export const DealMatchPopup = React.memo(function DealMatchPopup({
           }`}
         />
 
-        {/* 2-Second Depleting Progress Bar */}
+        {/* Depleting Progress Bar */}
         <div className="absolute top-0 inset-x-0 h-1 bg-white/10">
           <div
             className={`h-full transition-all ease-linear ${
@@ -102,10 +106,10 @@ export const DealMatchPopup = React.memo(function DealMatchPopup({
           />
         </div>
 
-        {/* Header Strip */}
-        <div className="flex items-center justify-between gap-1 pt-0.5">
-          <div className="flex items-center gap-1.5">
-            <span className="relative flex h-2 w-2">
+        {/* Header Strip with Mall Badge & Dismiss */}
+        <div className="flex items-center justify-between gap-1 pt-1">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="relative flex h-2 w-2 shrink-0">
               <span
                 className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
                   isFree ? "bg-emerald-400" : isSuperDeal ? "bg-rose-400" : "bg-accent"
@@ -118,7 +122,7 @@ export const DealMatchPopup = React.memo(function DealMatchPopup({
               />
             </span>
             <span
-              className={`font-mono text-[9.5px] uppercase tracking-wider font-black ${
+              className={`font-mono text-[9.5px] uppercase tracking-wider font-black truncate ${
                 isFree
                   ? "text-emerald-400 animate-pulse"
                   : isSuperDeal
@@ -129,14 +133,14 @@ export const DealMatchPopup = React.memo(function DealMatchPopup({
               {isFree
                 ? "🎁 100% FREE GIVEAWAY!"
                 : isSuperDeal
-                  ? `🔥 PRIORITY +${discountPercent}% SPECIAL!`
-                  : "⚡ Deal Matched!"}
+                  ? `🔥 PRIORITY -${discountPercent}% SPECIAL!`
+                  : "⚡ BEL AIR DEAL MATCHED!"}
             </span>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0">
             <span className="font-mono text-[8.5px] text-muted-foreground">
-              {isHovered ? "Paused" : "Saving in 2s"}
+              {isHovered ? "Paused" : "Saving"}
             </span>
             <button
               onClick={onDismiss}
@@ -148,29 +152,62 @@ export const DealMatchPopup = React.memo(function DealMatchPopup({
           </div>
         </div>
 
-        {/* Product Image Thumbnail */}
+        {/* Location Subtitle: Bel Air Shopping Centre with Google Maps Link */}
+        <div className="mt-1 flex items-center justify-between font-mono text-[8.5px] text-slate-300">
+          <a
+            href={deal.store.mallUrl || "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-primary hover:underline font-semibold truncate"
+            title="Open in Google Maps"
+          >
+            <span>📍</span>
+            <span>{deal.store.mallName || "Bel Air Shopping Centre"}</span>
+            <span>↗</span>
+          </a>
+          <span className="text-white/60 bg-white/5 px-1.5 py-0.5 rounded border border-white/10 shrink-0">
+            {deal.store.dist}m away
+          </span>
+        </div>
+
+        {/* Product Image Thumbnail with Official Company Logo Badge */}
         {deal.store.image && (
-          <div className="relative mt-2 h-20 w-full overflow-hidden rounded-xl border border-white/15 shadow-inner">
+          <div className="relative mt-2 h-24 w-full overflow-hidden rounded-xl border border-white/15 shadow-inner group">
             <img
               src={deal.store.image}
               alt={deal.store.item}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0c101c] via-transparent to-black/30" />
+
+            {/* Official Company Logo Badge */}
+            {deal.store.companyLogoSymbol && (
+              <div
+                className="absolute top-1.5 left-1.5 rounded-md px-2 py-0.5 shadow-lg border border-white/20 font-bold tracking-wider text-[9px] font-sans flex items-center gap-1"
+                style={{
+                  backgroundColor: deal.store.brandBgColor || "#0f172a",
+                  color: deal.store.brandTextColor || "#ffffff",
+                }}
+              >
+                <span>{deal.store.companyLogoSymbol}</span>
+              </div>
+            )}
+
             {deal.store.specialBadge && (
-              <span className="absolute top-1 left-1 rounded-full bg-accent text-accent-foreground font-mono text-[8px] font-black px-1.5 py-0.5 shadow-sm">
+              <span className="absolute bottom-1.5 left-1.5 rounded-full bg-accent text-accent-foreground font-mono text-[8px] font-black px-1.5 py-0.5 shadow-sm">
                 ⚡ {deal.store.specialBadge}
               </span>
             )}
-            <span className="absolute bottom-1 right-1 rounded-md bg-black/75 px-1.5 py-0.5 font-mono text-[8.5px] text-white border border-white/10">
+
+            <span className="absolute bottom-1.5 right-1.5 rounded-md bg-black/75 px-1.5 py-0.5 font-mono text-[8.5px] text-white border border-white/10">
               {deal.store.dist}m
             </span>
           </div>
         )}
 
         {/* Item Info & Pricing */}
-        <div className="mt-2 flex items-start justify-between gap-2">
+        <div className="mt-2.5 flex items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="text-xs sm:text-sm font-extrabold text-white truncate leading-tight">
               {deal.store.item}
@@ -184,17 +221,19 @@ export const DealMatchPopup = React.memo(function DealMatchPopup({
           </div>
 
           <div className="text-right shrink-0">
-            <p className="font-extrabold text-accent text-sm sm:text-base leading-tight">
-              R{deal.price}
+            <p className="font-extrabold text-accent text-base leading-tight">
+              {isFree ? "FREE" : `R${deal.price}`}
             </p>
-            <p className="text-[9px] font-mono text-muted-foreground line-through">
-              R{deal.store.open}
-            </p>
+            {!isFree && (
+              <p className="text-[9.5px] font-mono text-muted-foreground line-through">
+                R{deal.store.open}
+              </p>
+            )}
           </div>
         </div>
 
         {/* Dynamic Special Offer Expiration Countdown Bar */}
-        <div className="mt-2 rounded-xl bg-black/40 border border-white/10 p-2 space-y-1 text-[9.5px] font-mono">
+        <div className="mt-2 rounded-xl bg-black/40 border border-white/10 p-2 space-y-1 text-[9px] font-mono">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="flex items-center gap-1">
               <span>⏳</span>
@@ -228,20 +267,46 @@ export const DealMatchPopup = React.memo(function DealMatchPopup({
           </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono">
-          <span className="rounded-md bg-accent/15 px-1.5 py-0.5 text-[9px] font-bold text-accent">
-            -{discountPercent}% OFF
-          </span>
+        {/* Instant Action Match Buttons: BUY or PARK */}
+        <div className="mt-2.5 pt-2 border-t border-white/10 grid grid-cols-2 gap-2 font-mono">
+          {/* Park in Lot Button */}
+          <button
+            onClick={() => {
+              if (onPark) onPark(deal);
+              else onAutoDismissToDeck(deal);
+            }}
+            className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl bg-primary/20 hover:bg-primary/30 text-primary border border-primary/40 font-bold text-[10.5px] transition-all active:scale-95 cursor-pointer shadow-teal"
+            title="Park this offer into Holding Lot for later checkout"
+          >
+            <span>🅿️</span>
+            <span>Park in Lot</span>
+          </button>
 
+          {/* Buy Now Button */}
+          <button
+            onClick={() => {
+              if (onBuy) onBuy(deal);
+              else onOpenDeck();
+            }}
+            className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 font-extrabold text-[10.5px] transition-all active:scale-95 cursor-pointer shadow-amber"
+            title="Instant Buy & Claim Voucher"
+          >
+            <span>🛍️</span>
+            <span>{isFree ? "Claim FREE" : `Buy R${deal.price}`}</span>
+          </button>
+        </div>
+
+        {/* Deck View link */}
+        <div className="mt-1.5 flex items-center justify-between text-[8.5px] font-mono text-muted-foreground px-1">
+          <span className="text-emerald-400 font-bold">-{discountPercent}% OFF Saved</span>
           <button
             onClick={() => {
               onAutoDismissToDeck(deal);
               onOpenDeck();
             }}
-            className="flex items-center gap-1 text-primary hover:text-white transition-colors cursor-pointer font-bold"
+            className="text-primary hover:text-white transition-colors cursor-pointer flex items-center gap-0.5"
           >
-            <span>View in Matched Deck</span>
+            <span>Browse Deck</span>
             <span>➔</span>
           </button>
         </div>

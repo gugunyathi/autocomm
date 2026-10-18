@@ -17,6 +17,9 @@ interface EnvironmentModalProps {
   onSetMobilityMode?: (mode: "auto" | "walking" | "fast_walking" | "driving") => void;
   currentSpeedKmh?: number;
   currentCadenceSec?: number;
+  isAtBelAir?: boolean;
+  onToggleBelAir?: (active: boolean) => void;
+  distanceToBelAir?: number;
 }
 
 export function EnvironmentModal({
@@ -38,6 +41,9 @@ export function EnvironmentModal({
   onSetMobilityMode,
   currentSpeedKmh = 4.2,
   currentCadenceSec = 30,
+  isAtBelAir = true,
+  onToggleBelAir,
+  distanceToBelAir = 0,
 }: EnvironmentModalProps) {
   if (!open) return null;
 
@@ -75,6 +81,59 @@ export function EnvironmentModal({
           >
             ✕
           </button>
+        </div>
+
+        {/* Bel Air Shopping Centre Geofence Status Card */}
+        <div className="mt-3 p-3.5 rounded-2xl bg-gradient-to-br from-primary/15 via-[#0f172a] to-accent/10 border border-primary/40 shadow-teal space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">📍</span>
+              <div>
+                <p className="text-xs font-extrabold text-white">Bel Air Shopping Centre</p>
+                <p className="text-[9.5px] font-mono text-primary font-semibold">
+                  North Riding, Randburg (-26.0594, 27.9583)
+                </p>
+              </div>
+            </div>
+            <span
+              className={`rounded-full px-2 py-0.5 text-[8.5px] font-mono font-bold ${
+                isAtBelAir
+                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 animate-pulse"
+                  : "bg-white/10 text-muted-foreground"
+              }`}
+            >
+              {isAtBelAir ? "IN GEOFENCE" : "OUT OF RANGE"}
+            </span>
+          </div>
+
+          <p className="text-[9.5px] text-slate-300 leading-relaxed font-sans">
+            Bellairs Dr & Malibongwe Dr. When inside this 450m perimeter, live pop-up sale matches
+            for Woolworths, Clicks, Mugg & Bean, and retail outlets appear to Buy or Park.
+          </p>
+
+          <div className="flex items-center justify-between pt-1 border-t border-white/10 font-mono text-[9px]">
+            <a
+              href="https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-primary hover:underline font-bold"
+            >
+              <span>View on Google Maps</span>
+              <span className="text-[8px]">↗</span>
+            </a>
+
+            <button
+              type="button"
+              onClick={() => onToggleBelAir?.(!isAtBelAir)}
+              className={`px-2 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                isAtBelAir
+                  ? "bg-primary text-primary-foreground shadow-teal"
+                  : "bg-white/10 text-white hover:bg-white/20"
+              }`}
+            >
+              {isAtBelAir ? "✓ Bel Air Active" : "Set At Bel Air"}
+            </button>
+          </div>
         </div>
 
         {/* Current Active Status Pill */}

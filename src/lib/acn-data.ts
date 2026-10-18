@@ -17,29 +17,229 @@ export type Store = {
   bearing: number; // 0-360 degrees bearing angle from user location
   bleBeaconId?: string; // Indoor Bluetooth Low Energy node UUID
   rssi?: number; // BLE signal strength in dBm (-35 to -85)
+  // Company logo & mall metadata
+  companyLogoSymbol?: string; // Official brand badge / text logo
+  brandBgColor?: string; // Official brand background color
+  brandTextColor?: string; // Official brand text color
+  mallName?: string; // e.g. "Bel Air Shopping Centre"
+  mallUrl?: string; // Google Maps link to the shopping centre
+  promoDetails?: string; // Extended sale / deal offer promo description
 };
 
 // Curated high-quality, fast-loading Unsplash product photos for items on special
-export const INDOOR: Store[] = [
+// 8 Real-World Retail Outlets physically located at Bel Air Shopping Centre (North Riding, Randburg)
+export const BEL_AIR_STORES: Store[] = [
   {
-    id: "zara",
-    name: "Zara",
+    id: "woolworths-belair",
+    name: "Woolworths Food",
+    icon: "🛒",
+    cat: "Gourmet Grocery",
+    hue: "teal",
+    dist: 8,
+    item: "Fresh Organic Produce Box & Baguette",
+    open: 350,
+    tag: "Grocery",
+    image:
+      "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80",
+    specialBadge: "SAVE R105 · FRESH HARVEST",
+    lat: -26.05942,
+    lng: 27.95827,
+    bearing: 45, // North-East Promenade
+    bleBeaconId: "acn-belair-woolies-01",
+    rssi: -42,
+    companyLogoSymbol: "WOOLWORTHS",
+    brandBgColor: "#000000",
+    brandTextColor: "#ffffff",
+    mallName: "Bel Air Shopping Centre",
+    mallUrl: "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8",
+    promoDetails:
+      "Daily Difference: Save R105 instantly on premium fresh produce and bakery bundle.",
+  },
+  {
+    id: "clicks-belair",
+    name: "Clicks Pharmacy",
+    icon: "💊",
+    cat: "Health & Beauty",
+    hue: "teal",
+    dist: 12,
+    item: "Vitamin C + Zinc Immunity Pack",
+    open: 280,
+    tag: "Skincare",
+    image:
+      "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=600&q=80",
+    specialBadge: "3-FOR-2 · FEEL GOOD",
+    lat: -26.05938,
+    lng: 27.95835,
+    bearing: 90, // East Wing
+    bleBeaconId: "acn-belair-clicks-02",
+    rssi: -48,
+    companyLogoSymbol: "💊 CLICKS",
+    brandBgColor: "#0284c7",
+    brandTextColor: "#ffffff",
+    mallName: "Bel Air Shopping Centre",
+    mallUrl: "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8",
+    promoDetails:
+      "Feel Good Savings: 3-for-2 across all natural health vitamins, skincare & supplements.",
+  },
+  {
+    id: "mugg-belair",
+    name: "Mugg & Bean Kiosk",
+    icon: "☕",
+    cat: "Artisan Cafe",
+    hue: "amber",
+    dist: 6,
+    item: "Mega Cappuccino + Giant Muffin",
+    open: 95,
+    tag: "Coffee",
+    image:
+      "https://images.unsplash.com/photo-1509785307050-d4066910ec1e?auto=format&fit=crop&w=600&q=80",
+    specialBadge: "FREE MUFFIN COMBO",
+    lat: -26.05945,
+    lng: 27.95822,
+    bearing: 135, // Upper Concourse
+    bleBeaconId: "acn-belair-mugg-03",
+    rssi: -38,
+    companyLogoSymbol: "☕ M&B",
+    brandBgColor: "#78350f",
+    brandTextColor: "#fef3c7",
+    mallName: "Bel Air Shopping Centre",
+    mallUrl: "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8",
+    promoDetails:
+      "Muffin Combo: Get a freshly baked giant muffin with any mega artisan cappuccino.",
+  },
+  {
+    id: "exclusive-belair",
+    name: "Exclusive Books",
+    icon: "📚",
+    cat: "Books & Leisure",
+    hue: "teal",
+    dist: 14,
+    item: "Sunday Times Bestseller & Journal",
+    open: 420,
+    tag: "Books",
+    image:
+      "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=600&q=80",
+    specialBadge: "2X COFFEE CLUB PTS",
+    lat: -26.05948,
+    lng: 27.95831,
+    bearing: 180, // South Aisle
+    bleBeaconId: "acn-belair-books-04",
+    rssi: -52,
+    companyLogoSymbol: "📚 EB",
+    brandBgColor: "#15803d",
+    brandTextColor: "#ffffff",
+    mallName: "Bel Air Shopping Centre",
+    mallUrl: "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8",
+    promoDetails: "Coffee Club Members receive double points on all top-selling hardcovers today.",
+  },
+  {
+    id: "istore-belair",
+    name: "iStore Apple",
+    icon: "📱",
+    cat: "Electronics",
+    hue: "teal",
+    dist: 16,
+    item: "AirPods Pro 2 Active ANC",
+    open: 5499,
+    tag: "Audio",
+    image:
+      "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?auto=format&fit=crop&w=600&q=80",
+    specialBadge: "R700 TRADE-IN BONUS",
+    lat: -26.05935,
+    lng: 27.95825,
+    bearing: 225, // West Wing
+    bleBeaconId: "acn-belair-apple-05",
+    rssi: -55,
+    companyLogoSymbol: " iStore",
+    brandBgColor: "#0f172a",
+    brandTextColor: "#ffffff",
+    mallName: "Bel Air Shopping Centre",
+    mallUrl: "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8",
+    promoDetails:
+      "Instant trade-in discount voucher applicable on AirPods Pro 2 and Mac accessories.",
+  },
+  {
+    id: "zara-belair",
+    name: "Zara Fashion",
     icon: "👗",
     cat: "Fashion",
     hue: "purple",
-    dist: 6,
-    item: "Oversized Wool Hoodie",
-    open: 899,
+    dist: 9,
+    item: "Oversized Tailored Wool Overcoat",
+    open: 1499,
     tag: "Hoodies",
     image:
       "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=600&q=80",
     specialBadge: "FLASH 40% OFF",
-    lat: -33.92487,
-    lng: 18.42405,
-    bearing: 45, // North-East (Mall Aisle 1)
-    bleBeaconId: "acn-ble-zara-01",
-    rssi: -42,
+    lat: -26.05949,
+    lng: 27.9582,
+    bearing: 270, // Central Mall Galleria
+    bleBeaconId: "acn-belair-zara-06",
+    rssi: -45,
+    companyLogoSymbol: "ZARA",
+    brandBgColor: "#000000",
+    brandTextColor: "#ffffff",
+    mallName: "Bel Air Shopping Centre",
+    mallUrl: "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8",
+    promoDetails:
+      "Runway Clearance: 40% off all structured wool coats and premium knitwear collections.",
   },
+  {
+    id: "nike-belair",
+    name: "Nike Performance",
+    icon: "👟",
+    cat: "Sportswear",
+    hue: "teal",
+    dist: 11,
+    item: "Pegasus 41 Road Running Shoes",
+    open: 2599,
+    tag: "Shoes",
+    image:
+      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80",
+    specialBadge: "RUNNER DROP 30%",
+    lat: -26.05944,
+    lng: 27.95838,
+    bearing: 315, // North Wing
+    bleBeaconId: "acn-belair-nike-07",
+    rssi: -49,
+    companyLogoSymbol: "✔️ NIKE",
+    brandBgColor: "#0f172a",
+    brandTextColor: "#ffffff",
+    mallName: "Bel Air Shopping Centre",
+    mallUrl: "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8",
+    promoDetails:
+      "Air Max Week: 30% instant rebate on performance footwear and dri-fit accessories.",
+  },
+  {
+    id: "hm-belair",
+    name: "H&M Boutique",
+    icon: "🧥",
+    cat: "Fashion",
+    hue: "purple",
+    dist: 15,
+    item: "Recycled Down Puffer Jacket",
+    open: 1299,
+    tag: "Jackets",
+    image:
+      "https://images.unsplash.com/photo-1544923246-77307dd654cb?auto=format&fit=crop&w=600&q=80",
+    specialBadge: "SEASON CLEARANCE",
+    lat: -26.05939,
+    lng: 27.95818,
+    bearing: 0, // True North Concourse
+    bleBeaconId: "acn-belair-hm-08",
+    rssi: -58,
+    companyLogoSymbol: "H&M",
+    brandBgColor: "#e11d48",
+    brandTextColor: "#ffffff",
+    mallName: "Bel Air Shopping Centre",
+    mallUrl: "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8",
+    promoDetails: "End of Season Sale: 45% off seasonal outerwear, puffers and winter knitwear.",
+  },
+];
+
+// Curated high-quality, fast-loading product photos for items on special
+export const INDOOR: Store[] = [
+  ...BEL_AIR_STORES,
   {
     id: "nespresso",
     name: "Nespresso Bar",
@@ -53,49 +253,16 @@ export const INDOOR: Store[] = [
     image:
       "https://images.unsplash.com/photo-1509785307050-d4066910ec1e?auto=format&fit=crop&w=600&q=80",
     specialBadge: "MORNING COMBO",
-    lat: -33.92492,
-    lng: 18.42412,
+    lat: -26.05942,
+    lng: 27.95832,
     bearing: 90, // East (Central atrium)
     bleBeaconId: "acn-ble-nesp-02",
     rssi: -48,
-  },
-  {
-    id: "istore",
-    name: "iStore",
-    icon: "📱",
-    cat: "Electronics",
-    hue: "teal",
-    dist: 14,
-    item: "AirPods Pro 2",
-    open: 5499,
-    tag: "Audio",
-    image:
-      "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?auto=format&fit=crop&w=600&q=80",
-    specialBadge: "MEMBER SPECIAL",
-    lat: -33.92498,
-    lng: 18.42395,
-    bearing: 135, // South-East
-    bleBeaconId: "acn-ble-apple-03",
-    rssi: -58,
-  },
-  {
-    id: "nike",
-    name: "Nike Lab",
-    icon: "👟",
-    cat: "Sportswear",
-    hue: "teal",
-    dist: 11,
-    item: "Pegasus 41 Running Shoes",
-    open: 2599,
-    tag: "Shoes",
-    image:
-      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80",
-    specialBadge: "RUNNER DROP",
-    lat: -33.92483,
-    lng: 18.42398,
-    bearing: 180, // South
-    bleBeaconId: "acn-ble-nike-04",
-    rssi: -52,
+    companyLogoSymbol: "NESPRESSO",
+    brandBgColor: "#3e2723",
+    brandTextColor: "#ffffff",
+    mallName: "Bel Air Shopping Centre",
+    mallUrl: "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8",
   },
   {
     id: "sushi",
@@ -110,11 +277,16 @@ export const INDOOR: Store[] = [
     image:
       "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=600&q=80",
     specialBadge: "CHEF SPECIAL",
-    lat: -33.92478,
-    lng: 18.42418,
+    lat: -26.05948,
+    lng: 27.95828,
     bearing: 225, // South-West
     bleBeaconId: "acn-ble-sushi-05",
     rssi: -64,
+    companyLogoSymbol: "KAUAI",
+    brandBgColor: "#047857",
+    brandTextColor: "#ffffff",
+    mallName: "Bel Air Shopping Centre",
+    mallUrl: "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8",
   },
   {
     id: "aesop",
@@ -129,49 +301,16 @@ export const INDOOR: Store[] = [
     image:
       "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=600&q=80",
     specialBadge: "LUXURY GIFT",
-    lat: -33.92485,
-    lng: 18.42422,
+    lat: -26.05945,
+    lng: 27.95832,
     bearing: 270, // West
     bleBeaconId: "acn-ble-aesop-06",
     rssi: -45,
-  },
-  {
-    id: "hm",
-    name: "H&M Studio",
-    icon: "🧥",
-    cat: "Fashion",
-    hue: "purple",
-    dist: 19,
-    item: "Puffer Jacket",
-    open: 1299,
-    tag: "Jackets",
-    image:
-      "https://images.unsplash.com/photo-1544923246-77307dd654cb?auto=format&fit=crop&w=600&q=80",
-    specialBadge: "SEASON CLEARANCE",
-    lat: -33.92472,
-    lng: 18.42411,
-    bearing: 315, // North-West
-    bleBeaconId: "acn-ble-hm-07",
-    rssi: -68,
-  },
-  {
-    id: "exclusive",
-    name: "Exclusive Books",
-    icon: "📚",
-    cat: "Books",
-    hue: "teal",
-    dist: 13,
-    item: "Signed Hardcover Bundle",
-    open: 640,
-    tag: "Books",
-    image:
-      "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=600&q=80",
-    specialBadge: "AUTHOR EXCLUSIVE",
-    lat: -33.92479,
-    lng: 18.42392,
-    bearing: 0, // North
-    bleBeaconId: "acn-ble-books-08",
-    rssi: -55,
+    companyLogoSymbol: "AESOP",
+    brandBgColor: "#292524",
+    brandTextColor: "#f5f5f4",
+    mallName: "Bel Air Shopping Centre",
+    mallUrl: "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8",
   },
   {
     id: "lindt",
@@ -186,11 +325,16 @@ export const INDOOR: Store[] = [
     image:
       "https://images.unsplash.com/photo-1549007994-cb92caebd54b?auto=format&fit=crop&w=600&q=80",
     specialBadge: "BUY 1 GET 1",
-    lat: -33.92484,
-    lng: 18.42408,
+    lat: -26.05944,
+    lng: 27.95828,
     bearing: 60, // North-East
     bleBeaconId: "acn-ble-lindt-09",
     rssi: -38,
+    companyLogoSymbol: "LINDT",
+    brandBgColor: "#78350f",
+    brandTextColor: "#fef3c7",
+    mallName: "Bel Air Shopping Centre",
+    mallUrl: "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8",
   },
 ];
 
@@ -208,11 +352,16 @@ export const OUTDOOR: Store[] = [
     image:
       "https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=600&q=80",
     specialBadge: "2-FOR-1 COMMUTE",
-    lat: -33.92505,
-    lng: 18.42425,
+    lat: -26.05952,
+    lng: 27.95845,
     bearing: 30, // North-North-East
     bleBeaconId: "acn-gps-vida-10",
     rssi: -72,
+    companyLogoSymbol: "VIDA",
+    brandBgColor: "#dc2626",
+    brandTextColor: "#ffffff",
+    mallName: "Bel Air Shopping Centre",
+    mallUrl: "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8",
   },
   {
     id: "incredible",
@@ -227,11 +376,16 @@ export const OUTDOOR: Store[] = [
     image:
       "https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?auto=format&fit=crop&w=600&q=80",
     specialBadge: "GAMER DEALS",
-    lat: -33.9252,
-    lng: 18.42435,
+    lat: -26.05958,
+    lng: 27.95855,
     bearing: 75, // East-North-East
     bleBeaconId: "acn-gps-tech-11",
     rssi: -79,
+    companyLogoSymbol: "INCREDIBLE",
+    brandBgColor: "#0284c7",
+    brandTextColor: "#ffffff",
+    mallName: "Bel Air Shopping Centre",
+    mallUrl: "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8",
   },
   {
     id: "adidas",
@@ -246,11 +400,16 @@ export const OUTDOOR: Store[] = [
     image:
       "https://images.unsplash.com/photo-1518002171953-a080ee817e1f?auto=format&fit=crop&w=600&q=80",
     specialBadge: "LIMITED DROP",
-    lat: -33.92528,
-    lng: 18.42415,
+    lat: -26.05962,
+    lng: 27.95842,
     bearing: 120, // East-South-East
     bleBeaconId: "acn-gps-adidas-12",
     rssi: -76,
+    companyLogoSymbol: "ADIDAS",
+    brandBgColor: "#000000",
+    brandTextColor: "#ffffff",
+    mallName: "Bel Air Shopping Centre",
+    mallUrl: "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8",
   },
   {
     id: "kfc",
@@ -265,11 +424,16 @@ export const OUTDOOR: Store[] = [
     image:
       "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=600&q=80",
     specialBadge: "LUNCH SPECIAL",
-    lat: -33.92518,
-    lng: 18.42385,
+    lat: -26.05954,
+    lng: 27.95825,
     bearing: 160, // South-South-East
     bleBeaconId: "acn-gps-ramen-13",
     rssi: -74,
+    companyLogoSymbol: "MOCHI RAMEN",
+    brandBgColor: "#e11d48",
+    brandTextColor: "#ffffff",
+    mallName: "Bel Air Shopping Centre",
+    mallUrl: "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8",
   },
   {
     id: "markham",
@@ -284,11 +448,16 @@ export const OUTDOOR: Store[] = [
     image:
       "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=600&q=80",
     specialBadge: "SUMMER ESSENTIAL",
-    lat: -33.92535,
-    lng: 18.42375,
+    lat: -26.05965,
+    lng: 27.95815,
     bearing: 200, // South-South-West
     bleBeaconId: "acn-gps-mark-14",
     rssi: -82,
+    companyLogoSymbol: "MARKHAM",
+    brandBgColor: "#0f172a",
+    brandTextColor: "#ffffff",
+    mallName: "Bel Air Shopping Centre",
+    mallUrl: "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8",
   },
   {
     id: "dischem",
@@ -303,11 +472,16 @@ export const OUTDOOR: Store[] = [
     image:
       "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=600&q=80",
     specialBadge: "HEALTH REWARDS",
-    lat: -33.9251,
-    lng: 18.42365,
+    lat: -26.05951,
+    lng: 27.95812,
     bearing: 240, // West-South-West
     bleBeaconId: "acn-gps-pharm-15",
     rssi: -75,
+    companyLogoSymbol: "DIS-CHEM",
+    brandBgColor: "#059669",
+    brandTextColor: "#ffffff",
+    mallName: "Bel Air Shopping Centre",
+    mallUrl: "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8",
   },
   {
     id: "woolies",

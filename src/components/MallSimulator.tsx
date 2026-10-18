@@ -1573,14 +1573,23 @@ export default function MallSimulator({
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h3 className="font-extrabold text-xs sm:text-sm text-white truncate">
-                  IPS Indoor Grid Engine
+                  Bel Air Shopping Centre · IPS Indoor Grid
                 </h3>
-                <span className="text-[9px] text-blue-400 font-mono border border-blue-500/30 px-1.5 py-0.2 rounded bg-blue-950/80 shrink-0 hidden xs:inline">
-                  v2.6-GridCorridor
+                <span className="text-[9px] text-emerald-400 font-mono border border-emerald-500/30 px-1.5 py-0.2 rounded bg-emerald-950/80 shrink-0 hidden xs:inline">
+                  Randburg (-26.0594, 27.9583)
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 truncate">
-                8 Outlets · Live Passage Walk Simulation
+              <p className="text-[10px] text-slate-400 truncate flex items-center gap-1.5">
+                <span>8 Retail Outlets (Woolworths, Clicks, M&B, etc.)</span>
+                <span>·</span>
+                <a
+                  href="https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline font-semibold"
+                >
+                  Google Maps ↗
+                </a>
               </p>
             </div>
           </div>

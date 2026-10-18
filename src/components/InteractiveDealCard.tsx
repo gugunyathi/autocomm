@@ -450,7 +450,7 @@ export const InteractiveDealCard = React.memo(function InteractiveDealCard({
 
       {/* Primary Item details */}
       {deal.store.image && (
-        <div className="relative mt-2.5 h-28 sm:h-32 w-full overflow-hidden rounded-2xl border border-white/20 shadow-inner group">
+        <div className="relative mt-2.5 h-32 sm:h-36 w-full overflow-hidden rounded-2xl border border-white/20 shadow-inner group">
           <img
             src={deal.store.image}
             alt={deal.store.item}
@@ -458,28 +458,70 @@ export const InteractiveDealCard = React.memo(function InteractiveDealCard({
             loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0f1423] via-transparent to-black/30" />
+
+          {/* Official Company Logo Badge */}
+          {deal.store.companyLogoSymbol && (
+            <div
+              className="absolute top-2 left-2 rounded-lg px-2.5 py-1 shadow-lg border border-white/25 font-bold tracking-wider text-[10px] font-sans flex items-center gap-1.5"
+              style={{
+                backgroundColor: deal.store.brandBgColor || "#0f172a",
+                color: deal.store.brandTextColor || "#ffffff",
+              }}
+            >
+              <span>{deal.store.companyLogoSymbol}</span>
+            </div>
+          )}
+
           {deal.store.specialBadge && (
-            <span className="absolute top-2 left-2 rounded-full bg-accent text-accent-foreground font-mono text-[9px] font-black px-2 py-0.5 shadow-md">
+            <span className="absolute bottom-2 left-2 rounded-full bg-accent text-accent-foreground font-mono text-[9px] font-black px-2 py-0.5 shadow-md">
               ⚡ {deal.store.specialBadge}
             </span>
           )}
-          <span className="absolute bottom-2 right-2 rounded-lg bg-black/70 backdrop-blur-md px-2 py-0.5 font-mono text-[9.5px] text-white border border-white/15">
+          <span className="absolute bottom-2 right-2 rounded-lg bg-black/75 backdrop-blur-md px-2 py-0.5 font-mono text-[9.5px] text-white border border-white/15">
             {deal.store.dist}m away
           </span>
         </div>
       )}
 
-      <div className="mt-2.5 flex items-center justify-between gap-2">
+      {/* Bel Air Shopping Centre Location Header */}
+      <div className="mt-2 flex items-center justify-between font-mono text-[9px] text-slate-300">
+        <a
+          href={deal.store.mallUrl || "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8"}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 text-primary hover:underline font-semibold"
+          title="Open Bel Air Shopping Centre in Google Maps"
+        >
+          <span>📍</span>
+          <span>{deal.store.mallName || "Bel Air Shopping Centre"}</span>
+          <span className="text-[8px]">↗</span>
+        </a>
+        <span className="text-accent font-bold">Live Proximity Match</span>
+      </div>
+
+      <div className="mt-1.5 flex items-center justify-between gap-2">
         <div className="min-w-0">
           <h2 className="text-base sm:text-lg font-bold text-foreground truncate">
             {deal.store.item}
           </h2>
-          <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
-            <span>{deal.store.icon}</span>
+          <div className="text-xs text-muted-foreground truncate flex items-center gap-1.5 mt-0.5">
+            {deal.store.companyLogoSymbol ? (
+              <span
+                className="px-1.5 py-0.5 rounded text-[9px] font-bold"
+                style={{
+                  backgroundColor: deal.store.brandBgColor || "#0f172a",
+                  color: deal.store.brandTextColor || "#ffffff",
+                }}
+              >
+                {deal.store.companyLogoSymbol}
+              </span>
+            ) : (
+              <span>{deal.store.icon}</span>
+            )}
             <span className="font-semibold text-foreground/90">{deal.store.name}</span>
             <span>·</span>
             <span className="text-primary font-mono">{deal.store.dist}m away</span>
-          </p>
+          </div>
         </div>
         <div className="text-2xl place-items-center rounded-2xl bg-muted/40 p-2 border border-border/50 shrink-0 shadow-sm">
           {deal.store.icon}

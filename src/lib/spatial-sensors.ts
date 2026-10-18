@@ -14,12 +14,49 @@ export interface SpatialCoordinates {
   altitude?: number | null;
 }
 
-// Cape Town Mall / City Center Reference Origin
-export const DEFAULT_USER_COORDS: SpatialCoordinates = {
-  latitude: -33.92487,
-  longitude: 18.4241,
+// Bel Air Shopping Centre (North Riding, Randburg, Johannesburg, South Africa)
+export const BEL_AIR_SHOPPING_CENTRE = {
+  id: "bel-air",
+  name: "Bel Air Shopping Centre",
+  subtitle: "North Riding, Randburg, Johannesburg",
+  address: "Bellairs Dr & Malibongwe Dr, North Riding, Randburg, 2162, South Africa",
+  latitude: -26.05941834252426,
+  longitude: 27.95827226170294,
+  googleMapsUrl: "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8",
+  radiusMeters: 450, // 450m Geofence perimeter covering the shopping centre & parking lot
+};
+
+export const BEL_AIR_USER_COORDS: SpatialCoordinates = {
+  latitude: -26.05941834252426,
+  longitude: 27.95827226170294,
   accuracy: 3.5,
 };
+
+// Cape Town Mall / City Center Reference Origin
+export const DEFAULT_USER_COORDS: SpatialCoordinates = {
+  latitude: -26.05941834252426,
+  longitude: 27.95827226170294,
+  accuracy: 3.5,
+};
+
+/**
+ * Checks whether given coordinates are within the Bel Air Shopping Centre geofence
+ */
+export function checkIsAtBelAir(
+  lat: number,
+  lon: number,
+): { isAtBelAir: boolean; distanceMeters: number } {
+  const distanceMeters = getDistanceInMeters(
+    lat,
+    lon,
+    BEL_AIR_SHOPPING_CENTRE.latitude,
+    BEL_AIR_SHOPPING_CENTRE.longitude,
+  );
+  return {
+    isAtBelAir: distanceMeters <= BEL_AIR_SHOPPING_CENTRE.radiusMeters,
+    distanceMeters,
+  };
+}
 
 /**
  * Calculates physical distance in meters between two GPS coordinates using Haversine formula
