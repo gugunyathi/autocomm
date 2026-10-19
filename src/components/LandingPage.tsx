@@ -50,6 +50,7 @@ interface LandingPageProps {
   onOpenWeb3Wallet?: () => void;
   onOpenBitchat?: () => void;
   onOpenAgentPortal?: () => void;
+  onOpenPayPalHackathon?: () => void;
   walletUsdcBalance?: number;
   activeChain?: string;
   // Commercialization Engine & Ad Library Props
@@ -108,6 +109,7 @@ export function LandingPage({
   onOpenWeb3Wallet,
   onOpenBitchat,
   onOpenAgentPortal,
+  onOpenPayPalHackathon,
   walletUsdcBalance = 285.5,
   activeChain = "base",
   walletState = {
@@ -221,6 +223,16 @@ export function LandingPage({
 
           {/* Zone 2: Clean Nav Links on Desktop */}
           <nav className="hidden lg:flex items-center gap-3.5 xl:gap-4.5 text-xs font-medium text-muted-foreground">
+            {onOpenPayPalHackathon && (
+              <button
+                onClick={onOpenPayPalHackathon}
+                className="hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1.5 font-bold text-amber-300 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/30 shadow-[0_0_8px_rgba(245,158,11,0.25)]"
+                title="PayPal AI Hackathon 2026 Engine: AG Grid, Channel3, PayPal Sandbox, APIMatic"
+              >
+                <span>🏆</span>
+                <span>PayPal Hub</span>
+              </button>
+            )}
             {onOpenAgentPortal && (
               <button
                 onClick={onOpenAgentPortal}
@@ -458,6 +470,17 @@ export function LandingPage({
             </button>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-1 border-t border-border/40">
+              {onOpenPayPalHackathon && (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenPayPalHackathon();
+                  }}
+                  className="block w-full text-left py-2 px-2.5 rounded-xl hover:bg-muted/40 text-amber-300 font-bold hover:text-white transition-colors cursor-pointer"
+                >
+                  🏆 PayPal Hub (AG Grid &amp; A2A)
+                </button>
+              )}
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);

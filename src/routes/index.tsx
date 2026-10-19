@@ -30,6 +30,7 @@ import { AutoWalletModal } from "@/components/marketplace/AutoWalletModal";
 import { Web3WalletModal } from "@/components/marketplace/Web3WalletModal";
 import { BitchatMeshModal } from "@/components/bitchat/BitchatMeshModal";
 import { AgentDevPortalModal } from "@/components/developer/AgentDevPortalModal";
+import { PayPalHackathonModal } from "@/components/PayPalHackathonModal";
 import {
   DEFAULT_USER_COORDS,
   BEL_AIR_SHOPPING_CENTRE,
@@ -154,6 +155,10 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
   const [web3WalletOpen, setWeb3WalletOpen] = useState(false);
   const [bitchatOpen, setBitchatOpen] = useState(false);
   const [agentDevPortalOpen, setAgentDevPortalOpen] = useState(false);
+  const [paypalHackathonOpen, setPaypalHackathonOpen] = useState(false);
+  const [paypalHackathonTab, setPaypalHackathonTab] = useState<
+    "ag-grid" | "channel3" | "paypal" | "apimatic"
+  >("ag-grid");
 
   // FinTech, Web3, Shopify, Attention Ads & Intent Wishlist Hook
   const {
@@ -1138,6 +1143,10 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
           onOpenWeb3Wallet={() => setWeb3WalletOpen(true)}
           onOpenBitchat={() => setBitchatOpen(true)}
           onOpenAgentPortal={() => setAgentDevPortalOpen(true)}
+          onOpenPayPalHackathon={() => {
+            setPaypalHackathonTab("ag-grid");
+            setPaypalHackathonOpen(true);
+          }}
           walletUsdcBalance={walletState.balances.USDC}
           activeChain={walletState.network}
           walletState={walletState}
@@ -1247,6 +1256,12 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
         />
         {/* BitChat BLE Mesh & Nostr A2A Terminal Modal */}
         <BitchatMeshModal isOpen={bitchatOpen} onClose={() => setBitchatOpen(false)} />
+        {/* PayPal AI Hackathon 2026 Engine Modal */}
+        <PayPalHackathonModal
+          isOpen={paypalHackathonOpen}
+          onClose={() => setPaypalHackathonOpen(false)}
+          initialTab={paypalHackathonTab}
+        />
       </>
     );
   }
@@ -1282,6 +1297,20 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
 
           {/* Quick Actions (User, Perimeter & Scan) */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* PayPal AI Hackathon Hub Badge */}
+            <button
+              onClick={() => {
+                setPaypalHackathonTab("ag-grid");
+                setPaypalHackathonOpen(true);
+              }}
+              className="glass flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 text-[9.5px] sm:text-[10.5px] font-mono text-amber-300 border-amber-500/40 bg-amber-500/10 hover:border-amber-400 hover:bg-amber-500/20 transition-all cursor-pointer shadow-[0_0_8px_rgba(245,158,11,0.25)]"
+              title="Open PayPal AI Hackathon Hub (AG Grid, Channel3, PayPal Sandbox, APIMatic)"
+            >
+              <span>🏆</span>
+              <span className="font-bold hidden xs:inline">PayPal Hub</span>
+              <span className="font-bold xs:hidden">Hub</span>
+            </button>
+
             {/* BitChat Mesh Badge */}
             <button
               onClick={() => setBitchatOpen(true)}
@@ -2884,6 +2913,12 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
         arbitrageLedger={arbitrageLedger}
         onGenerateApiKey={handleGenerateApiKey}
         onRecordArbitrageSavings={handleRecordArbitrageSavings}
+      />
+      {/* PayPal AI Hackathon 2026 Engine Modal */}
+      <PayPalHackathonModal
+        isOpen={paypalHackathonOpen}
+        onClose={() => setPaypalHackathonOpen(false)}
+        initialTab={paypalHackathonTab}
       />
     </main>
   );
