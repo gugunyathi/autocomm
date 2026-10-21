@@ -83,6 +83,9 @@ export function AgentNameServiceModal({
   const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Recent Searches Feature
+  const [recentSearches, setRecentSearches] = useState<string[]>(["apple", "nike", "x", "007"]);
+
   // Batch Registration Cart
   const [batchCart, setBatchCart] = useState<string[]>([]);
   const [isBatchDrawerOpen, setIsBatchDrawerOpen] = useState(false);
@@ -597,10 +600,55 @@ export function AgentNameServiceModal({
                   placeholder="Search available handles or check length (e.g. x, 007, ai, bot, shop, alpha, trends, coffee)..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && searchQuery.trim()) {
+                      const clean = searchQuery
+                        .trim()
+                        .toLowerCase()
+                        .replace(/[^a-z0-9_-]/g, "");
+                      if (clean && !recentSearches.includes(clean)) {
+                        setRecentSearches((prev) => [clean, ...prev.slice(0, 5)]);
+                      }
+                    }
+                  }}
                   className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-black/60 border border-cyan-500/40 text-sm text-white placeholder-muted-foreground font-mono focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 shadow-xl"
                   autoFocus
                 />
               </div>
+
+              {/* Recent Searches Pills */}
+              {recentSearches.length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap font-mono text-xs">
+                  <span className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-cyan-400" /> Recent:
+                  </span>
+                  {recentSearches.map((term) => (
+                    <button
+                      key={term}
+                      onClick={() => setSearchQuery(term)}
+                      className="px-2.5 py-1 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/60 transition-all text-[11px] font-bold cursor-pointer flex items-center gap-1.5"
+                    >
+                      <span>{term}.agent</span>
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setRecentSearches(recentSearches.filter((t) => t !== term));
+                        }}
+                        className="text-muted-foreground hover:text-white"
+                        title="Remove from recent searches"
+                      >
+                        ×
+                      </span>
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setRecentSearches([])}
+                    className="text-[10px] text-muted-foreground hover:text-white underline cursor-pointer ml-1"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
 
               {/* Instant Search Result Card */}
               {searchQuery.trim() && (
