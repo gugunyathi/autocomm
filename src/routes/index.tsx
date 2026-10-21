@@ -31,6 +31,7 @@ import { Web3WalletModal } from "@/components/marketplace/Web3WalletModal";
 import { BitchatMeshModal } from "@/components/bitchat/BitchatMeshModal";
 import { AgentDevPortalModal } from "@/components/developer/AgentDevPortalModal";
 import { PayPalHackathonModal } from "@/components/PayPalHackathonModal";
+import { AgentNameServiceModal } from "@/components/names/AgentNameServiceModal";
 import {
   DEFAULT_USER_COORDS,
   BEL_AIR_SHOPPING_CENTRE,
@@ -159,6 +160,10 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
   const [paypalHackathonTab, setPaypalHackathonTab] = useState<
     "ag-grid" | "channel3" | "paypal" | "apimatic"
   >("ag-grid");
+  const [agentNamesModalOpen, setAgentNamesModalOpen] = useState(false);
+  const [agentNamesTab, setAgentNamesTab] = useState<
+    "search" | "owners" | "leaderboard" | "auctions" | "secondary" | "x402"
+  >("search");
 
   // FinTech, Web3, Shopify, Attention Ads & Intent Wishlist Hook
   const {
@@ -1147,6 +1152,18 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
             setPaypalHackathonTab("ag-grid");
             setPaypalHackathonOpen(true);
           }}
+          onOpenAgentNames={() => {
+            setAgentNamesTab("search");
+            setAgentNamesModalOpen(true);
+          }}
+          onOpenOwnersDirectory={() => {
+            setAgentNamesTab("owners");
+            setAgentNamesModalOpen(true);
+          }}
+          onOpenLeaderboard={() => {
+            setAgentNamesTab("leaderboard");
+            setAgentNamesModalOpen(true);
+          }}
           walletUsdcBalance={walletState.balances.USDC}
           activeChain={walletState.network}
           walletState={walletState}
@@ -1262,6 +1279,14 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
           onClose={() => setPaypalHackathonOpen(false)}
           initialTab={paypalHackathonTab}
         />
+        {/* Agent Name Service (.agent handles & x402 marketplace) Modal */}
+        <AgentNameServiceModal
+          isOpen={agentNamesModalOpen}
+          onClose={() => setAgentNamesModalOpen(false)}
+          initialTab={agentNamesTab}
+          walletAddress={walletState.address}
+          userUsdcBalance={walletState.balances.USDC}
+        />
       </>
     );
   }
@@ -1309,6 +1334,17 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
               <span>🏆</span>
               <span className="font-bold hidden xs:inline">PayPal Hub</span>
               <span className="font-bold xs:hidden">Hub</span>
+            </button>
+
+            {/* Agent Name Sales (.agent) & x402 Marketplace */}
+            <button
+              onClick={() => setAgentNamesModalOpen(true)}
+              className="glass flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 text-[9.5px] sm:text-[10.5px] font-mono text-cyan-300 border-cyan-500/40 bg-cyan-500/10 hover:border-cyan-400 hover:bg-cyan-500/20 transition-all cursor-pointer shadow-[0_0_8px_rgba(6,182,212,0.25)]"
+              title="Agent Name Sales (.agent handles) & x402 Secondary Marketplace"
+            >
+              <span>🏷️</span>
+              <span className="font-bold hidden xs:inline">.agent Names</span>
+              <span className="font-bold xs:hidden">Names</span>
             </button>
 
             {/* BitChat Mesh Badge */}
@@ -2919,6 +2955,14 @@ export function App({ initialView }: { initialView?: "landing" | "mesh" } = {}) 
         isOpen={paypalHackathonOpen}
         onClose={() => setPaypalHackathonOpen(false)}
         initialTab={paypalHackathonTab}
+      />
+      {/* Agent Name Service (.agent handles & x402 marketplace) Modal */}
+      <AgentNameServiceModal
+        isOpen={agentNamesModalOpen}
+        onClose={() => setAgentNamesModalOpen(false)}
+        initialTab={agentNamesTab}
+        walletAddress={walletState.address}
+        userUsdcBalance={walletState.balances.USDC}
       />
     </main>
   );

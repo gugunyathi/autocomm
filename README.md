@@ -10,6 +10,9 @@
 ![PayPal Sandbox](https://img.shields.io/badge/PayPal-Sandbox_Orders_v2-003087?style=for-the-badge&logo=paypal&logoColor=white)
 ![Channel3](https://img.shields.io/badge/Channel3-WebRTC_Stream-FF4500?style=for-the-badge)
 ![APIMatic](https://img.shields.io/badge/APIMatic-OpenAPI_3.0-4B0082?style=for-the-badge)
+![x402 Protocol](https://img.shields.io/badge/x402-HTTP_402_Agent_Payments-00E5FF?style=for-the-badge)
+![Multi--Chain](https://img.shields.io/badge/Crypto-Base_%7C_Arc_%7C_Solana-6366F1?style=for-the-badge)
+![Agent Names](https://img.shields.io/badge/.agent-Name_Registry_%26_Auctions-10B981?style=for-the-badge)
 ![PWA Ready](https://img.shields.io/badge/PWA-Installable-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white)
 
 ---
@@ -63,15 +66,22 @@ AutoCom bridges the physical and agentic commerce worlds by providing:
 
 All endpoints are hosted and available via the backend HTTP server with full CORS support (`Access-Control-Allow-Origin: *`):
 
-| Method | Endpoint                      | Description                               | Request Payload                        | Response                                          |
-| :----- | :---------------------------- | :---------------------------------------- | :------------------------------------- | :------------------------------------------------ |
-| `GET`  | `/api/health`                 | Service health telemetry & outlet stats   | None                                   | `{ status: "HEALTHY", outletsActive: 8, ... }`    |
-| `GET`  | `/api/mall/directory`         | 8-Outlet Bel Air Mall spatial catalog     | None                                   | Array of `MallOutlet` objects with GPS & bearings |
-| `POST` | `/api/agent/negotiate`        | A2A bilateral bargaining packet handler   | `A2AMessage` JSON                      | `A2AMessage` (Accept / Counter-Offer)             |
-| `POST` | `/api/paypal/create-order`    | Create PayPal Sandbox order with ZAR->USD | `{ storeId, negotiatedPriceZAR, ... }` | `{ orderId, convertedUSD, exchangeRate, ... }`    |
-| `POST` | `/api/paypal/checkout-settle` | Zero-click vaulted M2M settlement         | `{ orderId, agentAuthorizationHash }`  | `{ transactionId, settledAmountUSD, success }`    |
-| `GET`  | `/api/paypal/audit-ledger`    | Real-time in-memory audit ledger records  | None                                   | `{ count: number, orders: [] }`                   |
-| `GET`  | `/api/openapi.json`           | Live OpenAPI 3.0.3 specification JSON     | None                                   | Full OpenAPI 3.0.3 Contract for APIMatic          |
+| Method | Endpoint                      | Description                                   | Request Payload                        | Response                                          |
+| :----- | :---------------------------- | :-------------------------------------------- | :------------------------------------- | :------------------------------------------------ |
+| `GET`  | `/api/health`                 | Service health telemetry & outlet stats       | None                                   | `{ status: "HEALTHY", outletsActive: 8, ... }`    |
+| `GET`  | `/api/mall/directory`         | 8-Outlet Bel Air Mall spatial catalog         | None                                   | Array of `MallOutlet` objects with GPS & bearings |
+| `POST` | `/api/agent/negotiate`        | A2A bilateral bargaining packet handler       | `A2AMessage` JSON                      | `A2AMessage` (Accept / Counter-Offer)             |
+| `POST` | `/api/paypal/create-order`    | Create PayPal Sandbox order with ZAR->USD     | `{ storeId, negotiatedPriceZAR, ... }` | `{ orderId, convertedUSD, exchangeRate, ... }`    |
+| `POST` | `/api/paypal/checkout-settle` | Zero-click vaulted M2M settlement             | `{ orderId, agentAuthorizationHash }`  | `{ transactionId, settledAmountUSD, success }`    |
+| `GET`  | `/api/paypal/audit-ledger`    | Real-time in-memory audit ledger records      | None                                   | `{ count: number, orders: [] }`                   |
+| `GET`  | `/api/openapi.json`           | Live OpenAPI 3.0.3 specification JSON         | None                                   | Full OpenAPI 3.0.3 Contract for APIMatic          |
+| `GET`  | `/api/names/search`           | Real-time .agent handle search & pricing      | `?query=handle`                        | Search result with tier, status, price, auction   |
+| `GET`  | `/api/names/directory`        | Full registry directory & auctions            | None                                   | `{ totalRegistered, auctions, secondary, ... }`   |
+| `GET`  | `/api/names/x402-quote`       | HTTP 402 payment challenge quote              | `?name=handle`                         | Challenge schema, pay-to addresses & cost         |
+| `POST` | `/api/names/claim`            | Claim handle (x402 / Base / Arc / SOL / Card) | Claim payload + x402 headers           | Claimed `AgentNameRecord` or HTTP 402 challenge   |
+| `POST` | `/api/names/bid`              | Place auction bid for reserved handle         | `{ name, bidder, bidAmountUSD, ... }`  | Updated auction state & top bidder                |
+| `POST` | `/api/names/buy-secondary`    | Instant P2P buyout from secondary market      | `{ listingId, buyer, paymentMethod }`  | Settled secondary trade & transferred ownership   |
+| `GET`  | `/api/names/skill.json`       | Agent Skill Manifest for autonomous bots      | None                                   | OpenAPI agent skill specification for x402 bot    |
 
 ### Sample cURL Requests
 
@@ -185,7 +195,47 @@ AutoCom models 8 real-world retail outlets physically located at **Bel Air Shopp
 - **API Standards**: OpenAPI 3.0.3 + APIMatic SDK Schema
 - **Mesh Communication**: BitChat BLE Mesh Protocol + Nostr A2A Relays
 - **Authentication**: WebAuthn Biometric Passkeys (`@simplewebauthn/browser`)
+- **Agent Payments**: x402 Protocol (HTTP 402 Payment Required for autonomous bots)
+- **Multi-Chain Crypto**: Base, Arc, and Solana settlement rails + Card tokenization
 - **Icons**: [Lucide React](https://lucide.dev/)
+
+---
+
+## 🏷️ Agent Name Sales & Registry (.agent handles)
+
+AutoCom features a decentralized, multi-tiered identity registry for personal autonomous agents and merchant bots:
+
+### 1. Sliding Scale Character Pricing & Anti-Spam Architecture
+
+- **1 Character** (e.g. `a.agent`, `7.agent`, `q.agent`): `$1,000` / `1,000 USDC` (Batch up to 20)
+- **2 Characters** (e.g. `ai.agent`, `za.agent`, `42.agent`): `$600` / `600 USDC` (Batch up to 20)
+- **3 Characters** (e.g. `bot.agent`, `pay.agent`, `gpt.agent`): `$300` / `300 USDC` (Batch up to 20)
+- **4 Characters** (e.g. `shop.agent`, `mesh.agent`): `$20` / `20 USDC` (Max 1 per registration)
+- **5 Characters** (e.g. `alpha.agent`, `trend.agent`): `$2` / `2 USDC` (Max 1 per registration)
+- **6 Characters** (e.g. `istore.agent`, `coffee.agent`): `$1` / `1 USDC` (Max 1 per registration)
+- **7+ Characters (Standard)**: **FREE ($0.00)** for Humans / **$0.20 USDC** for AI Agents (Anti-Spam protocol fee, Max 1 per registration)
+- **Mainstream Brand Verification Tier**: `$1,000` / `1,000 USDC` baseline or Special Auction
+
+### 2. Registration Limits & Batch Purchasing Rules
+
+- **Anti-Spam Single Registration Limit**: Strictly maximum **1 name per registration** for standard handles (4, 5, 6, and 7+ characters) to prevent bulk squatting attacks.
+- **Premium Tier Batch Exception**: Users and AI agents securing **1, 2, or 3-character handles** and those buying winning **auction items** can batch buy **up to 20 names in a single transaction** via `POST /api/names/batch-claim`.
+
+### 3. Directory of Owners & Top Sales Leaderboard
+
+- **Directory of Owners (`/names` -> Directory tab & `GET /api/names/owners`)**: Public verifiable ownership registry with live search, verification badges for merchant anchors, wallet addresses, agent IDs, and claimed timestamps.
+- **Top Sales Leaderboard (`/names` -> Leaderboard tab & `GET /api/names/leaderboard`)**: Real-time sales ranking across Primary, Secondary, and Auction markets (with record sales like `$95,000` for `apple.agent` and `$72,000` for `nike.agent`).
+
+### 4. Iconic & Mainstream Brand Auctions
+
+Pre-reserved high-demand handles (`0`, `007`, `1`, `god`, `vip`, `x`, `boss`, `alpha`, `777`) and mainstream trademarks (`nike`, `coke`, `apple`, `zara`, `starbucks`, `tesla`, `gucci`, `amazon`) are protected from squatting and allocated via programmatic English auctions with countdown timers and minimum bid increments.
+
+### 5. Payment Rails & Autonomous x402 Protocol
+
+- **Autonomous AI Agents**: Can discover, quote, and settle handles using the **x402 Protocol** (`HTTP 402 Payment Required` standard with `X-402-Payment-Token` headers and zero-click settlement).
+- **Humans**: Choice of multi-chain crypto on **Base**, **Arc**, or **Solana** (USDC/SOL/ETH), or standard Credit/Debit card checkout with simulated cardholder tokenization.
+- **Secondary Marketplace**: Built-in peer-to-peer marketplace for secondary handle trading with floor pricing, transfer-of-ownership logs, and instant buy capability.
+- **Agent Skill Manifest**: Documented in `skills/agent_name_service/SKILL.md` and live at `/api/names/skill.json` for plug-and-play LLM tool calls.
 
 ---
 

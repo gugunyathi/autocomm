@@ -51,6 +51,9 @@ interface LandingPageProps {
   onOpenBitchat?: () => void;
   onOpenAgentPortal?: () => void;
   onOpenPayPalHackathon?: () => void;
+  onOpenAgentNames?: () => void;
+  onOpenOwnersDirectory?: () => void;
+  onOpenLeaderboard?: () => void;
   walletUsdcBalance?: number;
   activeChain?: string;
   // Commercialization Engine & Ad Library Props
@@ -110,6 +113,9 @@ export function LandingPage({
   onOpenBitchat,
   onOpenAgentPortal,
   onOpenPayPalHackathon,
+  onOpenAgentNames,
+  onOpenOwnersDirectory,
+  onOpenLeaderboard,
   walletUsdcBalance = 285.5,
   activeChain = "base",
   walletState = {
@@ -231,6 +237,36 @@ export function LandingPage({
               >
                 <span>🏆</span>
                 <span>PayPal Hub</span>
+              </button>
+            )}
+            {onOpenAgentNames && (
+              <button
+                onClick={onOpenAgentNames}
+                className="hover:text-cyan-300 transition-colors cursor-pointer flex items-center gap-1.5 font-bold text-cyan-300 bg-cyan-500/10 px-2.5 py-1 rounded-lg border border-cyan-500/40 shadow-[0_0_8px_rgba(6,182,212,0.25)]"
+                title="Agent Name Sales (.agent Handles) & x402 Marketplace"
+              >
+                <span>🏷️</span>
+                <span>.agent Names</span>
+              </button>
+            )}
+            {onOpenOwnersDirectory && (
+              <button
+                onClick={onOpenOwnersDirectory}
+                className="hover:text-teal-300 transition-colors cursor-pointer flex items-center gap-1.5 font-bold text-teal-300 bg-teal-500/10 px-2.5 py-1 rounded-lg border border-teal-500/30 shadow-[0_0_8px_rgba(20,184,166,0.2)]"
+                title="Directory of .agent Name Owners & Verified Handles"
+              >
+                <span>👥</span>
+                <span>Owners</span>
+              </button>
+            )}
+            {onOpenLeaderboard && (
+              <button
+                onClick={onOpenLeaderboard}
+                className="hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1.5 font-bold text-amber-300 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/30 shadow-[0_0_8px_rgba(245,158,11,0.2)]"
+                title="Agent Name Sales Leaderboard (Primary, Secondary, Auctions)"
+              >
+                <span>🏆</span>
+                <span>Leaderboard</span>
               </button>
             )}
             {onOpenAgentPortal && (
@@ -479,6 +515,39 @@ export function LandingPage({
                   className="block w-full text-left py-2 px-2.5 rounded-xl hover:bg-muted/40 text-amber-300 font-bold hover:text-white transition-colors cursor-pointer"
                 >
                   🏆 PayPal Hub (AG Grid &amp; A2A)
+                </button>
+              )}
+              {onOpenAgentNames && (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenAgentNames();
+                  }}
+                  className="block w-full text-left py-2 px-2.5 rounded-xl hover:bg-muted/40 text-cyan-300 font-bold hover:text-white transition-colors cursor-pointer"
+                >
+                  🏷️ .agent Names &amp; x402 Market
+                </button>
+              )}
+              {onOpenOwnersDirectory && (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenOwnersDirectory();
+                  }}
+                  className="block w-full text-left py-2 px-2.5 rounded-xl hover:bg-muted/40 text-teal-300 font-bold hover:text-white transition-colors cursor-pointer"
+                >
+                  👥 Directory of Owners &amp; Registry
+                </button>
+              )}
+              {onOpenLeaderboard && (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenLeaderboard();
+                  }}
+                  className="block w-full text-left py-2 px-2.5 rounded-xl hover:bg-muted/40 text-amber-300 font-bold hover:text-white transition-colors cursor-pointer"
+                >
+                  🏆 Top Sales Leaderboard (P/S/A)
                 </button>
               )}
               <button

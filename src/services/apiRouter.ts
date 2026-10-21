@@ -357,6 +357,294 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
     });
   }
 
+  // 8. Agent Names Search: GET /api/names/search?query=...
+  if (pathname === "/api/names/search" && method === "GET") {
+    const q = url.searchParams.get("query") || "";
+    const isAgent = url.searchParams.get("isAgent") === "true";
+    const { searchAgentNames } = await import("./agentNameService");
+    const result = await searchAgentNames(q, isAgent);
+    return jsonResponse(result);
+  }
+
+  // 9. Agent Names Directory: GET /api/names/directory
+  if (pathname === "/api/names/directory" && method === "GET") {
+    const { searchAgentNames } = await import("./agentNameService");
+    const result = await searchAgentNames("");
+    return jsonResponse({
+      totalCount: result.allRecords.length,
+      auctions: result.allRecords.filter((r) => r.status === "AUCTION_LIVE"),
+      secondaryMarket: result.allRecords.filter((r) => r.status === "SECONDARY_LISTED"),
+      claimed: result.allRecords.filter((r) => r.status === "CLAIMED"),
+      pricingSchedule: {
+        oneCharacter: {
+          usd: 1000,
+          zar: 18500,
+          description: "1 Letter or 1 Number (x, 7, q) - Batch up to 20",
+        },
+        twoCharacters: {
+          usd: 600,
+          zar: 11100,
+          description: "2 Letters or Numbers (ai, za, 42) - Batch up to 20",
+        },
+        threeCharacters: {
+          usd: 300,
+          zar: 5550,
+          description: "3 Letters or Numbers (bot, gpt, pay) - Batch up to 20",
+        },
+        fourCharacters: {
+          usd: 20,
+          zar: 370,
+          description: "4 Letters or Numbers (shop, mesh) - Max 1 per registration",
+        },
+        fiveCharacters: {
+          usd: 2,
+          zar: 37,
+          description: "5 Letters or Numbers (alpha, trend) - Max 1 per registration",
+        },
+        sixCharacters: {
+          usd: 1,
+          zar: 18.5,
+          description: "6 Letters or Numbers (istore, coffee) - Max 1 per registration",
+        },
+        sevenPlusCharacters: {
+          usdHuman: 0,
+          usdAgent: 0.2,
+          description:
+            "7+ Characters: Free for Humans / $0.20 for AI Agents (Anti-Spam) - Max 1 per registration",
+        },
+        mainstreamBrands: {
+          usd: 1000,
+          zar: 18500,
+          description: "Brand Trademark Tier or Special Auction",
+        },
+      },
+    });
+  }
+
+  // 10. Agent Names Directory of Owners: GET /api/names/owners
+  if (pathname === "/api/names/owners" && method === "GET") {
+    const search = url.searchParams.get("search") || undefined;
+    const category = url.searchParams.get("category") || undefined;
+    const chain = url.searchParams.get("chain") || undefined;
+    const ownerType = url.searchParams.get("ownerType") || undefined;
+    const { getOwnerDirectory } = await import("./agentNameService");
+    const owners = getOwnerDirectory({ search, category, chain, ownerType });
+    return jsonResponse({
+      count: owners.length,
+      owners,
+    });
+  }
+
+  // 11. Agent Names Leaderboard: GET /api/names/leaderboard
+  if (pathname === "/api/names/leaderboard" && method === "GET") {
+    const marketType = url.searchParams.get("marketType") || undefined;
+    const { getLeaderboard } = await import("./agentNameService");
+    const leaderboard = getLeaderboard(marketType);
+    return jsonResponse({
+      count: leaderboard.length,
+      marketType: marketType || "ALL",
+      leaderboard,
+    });
+  }
+
+  // 12. Agent Names x402 Quote Challenge: GET /api/names/x402-quote?name=...
+  if (pathname === "/api/names/x402-quote" && method === "GET") {
+    const name = url.searchParams.get("name") || "agent";
+    const isAgent = url.searchParams.get("isAgent") !== "false";
+    const { getX402PaymentQuote } = await import("./agentNameService");
+    const quote = getX402PaymentQuote(name, isAgent);
+    return jsonResponse(quote, 200);
+  }
+
+  // 13. Agent Names Claim: POST /api/names/claim
+  if (pathname === "/api/names/claim" && method === "POST") {
+    try {
+      const body = await request.json();
+      const name = String(body.name || "")
+        .toLowerCase()
+        .trim();
+      const paymentMethod = String(body.paymentMethod || "x402");
+      const isAgent = paymentMethod === "x402" || body.isAgent === true;
+      const { calculateNamePricing, claimAgentName, getX402PaymentQuote } =
+        await import("./agentNameService");
+      const pricing = calculateNamePricing(name, isAgent);
+
+      // Check if name is auction-reserved or brand-reserved
+      if (pricing.isAuctionReserved || pricing.isBrandReserved) {
+        return jsonResponse(
+          {
+            error: "RESERVED_FOR_AUCTION",
+            message: `"${pricing.fullName}" is pre-reserved for curated auction. Submit a bid via /api/names/bid instead.`,
+            pricing,
+          },
+          403,
+        );
+      }
+
+      // x402 Protocol Check: If paymentMethod is x402 and header/token is absent, respond with HTTP 402 Payment Required!
+      const x402Token = request.headers.get("X-402-Payment-Token") || body.x402Token;
+      if (paymentMethod === "x402" && !x402Token) {
+        const challenge = getX402PaymentQuote(name, true);
+        return new Response(JSON.stringify(challenge, null, 2), {
+          status: 402,
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "X-402-Payment-Required": "true",
+            "X-402-Cost-USD": String(pricing.priceUsd),
+            "X-402-Destination-Base": "0x8849c71a3e2b9f8d1c0a7e6b5d4c3b2a1e0f9a8b",
+            "X-402-Destination-Solana": "AutocomNameServiceVaultSolana11111111111111111",
+            "X-402-Destination-Arc": "0x3344b81c2e0f9a7b6c5d4e3f2a1b0c9d8e7f6a5b",
+          },
+        });
+      }
+
+      const result = await claimAgentName(body);
+      return jsonResponse(result, 201);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return jsonResponse({ error: "Failed to process agent name claim", details: msg }, 400);
+    }
+  }
+
+  // 14. Agent Names Batch Claim: POST /api/names/batch-claim
+  if (pathname === "/api/names/batch-claim" && method === "POST") {
+    try {
+      const body = await request.json();
+      const names = Array.isArray(body.names) ? body.names : [];
+      const paymentMethod = String(body.paymentMethod || "crypto");
+      const isAgent = paymentMethod === "x402" || body.isAgent === true;
+
+      const { batchClaimAgentNames, validateRegistrationBatch } =
+        await import("./agentNameService");
+      const validation = validateRegistrationBatch(names, isAgent);
+
+      if (!validation.allowed) {
+        return jsonResponse(
+          {
+            error: "BATCH_LIMIT_EXCEEDED",
+            message: validation.reason,
+            validation,
+          },
+          400,
+        );
+      }
+
+      const result = await batchClaimAgentNames({
+        names,
+        type: body.type || "personal",
+        paymentMethod,
+        network: body.network || "base",
+        isAgent,
+        cardToken: body.cardToken,
+        x402Token: body.x402Token,
+        agentId: body.agentId,
+        ownerIdentifier: body.ownerIdentifier,
+      });
+
+      return jsonResponse(result, 201);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return jsonResponse({ error: "Batch claim failed", details: msg }, 400);
+    }
+  }
+
+  // 15. Agent Names Auction Bid: POST /api/names/bid
+  if (pathname === "/api/names/bid" && method === "POST") {
+    try {
+      const body = await request.json();
+      const { placeAuctionBid } = await import("./agentNameService");
+      const result = await placeAuctionBid(
+        body.name,
+        Number(body.amountUsd),
+        body.bidder || "autonomous_agent_proxy",
+        body.paymentMethod || "x402",
+        body.network || "base",
+      );
+      return jsonResponse(result, 200);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to place auction bid";
+      return jsonResponse({ error: msg }, 400);
+    }
+  }
+
+  // 16. Agent Names Secondary Marketplace List: POST /api/names/list
+  if (pathname === "/api/names/list" && method === "POST") {
+    try {
+      const body = await request.json();
+      const { listOnSecondaryMarket } = await import("./agentNameService");
+      const result = await listOnSecondaryMarket(
+        body.name,
+        Number(body.listedPriceUsd),
+        body.seller || "owner_wallet",
+        body.network || "base",
+      );
+      return jsonResponse(result, 200);
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : "Failed to list name on secondary marketplace";
+      return jsonResponse({ error: msg }, 400);
+    }
+  }
+
+  // 17. Agent Names Secondary Marketplace Buy: POST /api/names/buy-secondary
+  if (pathname === "/api/names/buy-secondary" && method === "POST") {
+    try {
+      const body = await request.json();
+      const { buyFromSecondaryMarket } = await import("./agentNameService");
+      const result = await buyFromSecondaryMarket(
+        body.name,
+        body.buyer || "buyer_agent",
+        body.paymentMethod || "x402",
+        body.network || "base",
+      );
+      return jsonResponse(result, 200);
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : "Failed to buy name from secondary marketplace";
+      return jsonResponse({ error: msg }, 400);
+    }
+  }
+
+  // 18. Agent Skill Manifest for x402 Search & Buy: GET /api/names/skill.json
+  if (pathname === "/api/names/skill.json" && method === "GET") {
+    return jsonResponse({
+      name: "autocom-agent-name-service",
+      version: "2.0.0",
+      description:
+        "Autonomous AI Agent skill to search, quote, claim, batch-buy, and trade sovereign .agent names using HTTP 402 (x402) micropayments and multi-chain crypto (Base, Arc, Solana).",
+      protocol: "x402-autonomous-v1",
+      supportedNetworks: ["base", "solana", "arc"],
+      slidingPricingScale: {
+        "1_character": "$1,000 / 1000 USDC (Batch up to 20)",
+        "2_characters": "$600 / 600 USDC (Batch up to 20)",
+        "3_characters": "$300 / 300 USDC (Batch up to 20)",
+        "4_characters": "$20 / 20 USDC (Max 1 per registration)",
+        "5_characters": "$2 / 2 USDC (Max 1 per registration)",
+        "6_characters": "$1 / 1 USDC (Max 1 per registration)",
+        "7_plus_characters":
+          "Free ($0.00) for humans / $0.20 for AI agents anti-spam (Max 1 per registration)",
+      },
+      batchLimits: {
+        standardHandles: "Strictly maximum 1 name per registration for standard 4+ letter handles",
+        premiumAndAuctions:
+          "Up to 20 names per transaction for 1, 2, 3 letters/numbers and winning auction items",
+      },
+      endpoints: {
+        search: "/api/names/search?query={name}&isAgent={true|false}",
+        x402Quote: "/api/names/x402-quote?name={name}&isAgent={true|false}",
+        claim: "/api/names/claim",
+        batchClaim: "/api/names/batch-claim",
+        ownersDirectory:
+          "/api/names/owners?search={query}&category={ALL|PERSONAL|MERCHANT}&chain={ALL|Base|Arc|Solana}",
+        leaderboard: "/api/names/leaderboard?marketType={ALL|PRIMARY|SECONDARY|AUCTION}",
+        bid: "/api/names/bid",
+        listSecondary: "/api/names/list",
+        buySecondary: "/api/names/buy-secondary",
+      },
+    });
+  }
+
   // Unhandled /api route
   return jsonResponse({ error: `Endpoint ${pathname} not found` }, 404);
 }
