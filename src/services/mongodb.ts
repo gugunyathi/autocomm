@@ -1,38 +1,79 @@
 import { MongoClient, type Db } from "mongodb";
 import { ALL_MALLS } from "../lib/malls/index";
+import { loadServerEnv } from "../lib/env";
 
-const uri = process.env.MONGODB_URI || "";
+// Ensure server environment variables are populated from .env
+loadServerEnv();
+
+let activeUri: string = "";
 let client: MongoClient | null = null;
-let clientPromise: Promise<MongoClient> | null = null;
+let clientPromise: Promise<MongoClient | null> | null = null;
 let dbInstance: Db | null = null;
 let isInitialized = false;
 
+/**
+ * Dynamically resolves MongoDB URI from process.env or Vite environment
+ */
+export function getMongoUri(): string {
+  loadServerEnv();
+  return (
+    process.env.MONGODB_URI ||
+    process.env.MONGO_URI ||
+    (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_MONGODB_URI) ||
+    ""
+  );
+}
+
+/**
+ * Returns connected MongoClient instance or null if unconfigured
+ */
 export async function getMongoClient(): Promise<MongoClient | null> {
-  if (!uri) {
+  const currentUri = getMongoUri();
+
+  if (!currentUri) {
     return null;
   }
-  if (!clientPromise) {
-    client = new MongoClient(uri, {
+
+  // If URI changed or client not created yet, initialize
+  if (!client || activeUri !== currentUri) {
+    activeUri = currentUri;
+    dbInstance = null;
+    isInitialized = false;
+
+    client = new MongoClient(currentUri, {
       maxPoolSize: 10,
       serverSelectionTimeoutMS: 5000,
     });
-    clientPromise = client.connect().catch((err) => {
-      console.error(
-        "[MongoDB] Connection error:",
-        err instanceof Error ? err.message : String(err),
-      );
-      clientPromise = null;
-      return null as unknown as MongoClient;
-    });
+
+    clientPromise = client
+      .connect()
+      .then((c) => {
+        console.log("[MongoDB] Connected successfully to cluster database.");
+        return c;
+      })
+      .catch((err) => {
+        console.error(
+          "[MongoDB] Connection error:",
+          err instanceof Error ? err.message : String(err),
+        );
+        client = null;
+        clientPromise = null;
+        return null;
+      });
   }
+
   return clientPromise;
 }
 
+/**
+ * Returns active database handle
+ */
 export async function getDb(): Promise<Db | null> {
   if (dbInstance) return dbInstance;
   const connectedClient = await getMongoClient();
   if (!connectedClient) return null;
-  dbInstance = connectedClient.db("autocom_db");
+  const dbName = process.env.MONGODB_DB_NAME || "autocom_db";
+  dbInstance = connectedClient.db(dbName);
   return dbInstance;
 }
 
@@ -46,20 +87,35 @@ export async function initAndSeedDatabase(): Promise<{
   mallCount: number;
   storeCount: number;
   productCount: number;
+  message?: string;
 }> {
   if (isInitialized) {
-    return { success: true, mallCount: ALL_MALLS.length, storeCount: 40, productCount: 320 };
+    return {
+      success: true,
+      mallCount: ALL_MALLS.length,
+      storeCount: 40,
+      productCount: 320,
+      message: "Database already verified & initialized",
+    };
   }
 
   try {
     const db = await getDb();
     if (!db) {
-      return { success: false, mallCount: 0, storeCount: 0, productCount: 0 };
+      return {
+        success: false,
+        mallCount: 0,
+        storeCount: 0,
+        productCount: 0,
+        message: "MongoDB URI not configured or connection offline. Using fallback memory store.",
+      };
     }
 
     const mallsCol = db.collection("malls");
     const storesCol = db.collection("stores");
     const productsCol = db.collection("products");
+    const ordersCol = db.collection("orders");
+    const parkedCol = db.collection("parked_offers");
 
     // Create indexes for blazing-fast query latency (<2ms)
     await Promise.allSettled([
@@ -68,6 +124,9 @@ export async function initAndSeedDatabase(): Promise<{
       productsCol.createIndex({ id: 1 }, { unique: true }),
       productsCol.createIndex({ storeId: 1 }),
       productsCol.createIndex({ mallId: 1 }),
+      ordersCol.createIndex({ orderId: 1 }, { unique: true }),
+      ordersCol.createIndex({ createdAt: -1 }),
+      parkedCol.createIndex({ id: 1 }, { unique: true }),
     ]);
 
     let totalStores = 0;
@@ -173,10 +232,17 @@ export async function initAndSeedDatabase(): Promise<{
       mallCount: ALL_MALLS.length,
       storeCount: totalStores,
       productCount: totalProducts,
+      message: "Database seed and index build successfully completed",
     };
   } catch (err: unknown) {
     console.error("[MongoDB] Seeding error:", err instanceof Error ? err.message : String(err));
-    return { success: false, mallCount: 0, storeCount: 0, productCount: 0 };
+    return {
+      success: false,
+      mallCount: 0,
+      storeCount: 0,
+      productCount: 0,
+      message: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -187,14 +253,37 @@ export async function persistOrderToDb(order: Record<string, unknown>): Promise<
   try {
     const db = await getDb();
     if (!db) return false;
-    await db.collection("orders").insertOne({
-      ...order,
-      storedAt: new Date(),
-    });
+    await db.collection("orders").updateOne(
+      { orderId: order.orderId },
+      {
+        $set: {
+          ...order,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: {
+          storedAt: new Date(),
+        },
+      },
+      { upsert: true },
+    );
     return true;
   } catch (e: unknown) {
     console.error("[MongoDB] Failed to persist order:", e instanceof Error ? e.message : String(e));
     return false;
+  }
+}
+
+/**
+ * Retrieves audit orders from MongoDB with in-memory fallback
+ */
+export async function getOrdersFromDb(limit = 100): Promise<any[]> {
+  try {
+    const db = await getDb();
+    if (!db) return [];
+    return await db.collection("orders").find({}).sort({ createdAt: -1 }).limit(limit).toArray();
+  } catch (err) {
+    console.error("[MongoDB] Failed to query orders:", err);
+    return [];
   }
 }
 
@@ -207,13 +296,11 @@ export async function persistParkedOfferToDb(
   try {
     const db = await getDb();
     if (!db) return false;
-    await db
-      .collection("parked_offers")
-      .updateOne(
-        { id: parkedOffer.id },
-        { $set: { ...parkedOffer, storedAt: new Date() } },
-        { upsert: true },
-      );
+    await db.collection("parked_offers").updateOne(
+      { id: parkedOffer.id },
+      { $set: { ...parkedOffer, storedAt: new Date() } },
+      { upsert: true },
+    );
     return true;
   } catch (e: unknown) {
     console.error(
@@ -225,38 +312,162 @@ export async function persistParkedOfferToDb(
 }
 
 /**
- * Returns health status of MongoDB backend
+ * Retrieves parked offers from MongoDB
+ */
+export async function getParkedOffersFromDb(): Promise<any[]> {
+  try {
+    const db = await getDb();
+    if (!db) return [];
+    return await db.collection("parked_offers").find({}).sort({ storedAt: -1 }).toArray();
+  } catch (err) {
+    console.error("[MongoDB] Failed to query parked offers:", err);
+    return [];
+  }
+}
+
+/**
+ * Queries all malls from MongoDB with fallback to static constants
+ */
+export async function getMallsFromDb(): Promise<any[]> {
+  try {
+    const db = await getDb();
+    if (db) {
+      const dbMalls = await db.collection("malls").find({}).toArray();
+      if (dbMalls.length > 0) return dbMalls;
+    }
+  } catch (err) {
+    console.warn("[MongoDB] Fallback to in-memory malls:", err);
+  }
+  return ALL_MALLS;
+}
+
+/**
+ * Queries stores by mallId or category
+ */
+export async function getStoresFromDb(mallId?: string, cat?: string): Promise<any[]> {
+  try {
+    const db = await getDb();
+    if (db) {
+      const filter: Record<string, unknown> = {};
+      if (mallId) filter.mallId = mallId;
+      if (cat) filter.cat = cat;
+      const stores = await db.collection("stores").find(filter).toArray();
+      if (stores.length > 0) return stores;
+    }
+  } catch (err) {
+    console.warn("[MongoDB] Fallback stores query:", err);
+  }
+
+  // Fallback
+  let allStores = ALL_MALLS.flatMap((m) => m.stores);
+  if (mallId) allStores = allStores.filter((s) => (s as any).mallId === mallId);
+  if (cat) allStores = allStores.filter((s) => s.cat.toLowerCase() === cat.toLowerCase());
+  return allStores;
+}
+
+/**
+ * Queries products by storeId, mallId, or search text
+ */
+export async function getProductsFromDb(params?: {
+  mallId?: string;
+  storeId?: string;
+  search?: string;
+  category?: string;
+  limit?: number;
+}): Promise<any[]> {
+  const limit = params?.limit || 100;
+  try {
+    const db = await getDb();
+    if (db) {
+      const filter: Record<string, unknown> = {};
+      if (params?.mallId) filter.mallId = params.mallId;
+      if (params?.storeId) filter.storeId = params.storeId;
+      if (params?.category) filter.category = params.category;
+      if (params?.search) {
+        filter.$or = [
+          { name: { $regex: params.search, $options: "i" } },
+          { description: { $regex: params.search, $options: "i" } },
+          { category: { $regex: params.search, $options: "i" } },
+        ];
+      }
+      const prods = await db.collection("products").find(filter).limit(limit).toArray();
+      if (prods.length > 0) return prods;
+    }
+  } catch (err) {
+    console.warn("[MongoDB] Fallback products query:", err);
+  }
+
+  // In-memory fallback
+  let allProducts = ALL_MALLS.flatMap((m) => m.stores.flatMap((s) => s.products || []));
+  if (params?.storeId) {
+    allProducts = allProducts.filter((p) => (p as any).storeId === params.storeId);
+  }
+  if (params?.category) {
+    allProducts = allProducts.filter((p) => p.category.toLowerCase().includes(params.category!.toLowerCase()));
+  }
+  if (params?.search) {
+    const q = params.search.toLowerCase();
+    allProducts = allProducts.filter(
+      (p) => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q),
+    );
+  }
+  return allProducts.slice(0, limit);
+}
+
+/**
+ * Returns health and connection status of MongoDB backend
  */
 export async function getMongoHealth(): Promise<{
   connected: boolean;
   database: string;
   uriConfigured: boolean;
+  pingMs?: number;
   stats?: {
     collections: string[];
+    mallCount?: number;
+    storeCount?: number;
+    productCount?: number;
+    orderCount?: number;
   };
 }> {
+  const uri = getMongoUri();
   if (!uri) {
     return { connected: false, database: "none", uriConfigured: false };
   }
   try {
+    const startTime = Date.now();
     const db = await getDb();
     if (!db) {
-      return { connected: false, database: "autocom_db", uriConfigured: true };
+      return { connected: false, database: process.env.MONGODB_DB_NAME || "autocom_db", uriConfigured: true };
     }
     const ping = await db.command({ ping: 1 });
+    const pingMs = Date.now() - startTime;
     const collections = await db.listCollections().toArray();
+
+    const [mallCount, storeCount, productCount, orderCount] = await Promise.all([
+      db.collection("malls").countDocuments().catch(() => 0),
+      db.collection("stores").countDocuments().catch(() => 0),
+      db.collection("products").countDocuments().catch(() => 0),
+      db.collection("orders").countDocuments().catch(() => 0),
+    ]);
+
     return {
       connected: ping.ok === 1,
-      database: "autocom_db",
+      database: db.databaseName,
       uriConfigured: true,
+      pingMs,
       stats: {
         collections: collections.map((c) => c.name),
+        mallCount,
+        storeCount,
+        productCount,
+        orderCount,
       },
     };
   } catch {
     return {
       connected: false,
-      database: "autocom_db",
+      database: process.env.MONGODB_DB_NAME || "autocom_db",
       uriConfigured: true,
     };
   }

@@ -199,16 +199,19 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
     return jsonResponse({
       status: "HEALTHY",
       service: "AutoCom Spatial Commerce Backend Engine",
-      version: "2.7.0",
+      version: "3.0.0",
       timestamp: new Date().toISOString(),
-      outletsActive: 40,
-      settledOrdersCount: serverAuditStore.length,
+      outletsActive: mongoHealth.stats?.storeCount || 40,
+      settledOrdersCount: mongoHealth.stats?.orderCount || serverAuditStore.length,
       paypalSandbox: "ONLINE",
       channel3Pipeline: "READY",
       database: {
         engine: "MongoDB",
         connected: mongoHealth.connected,
+        database: mongoHealth.database,
         uriConfigured: mongoHealth.uriConfigured,
+        pingMs: mongoHealth.pingMs,
+        stats: mongoHealth.stats,
       },
     });
   }
@@ -229,9 +232,10 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
 
   // 2. All Malls: GET /api/malls
   if (pathname === "/api/malls" && method === "GET") {
-    const { ALL_MALLS } = await import("../lib/malls");
+    const { getMallsFromDb } = await import("./mongodb");
+    const malls = await getMallsFromDb();
     return jsonResponse(
-      ALL_MALLS.map((m) => ({
+      malls.map((m: any) => ({
         id: m.id,
         name: m.name,
         shortName: m.shortName,
@@ -241,18 +245,39 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
         longitude: m.longitude,
         googleMapsUrl: m.googleMapsUrl,
         radiusMeters: m.radiusMeters,
-        storeCount: m.stores.length,
+        storeCount: m.stores ? m.stores.length : 8,
       })),
     );
   }
 
-  // 2b. Mall Directory: GET /api/mall/directory?mallId=...
+  // 2b. Stores Query: GET /api/stores?mallId=...&cat=...
+  if (pathname === "/api/stores" && method === "GET") {
+    const mallId = url.searchParams.get("mallId") || undefined;
+    const cat = url.searchParams.get("cat") || undefined;
+    const { getStoresFromDb } = await import("./mongodb");
+    const stores = await getStoresFromDb(mallId, cat);
+    return jsonResponse(stores);
+  }
+
+  // 2c. Products Catalog Query: GET /api/products?mallId=...&storeId=...&search=...&category=...
+  if (pathname === "/api/products" && method === "GET") {
+    const mallId = url.searchParams.get("mallId") || undefined;
+    const storeId = url.searchParams.get("storeId") || undefined;
+    const search = url.searchParams.get("search") || undefined;
+    const category = url.searchParams.get("category") || undefined;
+    const limit = Number(url.searchParams.get("limit") || 100);
+    const { getProductsFromDb } = await import("./mongodb");
+    const products = await getProductsFromDb({ mallId, storeId, search, category, limit });
+    return jsonResponse(products);
+  }
+
+  // 2d. Mall Directory: GET /api/mall/directory?mallId=...
   if (pathname === "/api/mall/directory" && method === "GET") {
     const mallId = url.searchParams.get("mallId");
     if (mallId) {
-      const { getMallById } = await import("../lib/malls");
-      const mall = getMallById(mallId);
-      return jsonResponse(mall.stores);
+      const { getStoresFromDb } = await import("./mongodb");
+      const stores = await getStoresFromDb(mallId);
+      return jsonResponse(stores);
     }
     return jsonResponse(BEL_AIR_OUTLETS_DIRECTORY);
   }
@@ -338,6 +363,9 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
 
       serverAuditStore.unshift(newOrder);
 
+      // Persist to MongoDB in background
+      import("./mongodb").then((m) => m.persistOrderToDb(newOrder)).catch(() => {});
+
       return jsonResponse(
         {
           orderId,
@@ -403,10 +431,45 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
 
   // 7. PayPal Audit Ledger: GET /api/paypal/audit-ledger
   if (pathname === "/api/paypal/audit-ledger" && method === "GET") {
+    const { getOrdersFromDb } = await import("./mongodb");
+    const dbOrders = await getOrdersFromDb(100);
+    
+    // Merge database orders with in-memory store (deduplicated by orderId)
+    const orderMap = new Map<string, any>();
+    for (const order of serverAuditStore) {
+      orderMap.set(order.orderId, order);
+    }
+    for (const order of dbOrders) {
+      orderMap.set(order.orderId, order);
+    }
+    const allOrders = Array.from(orderMap.values()).sort(
+      (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime(),
+    );
+
     return jsonResponse({
-      count: serverAuditStore.length,
-      orders: serverAuditStore,
+      count: allOrders.length,
+      orders: allOrders,
+      source: dbOrders.length > 0 ? "MongoDB + In-Memory" : "In-Memory Buffer",
     });
+  }
+
+  // 7b. Parked Offers: GET /api/offers/parked
+  if (pathname === "/api/offers/parked" && method === "GET") {
+    const { getParkedOffersFromDb } = await import("./mongodb");
+    const parked = await getParkedOffersFromDb();
+    return jsonResponse({ count: parked.length, offers: parked });
+  }
+
+  // 7c. Park Offer: POST /api/offers/park
+  if (pathname === "/api/offers/park" && method === "POST") {
+    try {
+      const offer = await request.json();
+      const { persistParkedOfferToDb } = await import("./mongodb");
+      const success = await persistParkedOfferToDb(offer);
+      return jsonResponse({ success, id: offer.id, timestamp: new Date().toISOString() }, 201);
+    } catch {
+      return jsonResponse({ error: "Failed to park offer in MongoDB" }, 400);
+    }
   }
 
   // 8. Agent Names Search: GET /api/names/search?query=...

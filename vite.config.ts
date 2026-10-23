@@ -19,6 +19,10 @@ export default defineConfig({
     externals: {
       external: ["mongodb"],
     },
+    prerender: {
+      routes: ["/"],
+      crawlLinks: true,
+    },
   },
   tanstackStart: {
     // Redirect TanStack Start entries to src/client.tsx and src/server.ts

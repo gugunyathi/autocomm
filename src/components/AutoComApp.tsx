@@ -82,6 +82,11 @@ const AgentNameServiceModal = lazy(() =>
     default: m.AgentNameServiceModal,
   })),
 );
+const DatabaseStatusModal = lazy(() =>
+  import("@/components/DatabaseStatusModal").then((m) => ({
+    default: m.DatabaseStatusModal,
+  })),
+);
 
 type Deal = { store: Store; price: number; counter: number; expires: number; total: number };
 type Log = { t: string; msg: string; id: number };
@@ -140,17 +145,20 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
   // Auto-play walkthrough once for first-time users
   useEffect(() => {
     if (typeof window === "undefined") return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     try {
       const seen = localStorage.getItem(STORAGE_WALKTHROUGH_KEY);
       if (!seen) {
-        const timer = setTimeout(() => {
+        timer = setTimeout(() => {
           setWalkthroughOpen(true);
         }, 800);
-        return () => clearTimeout(timer);
       }
     } catch {
       // ignore storage access errors
     }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   const handleCompleteWalkthrough = () => {
@@ -183,6 +191,7 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
   const [agentNamesTab, setAgentNamesTab] = useState<
     "search" | "owners" | "leaderboard" | "auctions" | "secondary" | "x402"
   >("search");
+  const [dbStatusModalOpen, setDbStatusModalOpen] = useState(false);
 
   // FinTech, Web3, Shopify, Attention Ads & Intent Wishlist Hook
   const {
@@ -1080,7 +1089,7 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
     }, 700);
   }, []);
 
-  const triggerBagAnimation = useCallback((d: MatchedDeal | BoughtItem) => {
+  const triggerBagAnimation = useCallback((d: MatchedDeal | BoughtItem | ParkedOffer) => {
     setDivingCard({
       target: "bag",
       item: "item" in d ? d.item : d.store.item,
@@ -1114,6 +1123,13 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
 
     const updated = [newParked, ...parkedOffers.filter((p) => p.store.id !== d.store.id)];
     saveParked(updated);
+
+    // Persist parked offer directly to MongoDB
+    fetch("/api/offers/park", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newParked),
+    }).catch(() => {});
     setLogs((l) => [
       {
         t: now(),
@@ -1185,8 +1201,6 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
         price: Math.round(prod.priceZAR),
         open: prod.originalPriceZAR,
         boughtAt: Date.now(),
-        timestamp: Date.now(),
-        receiptId: `REC-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
         qrToken: token,
       };
       saveBought([newItem, ...boughtItems]);
@@ -1218,9 +1232,9 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
         },
         price: Math.round(prod.priceZAR),
         counter: Math.round(prod.priceZAR * 0.9),
+        open: prod.originalPriceZAR,
         expires: Date.now() + 600000,
-        total: 600,
-        timestamp: Date.now(),
+        parkedAt: Date.now(),
       };
       saveParked([newOffer, ...parkedOffers]);
       triggerParkAnimation(newOffer);
@@ -1469,6 +1483,12 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
               userUsdcBalance={walletState.balances.USDC}
             />
           )}
+          {dbStatusModalOpen && (
+            <DatabaseStatusModal
+              isOpen={dbStatusModalOpen}
+              onClose={() => setDbStatusModalOpen(false)}
+            />
+          )}
         </Suspense>
       </>
     );
@@ -1542,6 +1562,20 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
               </span>
               <span>📶</span>
               <span className="font-bold hidden xs:inline">BitChat</span>
+            </button>
+
+            {/* MongoDB Atlas Status Badge */}
+            <button
+              onClick={() => setDbStatusModalOpen(true)}
+              className="glass flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 text-[9.5px] sm:text-[10.5px] font-mono text-emerald-300 border-emerald-500/40 bg-emerald-500/10 hover:border-emerald-400 hover:bg-emerald-500/20 transition-all cursor-pointer shadow-[0_0_8px_rgba(16,185,129,0.25)]"
+              title="MongoDB Atlas Sovereign Database & Spatial Catalog Cluster"
+            >
+              <span className="relative flex h-1.5 w-1.5 shrink-0">
+                <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              </span>
+              <span>🍃</span>
+              <span className="font-bold hidden xs:inline">MongoDB</span>
             </button>
 
             {/* Quick Perimeter Badge */}
@@ -3070,29 +3104,29 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
               onClose={() => setMallSimulatorOpen(false)}
               onOpenBitchat={() => setBitchatOpen(true)}
               onClaimOffer={(mallStore) => {
-                const appStore = stores.find((s) => s.id === mallStore.id) || {
+                const appStore: Store = stores.find((s) => s.id === mallStore.id) || {
                   id: mallStore.id,
                   name: mallStore.name,
-                  offer: mallStore.promo,
-                  item: mallStore.category,
+                  icon: "🏪",
                   cat: mallStore.category,
-                  price: 199,
-                  orig: 299,
-                  bearing: 0,
+                  hue: "teal",
                   dist: 15,
-                  claimed: true,
-                  color: mallStore.color,
-                  perks: mallStore.perks,
+                  item: mallStore.category,
+                  open: 299,
+                  tag: mallStore.category,
+                  image: "",
                   lat: -26.145,
                   lng: 28.045,
+                  bearing: 0,
+                  promoDetails: mallStore.promo,
                 };
-                const boughtItem = {
+                const boughtItem: BoughtItem = {
                   id: `claim-sim-${Date.now()}`,
                   store: appStore,
                   item: appStore.item,
-                  price: appStore.price,
-                  orig: appStore.orig,
-                  boughtAt: now(),
+                  price: 199,
+                  open: appStore.open,
+                  boughtAt: Date.now(),
                   qrToken: `VOUCHER-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
                 };
                 saveBought([boughtItem, ...boughtItems]);
@@ -3107,36 +3141,33 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
                 ]);
               }}
               onParkOffer={(mallStore) => {
-                const appStore = stores.find((s) => s.id === mallStore.id) || {
+                const appStore: Store = stores.find((s) => s.id === mallStore.id) || {
                   id: mallStore.id,
                   name: mallStore.name,
-                  offer: mallStore.promo,
-                  item: mallStore.category,
+                  icon: "🏪",
                   cat: mallStore.category,
-                  price: 199,
-                  orig: 299,
-                  bearing: 0,
+                  hue: "teal",
                   dist: 15,
-                  claimed: false,
-                  color: mallStore.color,
-                  perks: mallStore.perks,
+                  item: mallStore.category,
+                  open: 299,
+                  tag: mallStore.category,
+                  image: "",
                   lat: -26.145,
                   lng: 28.045,
+                  bearing: 0,
+                  promoDetails: mallStore.promo,
                 };
                 if (!parkedOffers.some((p) => p.store.id === mallStore.id)) {
-                  saveParked([
-                    {
-                      id: `park-sim-${Date.now()}`,
-                      store: appStore,
-                      parkedAt: now(),
-                      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      }),
-                      savedPrice: appStore.price,
-                    },
-                    ...parkedOffers,
-                  ]);
+                  const newParkedOffer: ParkedOffer = {
+                    id: `park-sim-${Date.now()}`,
+                    store: appStore,
+                    price: 199,
+                    counter: 1,
+                    open: appStore.open,
+                    expires: Date.now() + 24 * 60 * 60 * 1000,
+                    parkedAt: Date.now(),
+                  };
+                  saveParked([newParkedOffer, ...parkedOffers]);
                   setLogs((l) => [
                     {
                       t: now(),

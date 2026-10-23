@@ -385,20 +385,55 @@ export function A2ATransactionAuditLedger() {
                 orderId: string;
                 transactionId?: string;
                 status: string;
+                priceZAR?: number;
+                amountUSD?: number;
+                createdAt?: string;
+                vaultRef?: string;
               }) => {
                 const idx = next.findIndex(
                   (r) =>
-                    r.outletId === backendOrder.storeId || r.paypalOrderId === backendOrder.orderId,
+                    r.paypalOrderId === backendOrder.orderId || (backendOrder.transactionId && r.paypalTxId === backendOrder.transactionId),
                 );
-                if (idx >= 0) {
+                const existing = next[idx];
+                if (idx >= 0 && existing) {
                   next[idx] = {
-                    ...next[idx],
+                    ...existing,
                     paypalOrderId: backendOrder.orderId,
-                    paypalTxId: backendOrder.transactionId || next[idx].paypalTxId,
+                    ...(backendOrder.transactionId ? { paypalTxId: backendOrder.transactionId } : existing.paypalTxId ? { paypalTxId: existing.paypalTxId } : {}),
                     status: (backendOrder.status === "SETTLED"
                       ? "SETTLED_VIA_PAYPAL"
-                      : next[idx].status) as A2ANegotiationStatus,
+                      : existing.status) as A2ANegotiationStatus,
                   };
+                } else if (backendOrder.orderId) {
+                  // Add database order row from MongoDB
+                  const outlet = SOUTH_AFRICAN_OUTLETS.find((o) => o.id === backendOrder.storeId) || {
+                    id: backendOrder.storeId,
+                    name: backendOrder.storeId.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+                    category: "Retail Outlet",
+                    sampleItem: "Bilateral Settled Goods",
+                    basePrice: backendOrder.priceZAR ? Math.round(backendOrder.priceZAR * 1.3) : 250,
+                  };
+                  const priceZar = backendOrder.priceZAR || 175;
+                  const origPrice = outlet.basePrice || Math.round(priceZar * 1.3);
+                  const savings = Math.max(0, origPrice - priceZar);
+                  const savingsPct = Math.round((savings / origPrice) * 1000) / 10;
+
+                  next.unshift({
+                    id: `db-tx-${backendOrder.orderId}`,
+                    timestamp: backendOrder.createdAt ? new Date(backendOrder.createdAt).toLocaleTimeString() : new Date().toLocaleTimeString(),
+                    outletId: outlet.id,
+                    outletName: outlet.name,
+                    category: outlet.category,
+                    itemName: outlet.sampleItem,
+                    originalPriceZAR: origPrice,
+                    negotiatedPriceZAR: priceZar,
+                    totalSavingsZAR: savings,
+                    savingsPercent: savingsPct,
+                    status: (backendOrder.status === "SETTLED" ? "SETTLED_VIA_PAYPAL" : "PAYMENT_PENDING") as A2ANegotiationStatus,
+                    paypalOrderId: backendOrder.orderId,
+                    ...(backendOrder.transactionId ? { paypalTxId: backendOrder.transactionId } : {}),
+                    usdEquivalent: backendOrder.amountUSD || Math.round(priceZar * 0.054 * 100) / 100,
+                  });
                 }
               },
             );
@@ -525,6 +560,8 @@ export function A2ATransactionAuditLedger() {
     setIsSimulating(true);
     const randomOutlet =
       SOUTH_AFRICAN_OUTLETS[Math.floor(Math.random() * SOUTH_AFRICAN_OUTLETS.length)];
+    if (!randomOutlet) return;
+
     const discountRate = 0.15 + Math.random() * 0.18; // 15% to 33% discount
     const negotiatedZAR = Math.round(randomOutlet.basePrice * (1 - discountRate));
     const savingsZAR = randomOutlet.basePrice - negotiatedZAR;
