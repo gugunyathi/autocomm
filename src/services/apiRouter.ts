@@ -189,22 +189,71 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
     });
   }
 
+  // Auto-seed MongoDB in background without blocking requests
+  import("./mongodb").then((m) => m.initAndSeedDatabase()).catch(() => {});
+
   // 1. Health check
   if (pathname === "/api/health" && method === "GET") {
+    const { getMongoHealth } = await import("./mongodb");
+    const mongoHealth = await getMongoHealth();
     return jsonResponse({
       status: "HEALTHY",
       service: "AutoCom Spatial Commerce Backend Engine",
-      version: "2.6.0",
+      version: "2.7.0",
       timestamp: new Date().toISOString(),
-      outletsActive: BEL_AIR_OUTLETS_DIRECTORY.length,
+      outletsActive: 40,
       settledOrdersCount: serverAuditStore.length,
       paypalSandbox: "ONLINE",
       channel3Pipeline: "READY",
+      database: {
+        engine: "MongoDB",
+        connected: mongoHealth.connected,
+        uriConfigured: mongoHealth.uriConfigured,
+      },
     });
   }
 
-  // 2. Mall Directory: GET /api/mall/directory
+  // 1b. MongoDB Database Status & Metrics: GET /api/db/status
+  if (pathname === "/api/db/status" && method === "GET") {
+    const { getMongoHealth } = await import("./mongodb");
+    const health = await getMongoHealth();
+    return jsonResponse(health);
+  }
+
+  // 1c. MongoDB Seed Trigger: POST /api/db/seed
+  if (pathname === "/api/db/seed" && method === "POST") {
+    const { initAndSeedDatabase } = await import("./mongodb");
+    const result = await initAndSeedDatabase();
+    return jsonResponse(result);
+  }
+
+  // 2. All Malls: GET /api/malls
+  if (pathname === "/api/malls" && method === "GET") {
+    const { ALL_MALLS } = await import("../lib/malls");
+    return jsonResponse(
+      ALL_MALLS.map((m) => ({
+        id: m.id,
+        name: m.name,
+        shortName: m.shortName,
+        subtitle: m.subtitle,
+        address: m.address,
+        latitude: m.latitude,
+        longitude: m.longitude,
+        googleMapsUrl: m.googleMapsUrl,
+        radiusMeters: m.radiusMeters,
+        storeCount: m.stores.length,
+      })),
+    );
+  }
+
+  // 2b. Mall Directory: GET /api/mall/directory?mallId=...
   if (pathname === "/api/mall/directory" && method === "GET") {
+    const mallId = url.searchParams.get("mallId");
+    if (mallId) {
+      const { getMallById } = await import("../lib/malls");
+      const mall = getMallById(mallId);
+      return jsonResponse(mall.stores);
+    }
     return jsonResponse(BEL_AIR_OUTLETS_DIRECTORY);
   }
 
@@ -334,6 +383,9 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
         };
         serverAuditStore.unshift(existing);
       }
+
+      // Persist to MongoDB in background
+      import("./mongodb").then((m) => m.persistOrderToDb(existing)).catch(() => {});
 
       return jsonResponse({
         transactionId: txId,

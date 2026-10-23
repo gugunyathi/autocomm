@@ -14,7 +14,7 @@ export interface SpatialCoordinates {
   altitude?: number | null;
 }
 
-// Bel Air Shopping Centre (North Riding, Randburg, Johannesburg, South Africa)
+// 5 South African Shopping Malls
 export const BEL_AIR_SHOPPING_CENTRE = {
   id: "bel-air",
   name: "Bel Air Shopping Centre",
@@ -23,8 +23,60 @@ export const BEL_AIR_SHOPPING_CENTRE = {
   latitude: -26.05941834252426,
   longitude: 27.95827226170294,
   googleMapsUrl: "https://maps.app.goo.gl/GQsaq4NcCUjDWZEt8",
-  radiusMeters: 450, // 450m Geofence perimeter covering the shopping centre & parking lot
+  radiusMeters: 450,
 };
+
+export const JACKAL_CREEK_SHOPPING_CENTRE = {
+  id: "jackal-creek",
+  name: "Jackal Creek Corner Shopping Mall",
+  subtitle: "Boundary Rd & Aureole Ave, North Riding",
+  address: "Boundary Rd & Aureole Ave, Jackal Creek, Roodepoort, 2169, South Africa",
+  latitude: -26.0594,
+  longitude: 27.9256,
+  googleMapsUrl: "https://maps.app.goo.gl/UUnJgkXS8RxqGthD8",
+  radiusMeters: 450,
+};
+
+export const BLUEBERRY_SQUARE_SHOPPING_CENTRE = {
+  id: "blueberry-square",
+  name: "Blueberry Square Shopping Mall",
+  subtitle: "Blueberry St & Beyers Naudé Dr, Honeydew",
+  address: "Blueberry St & Beyers Naudé Dr, Honeydew, Roodepoort, 2040, South Africa",
+  latitude: -26.0827,
+  longitude: 27.9209,
+  googleMapsUrl: "https://maps.app.goo.gl/gspZcgHJez7hQP3u5",
+  radiusMeters: 450,
+};
+
+export const NORTHGATE_SHOPPING_CENTRE = {
+  id: "northgate",
+  name: "Northgate Shopping Centre",
+  subtitle: "Northumberland Ave & Olievenhout Ave, North Riding",
+  address: "Northumberland Ave, North Riding, Randburg, 2162, South Africa",
+  latitude: -26.0628,
+  longitude: 27.9525,
+  googleMapsUrl: "https://maps.app.goo.gl/mmXeNnXRzaMtgnKS7",
+  radiusMeters: 500,
+};
+
+export const FOURWAYS_SHOPPING_CENTRE = {
+  id: "fourways",
+  name: "Fourways Mall",
+  subtitle: "William Nicol & Witkoppen, Fourways, Sandton",
+  address: "William Nicol Dr & Witkoppen Rd, Fourways, Sandton, 2055, South Africa",
+  latitude: -26.0189,
+  longitude: 28.0068,
+  googleMapsUrl: "https://maps.app.goo.gl/XsNqkLzo6to33TPLA",
+  radiusMeters: 600,
+};
+
+export const ALL_MALL_LOCATIONS = [
+  BEL_AIR_SHOPPING_CENTRE,
+  JACKAL_CREEK_SHOPPING_CENTRE,
+  BLUEBERRY_SQUARE_SHOPPING_CENTRE,
+  NORTHGATE_SHOPPING_CENTRE,
+  FOURWAYS_SHOPPING_CENTRE,
+];
 
 export const BEL_AIR_USER_COORDS: SpatialCoordinates = {
   latitude: -26.05941834252426,
@@ -54,6 +106,21 @@ export function checkIsAtBelAir(
   );
   return {
     isAtBelAir: distanceMeters <= BEL_AIR_SHOPPING_CENTRE.radiusMeters,
+    distanceMeters,
+  };
+}
+
+/**
+ * Checks whether given coordinates are within a specific shopping mall geofence
+ */
+export function checkIsAtMallLocation(
+  mall: { latitude: number; longitude: number; radiusMeters: number },
+  lat: number,
+  lon: number,
+): { isInside: boolean; distanceMeters: number } {
+  const distanceMeters = getDistanceInMeters(lat, lon, mall.latitude, mall.longitude);
+  return {
+    isInside: distanceMeters <= mall.radiusMeters,
     distanceMeters,
   };
 }

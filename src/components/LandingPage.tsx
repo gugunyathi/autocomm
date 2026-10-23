@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import heroStoreImage from "@/assets/images/hero_autonomous_store_1790899130361.jpg";
 import { type PasskeyUser, signOutPasskey } from "@/lib/passkey-auth";
 import { AutoComLogo } from "@/components/AutoComLogo";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
-import { PitchDeckModal } from "@/components/PitchDeckModal";
 import MallSimulator from "@/components/MallSimulator";
-import { downloadPitchDeckPDF } from "@/lib/pitch-deck-pdf";
 import { MonetizationMatrix } from "@/components/home/MonetizationMatrix";
+
+const PitchDeckModal = lazy(() =>
+  import("@/components/PitchDeckModal").then((m) => ({ default: m.PitchDeckModal })),
+);
 import { AdLibraryView } from "@/components/adserver/AdLibraryView";
 import type {
   Web3WalletState,
@@ -201,6 +203,7 @@ export function LandingPage({
     e.stopPropagation();
     try {
       setIsDirectDownloading(true);
+      const { downloadPitchDeckPDF } = await import("@/lib/pitch-deck-pdf");
       await downloadPitchDeckPDF();
       setDownloadSuccess(true);
       setTimeout(() => setDownloadSuccess(false), 3000);
@@ -1106,7 +1109,11 @@ export function LandingPage({
       </footer>
 
       {/* Interactive Pitch Deck Modal */}
-      <PitchDeckModal isOpen={pitchDeckOpen} onClose={() => setPitchDeckOpen(false)} />
+      <Suspense fallback={null}>
+        {pitchDeckOpen && (
+          <PitchDeckModal isOpen={pitchDeckOpen} onClose={() => setPitchDeckOpen(false)} />
+        )}
+      </Suspense>
     </div>
   );
 }

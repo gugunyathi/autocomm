@@ -24,7 +24,22 @@ export type Store = {
   mallName?: string; // e.g. "Bel Air Shopping Centre"
   mallUrl?: string; // Google Maps link to the shopping centre
   promoDetails?: string; // Extended sale / deal offer promo description
+  mallId?: string;
+  products?: import("./mall-types").RealProduct[];
 };
+
+export {
+  ALL_MALLS,
+  MALL_MAP,
+  getMallById,
+  findStoreById,
+  findProductsByStoreId,
+  BEL_AIR_MALL,
+  JACKAL_CREEK_MALL,
+  BLUEBERRY_SQUARE_MALL,
+  NORTHGATE_MALL,
+  FOURWAYS_MALL,
+} from "./malls";
 
 // Curated high-quality, fast-loading Unsplash product photos for items on special
 // 8 Real-World Retail Outlets physically located at Bel Air Shopping Centre (North Riding, Randburg)

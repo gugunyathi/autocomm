@@ -7,6 +7,19 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
+  vite: {
+    resolve: {
+      alias: [{ find: /^punycode\/?$/, replacement: "punycode" }],
+    },
+  },
+  nitro: {
+    alias: {
+      "punycode/": "punycode",
+    },
+    externals: {
+      external: ["mongodb"],
+    },
+  },
   tanstackStart: {
     // Redirect TanStack Start entries to src/client.tsx and src/server.ts
     client: { entry: "client" },

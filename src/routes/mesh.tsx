@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { App } from "./index";
+import { AutoComApp } from "@/components/AutoComApp";
 
 export const Route = createFileRoute("/mesh")({
   head: () => ({
@@ -24,5 +24,5 @@ export const Route = createFileRoute("/mesh")({
 });
 
 function MeshRouteComponent() {
-  return <App initialView="mesh" />;
+  return <AutoComApp initialView="mesh" />;
 }
