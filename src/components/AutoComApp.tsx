@@ -1155,7 +1155,7 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
     const d = targetDeal || deal || activePopupDeal;
     if (!d) return;
     triggerBagAnimation(d);
-    const token = `AUTOCOM-${d.store.name.slice(0, 4).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}-${new Date().getFullYear()}`;
+    const token = `AUTOCOMM-${d.store.name.slice(0, 4).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}-${new Date().getFullYear()}`;
     const newBought: BoughtItem = {
       id: `bought_${Date.now()}_${d.store.id}`,
       store: d.store,
@@ -1189,7 +1189,7 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
   // 1-Click Purchase of a specific store product from the 8-product card catalog
   const handleBuyStoreProduct = useCallback(
     (prod: RealProduct, store: Store) => {
-      const token = `AUTOCOM-${store.name.slice(0, 4).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}-${new Date().getFullYear()}`;
+      const token = `AUTOCOMM-${store.name.slice(0, 4).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}-${new Date().getFullYear()}`;
       const newItem: BoughtItem = {
         id: `bought-prod-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         store: {
@@ -1275,7 +1275,7 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
   // Claim and buy from Parking Lot
   const handleClaimFromParkingLot = (offer: ParkedOffer) => {
     triggerBagAnimation(offer);
-    const token = `AUTOCOM-${offer.store.name.slice(0, 4).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}-${new Date().getFullYear()}`;
+    const token = `AUTOCOMM-${offer.store.name.slice(0, 4).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}-${new Date().getFullYear()}`;
     const newBought: BoughtItem = {
       id: `bought_${Date.now()}_${offer.store.id}`,
       store: offer.store,
@@ -1518,7 +1518,7 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
                 </p>
               </div>
               <h1 className="text-sm sm:text-base md:text-lg font-bold tracking-tight text-foreground truncate leading-tight">
-                AutoCom
+                Autocomm
               </h1>
             </div>
           </button>

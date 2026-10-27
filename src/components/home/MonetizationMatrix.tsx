@@ -200,7 +200,7 @@ const MONETIZATION_TIERS: Record<MonetizationStreamKey, MonetizationTier[]> = {
       specs: [
         "Up to 50 active syndicated spatial campaigns",
         "5% Operator Tracking Kickback on all fulfilled sales",
-        "2% AutoCom platform facilitation fee retention",
+        "2% Autocomm platform facilitation fee retention",
         "Automated syndication to Meta & Google Location APIs",
         "Instant on-chain USDC wallet payouts",
       ],
@@ -255,7 +255,7 @@ const MONETIZATION_TIERS: Record<MonetizationStreamKey, MonetizationTier[]> = {
       specs: [
         "Dynamic bidding starting at $0.05 per verified agent attention tick",
         "80% pool value distributed directly to consumer agents/wallets",
-        "20% locked by AutoCom Protocol as network utility facilitation fee",
+        "20% locked by Autocomm Protocol as network utility facilitation fee",
         "Zero ad-block filtering: Cryptographically signed on Base & ARC",
         "Sub-meter proximity trigger verification before payout release",
       ],
@@ -1003,7 +1003,7 @@ export function MonetizationMatrix({
               </span>
               <p className="text-2xl font-black text-purple-300">20% Locked</p>
               <p className="text-slate-300 text-[11px]">
-                AutoCom platform facilitation utility fee
+                Autocomm platform facilitation utility fee
               </p>
             </div>
 

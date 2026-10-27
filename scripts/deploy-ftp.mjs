@@ -39,7 +39,9 @@ async function deploy() {
   const secure = env.FTP_SECURE === "true";
 
   if (!host || !user || !password) {
-    throw new Error(`Missing FTP credentials in .env. Host: ${host}, User: ${user}, Password: ${password ? "***" : "missing"}`);
+    throw new Error(
+      `Missing FTP credentials in .env. Host: ${host}, User: ${user}, Password: ${password ? "***" : "missing"}`,
+    );
   }
 
   const client = new ftp.Client();
@@ -72,7 +74,12 @@ async function deploy() {
   } catch (err) {
     console.error("❌ FTP Deployment failed:", err.message);
     // If connection failed with ftp.autocomm.xyz, try falling back to shared IP
-    if (host !== "129.232.193.194" && (err.message.includes("ENOTFOUND") || err.message.includes("ETIMEDOUT") || err.message.includes("ECONNREFUSED"))) {
+    if (
+      host !== "129.232.193.194" &&
+      (err.message.includes("ENOTFOUND") ||
+        err.message.includes("ETIMEDOUT") ||
+        err.message.includes("ECONNREFUSED"))
+    ) {
       console.log(`\n🔄 Retrying connection using Shared IP 129.232.193.194...`);
       const fallbackClient = new ftp.Client();
       fallbackClient.ftp.verbose = true;

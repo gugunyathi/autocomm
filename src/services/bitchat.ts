@@ -1142,7 +1142,7 @@ export class BitchatAgentService {
   public async scanWebBluetooth(): Promise<string> {
     if (typeof navigator === "undefined" || !("bluetooth" in navigator)) {
       throw new Error(
-        "Web Bluetooth API is not supported on this browser. AutoCom is operating via high-frequency simulated BLE mesh fallback.",
+        "Web Bluetooth API is not supported on this browser. Autocomm is operating via high-frequency simulated BLE mesh fallback.",
       );
     }
 

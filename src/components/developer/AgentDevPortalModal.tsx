@@ -173,7 +173,7 @@ export function AgentDevPortalModal({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg sm:text-2xl font-black text-white tracking-tight">
-                  AutoCom Agent API &amp; Developer Hub
+                  Autocomm Agent API &amp; Developer Hub
                 </h2>
                 <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/40 text-[10px] font-mono font-bold">
                   v3.2 Live
@@ -449,7 +449,7 @@ export function AgentDevPortalModal({
                         <th className="py-3 px-4">Merchant &amp; Deal Item</th>
                         <th className="py-3 px-4">Pricing Spread</th>
                         <th className="py-3 px-4">Value Saved</th>
-                        <th className="py-3 px-4 text-right">1.5% AutoCom Toll</th>
+                        <th className="py-3 px-4 text-right">1.5% Autocomm Toll</th>
                         <th className="py-3 px-4 text-center">Settlement Rail</th>
                       </tr>
                     </thead>
@@ -645,7 +645,7 @@ export function AgentDevPortalModal({
                       </span>
                       <span>•</span>
                       <span>
-                        1.5% AutoCom Toll:{" "}
+                        1.5% Autocomm Toll:{" "}
                         <strong className="text-teal-300">
                           ${lastSimResult.arbitrageFeeCollectedUsdc} USDC
                         </strong>
@@ -771,7 +771,7 @@ export function AgentDevPortalModal({
                       </button>
                     </div>
                     <pre className="p-4 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-slate-300 overflow-x-auto leading-relaxed">
-                      {`// 1. Initialize WebSocket connection to the AutoCom Grid Engine
+                      {`// 1. Initialize WebSocket connection to the Autocomm Grid Engine
 const ws = new WebSocket("wss://grid.autocom.network/v1/stream?token=${apiCredentials[0]?.apiKey || "ac_live_sandbox"}");
 
 ws.onopen = () => {
@@ -908,7 +908,7 @@ node.broadcastDealVoucher({
                       <button
                         onClick={() =>
                           handleCopyText(
-                            `POST /api/v1/shopify/sync-spatial-matrix\nHeaders: { "X-AutoCom-Key": "${apiCredentials[0]?.apiKey || "ac_live_sandbox"}" }\nBody: {\n  "shopUrl": "flagship.myshopify.com",\n  "corridorNode": "level1_north_passage"\n}`,
+                            `POST /api/v1/shopify/sync-spatial-matrix\nHeaders: { "X-Autocomm-Key": "${apiCredentials[0]?.apiKey || "ac_live_sandbox"}" }\nBody: {\n  "shopUrl": "flagship.myshopify.com",\n  "corridorNode": "level1_north_passage"\n}`,
                             "code-shopify",
                           )
                         }
@@ -949,7 +949,7 @@ Body: {
         <div className="p-4 sm:p-5 border-t border-slate-800 bg-slate-900/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono">
           <div className="flex items-center gap-2 text-slate-400 text-[11px]">
             <CheckCircle2 className="w-4 h-4 text-teal-400" />
-            <span>Connected to AutoCom Decentralized Grid API · Sandton Mesh Gateway</span>
+            <span>Connected to Autocomm Decentralized Grid API · Sandton Mesh Gateway</span>
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">

@@ -90,7 +90,7 @@ export function AutoComMarketplaceModal({
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h2 className="text-base sm:text-xl font-extrabold text-white truncate">
-                  AutoCom Hardware &amp; FinTech Store
+                  Autocomm Hardware &amp; FinTech Store
                 </h2>
                 <span className="px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 text-[10px] font-mono border border-teal-500/40 hidden xs:inline">
                   B2B &amp; Consumer Rail

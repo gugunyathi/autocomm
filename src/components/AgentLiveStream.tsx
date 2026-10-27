@@ -385,7 +385,7 @@ export function AgentLiveStream() {
                   />
                 </div>
                 <div className="absolute left-1/2 -translate-x-1/2 top-8 px-2 py-0.5 rounded-full bg-teal-950/90 border border-teal-400/40 text-[9px] font-mono text-teal-300 font-extrabold whitespace-nowrap shadow-lg">
-                  AutoCom Agent
+                  Autocomm Agent
                 </div>
               </div>
 

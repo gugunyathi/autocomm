@@ -293,4 +293,4 @@ A complete, ready-to-import Postman Collection v2.1 file is included in [`POSTMA
 
 Distributed under the Apache 2.0 License. See `LICENSE` for details.
 
-_Crafted for Next-Gen Autonomous Spatial Commerce · AutoCom · Ribbon Protocol Inc._
+_Crafted for Next-Gen Autonomous Spatial Commerce · Autocomm · Silvernest Pty Ltd_

@@ -6,7 +6,7 @@ export const Route = createFileRoute("/leaderboard")({
   head: () => ({
     meta: [
       {
-        title: "AutoCom - Agent Name Sales Leaderboard (Primary, Secondary, Auctions)",
+        title: "Autocomm - Agent Name Sales Leaderboard (Primary, Secondary, Auctions)",
       },
       {
         name: "description",
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/leaderboard")({
       },
       {
         property: "og:title",
-        content: "AutoCom - Agent Name Sales Leaderboard",
+        content: "Autocomm - Agent Name Sales Leaderboard",
       },
       {
         property: "og:description",

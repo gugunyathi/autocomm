@@ -85,7 +85,7 @@ export async function detectLocalCurrencyProfile(): Promise<CurrencyProfile> {
     );
   }
 
-  // Default to South Africa (AutoCom primary flagship hub) or browser locale
+  // Default to South Africa (Autocomm primary flagship hub) or browser locale
   const defaultProfile: CurrencyProfile = {
     code: "ZAR",
     symbol: "R",

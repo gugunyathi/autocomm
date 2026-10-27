@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "AutoCom - Autonomous Realtime Commerce Network",
-  "short_name": "AutoCom",
+  "name": "Autocomm - Autonomous Realtime Commerce Network",
+  "short_name": "Autocomm",
   "description": "Where your live AI shopping agent negotiates deals within 50 meters on a spinning proximity sphere.",
   "start_url": "/",
   "scope": "/",

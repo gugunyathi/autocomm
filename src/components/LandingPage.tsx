@@ -226,7 +226,7 @@ export function LandingPage({
           >
             <AutoComLogo size="md" />
             <span className="text-base sm:text-xl font-extrabold tracking-tight text-foreground">
-              AutoCom
+              Autocomm
             </span>
           </button>
 
@@ -639,7 +639,7 @@ export function LandingPage({
       >
         {/* Unboxed Metadata Kicker */}
         <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-mono text-primary leading-tight">
-          <span>AutoCom Mesh</span>
+          <span>Autocomm Mesh</span>
           <span aria-hidden="true">·</span>
           <span>WebAuthn FIDO2</span>
           <span aria-hidden="true">·</span>
@@ -748,7 +748,7 @@ export function LandingPage({
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl mx-auto">
             From smartphones, smartwatches, pocket AI devices to AR spatial glasses and connected
-            vehicle dashboards; AutoCom unifies real-time agentic deal bargaining across every
+            vehicle dashboards; Autocomm unifies real-time agentic deal bargaining across every
             surface you interact with.
           </p>
 
@@ -820,7 +820,7 @@ export function LandingPage({
               Tri-Sided Autonomous Marketplace
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-foreground tracking-tight">
-              Why Consumers, Merchants &amp; Brands Win with AutoCom
+              Why Consumers, Merchants &amp; Brands Win with Autocomm
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl mx-auto">
               Converting passive impressions and lost foot traffic into guaranteed spatial commerce.
@@ -1016,68 +1016,6 @@ export function LandingPage({
         </div>
       </section>
 
-      {/* Leadership Team Section */}
-      <section className="py-12 sm:py-16 px-3.5 sm:px-6 max-w-5xl mx-auto border-t border-border/40">
-        <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
-          <span className="text-xs font-mono text-primary uppercase tracking-widest font-bold">
-            Leadership Team
-          </span>
-          <h2 className="text-2xl sm:text-3xl font-black text-foreground mt-1">
-            Built by Pioneers in AI &amp; Spatial Commerce
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
-          <div className="glass p-5 sm:p-6 rounded-2xl border border-border/80 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-bold text-foreground">Gugu Nyathi</h3>
-                <p className="text-xs text-primary font-mono font-semibold">
-                  Chief Executive Officer (CEO)
-                </p>
-              </div>
-              <a
-                href="https://www.linkedin.com/in/gugunyathi/"
-                target="_blank"
-                rel="noreferrer"
-                className="px-3 py-1 rounded-lg bg-[#0077b5]/20 text-[#0077b5] hover:bg-[#0077b5]/30 text-xs font-bold font-mono flex items-center gap-1 border border-[#0077b5]/40"
-              >
-                <span>LinkedIn</span>
-                <span>↗</span>
-              </a>
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Spatial protocol architecture, autonomous AI agent bargaining networks, decentralized
-              commerce infrastructure &amp; product vision.
-            </p>
-          </div>
-
-          <div className="glass p-5 sm:p-6 rounded-2xl border border-border/80 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-bold text-foreground">Thami Nyathi</h3>
-                <p className="text-xs text-accent font-mono font-semibold">
-                  Chief Operating Officer (COO)
-                </p>
-              </div>
-              <a
-                href="https://www.linkedin.com/in/thaminyathi/"
-                target="_blank"
-                rel="noreferrer"
-                className="px-3 py-1 rounded-lg bg-[#0077b5]/20 text-[#0077b5] hover:bg-[#0077b5]/30 text-xs font-bold font-mono flex items-center gap-1 border border-[#0077b5]/40"
-              >
-                <span>LinkedIn</span>
-                <span>↗</span>
-              </a>
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Commercial retail partnerships, merchant network onboarding, supply chain operations
-              &amp; nationwide retail rollout execution.
-            </p>
-          </div>
-        </div>
-      </section>
-
       {/* Footer */}
       <footer className="border-t border-border/50 bg-background/80 py-8 px-4 text-center text-xs text-muted-foreground space-y-3">
         <div className="flex items-center justify-center gap-4 flex-wrap">
@@ -1101,11 +1039,11 @@ export function LandingPage({
               <span>·</span>
             </>
           )}
-          <a href="mailto:hello@ribbonprotocol.org" className="hover:text-foreground">
-            Contact: hello@ribbonprotocol.org
+          <a href="mailto:hello@autocomm.xyz" className="hover:text-foreground">
+            Contact: hello@autocomm.xyz
           </a>
         </div>
-        <p>© 2026 AutoCom · Ribbon Protocol Inc. All rights reserved.</p>
+        <p>© 2026 Autocomm | Silvernest Pty Ltd | All rights reserved.</p>
       </footer>
 
       {/* Interactive Pitch Deck Modal */}

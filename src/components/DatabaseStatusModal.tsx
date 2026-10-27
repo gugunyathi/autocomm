@@ -103,7 +103,10 @@ export function DatabaseStatusModal({ isOpen, onClose }: DatabaseStatusModalProp
               <Database className="w-5 h-5" />
             </div>
             <div>
-              <h2 id="db-status-title" className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <h2
+                id="db-status-title"
+                className="text-base sm:text-lg font-bold text-white flex items-center gap-2"
+              >
                 MongoDB Atlas Backend
                 <span
                   className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-mono font-bold border ${
@@ -114,8 +117,14 @@ export function DatabaseStatusModal({ isOpen, onClose }: DatabaseStatusModalProp
                         : "bg-blue-500/20 text-blue-300 border-blue-500/40"
                   }`}
                 >
-                  <span className={`h-1.5 w-1.5 rounded-full ${isConnected ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`} />
-                  {isConnected ? "ONLINE & INDEXED" : isUriConfigured ? "STANDBY / RECONNECTING" : "IN-MEMORY FALLBACK"}
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${isConnected ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`}
+                  />
+                  {isConnected
+                    ? "ONLINE & INDEXED"
+                    : isUriConfigured
+                      ? "STANDBY / RECONNECTING"
+                      : "IN-MEMORY FALLBACK"}
                 </span>
               </h2>
               <p className="text-xs text-muted-foreground font-mono">

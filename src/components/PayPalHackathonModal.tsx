@@ -85,7 +85,7 @@ export function PayPalHackathonModal({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "autocom-a2a-openapi-3.0.json";
+    a.download = "autocomm-a2a-openapi-3.0.json";
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -113,7 +113,7 @@ export function PayPalHackathonModal({
                   </h2>
                 </div>
                 <p className="text-xs text-slate-300 font-sans">
-                  AutoCom Spatial Commerce · AG Grid, Channel3, PayPal Sandbox, APIMatic SDKs
+                  Autocomm Spatial Commerce · AG Grid, Channel3, PayPal Sandbox, APIMatic SDKs
                 </p>
               </div>
             </div>

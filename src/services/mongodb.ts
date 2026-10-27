@@ -19,7 +19,8 @@ export function getMongoUri(): string {
   return (
     process.env.MONGODB_URI ||
     process.env.MONGO_URI ||
-    (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_MONGODB_URI) ||
+    (typeof import.meta !== "undefined" &&
+      (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_MONGODB_URI) ||
     ""
   );
 }
@@ -276,7 +277,7 @@ export async function persistOrderToDb(order: Record<string, unknown>): Promise<
 /**
  * Retrieves audit orders from MongoDB with in-memory fallback
  */
-export async function getOrdersFromDb(limit = 100): Promise<any[]> {
+export async function getOrdersFromDb(limit = 100): Promise<Record<string, unknown>[]> {
   try {
     const db = await getDb();
     if (!db) return [];
@@ -296,11 +297,13 @@ export async function persistParkedOfferToDb(
   try {
     const db = await getDb();
     if (!db) return false;
-    await db.collection("parked_offers").updateOne(
-      { id: parkedOffer.id },
-      { $set: { ...parkedOffer, storedAt: new Date() } },
-      { upsert: true },
-    );
+    await db
+      .collection("parked_offers")
+      .updateOne(
+        { id: parkedOffer.id },
+        { $set: { ...parkedOffer, storedAt: new Date() } },
+        { upsert: true },
+      );
     return true;
   } catch (e: unknown) {
     console.error(
@@ -314,7 +317,7 @@ export async function persistParkedOfferToDb(
 /**
  * Retrieves parked offers from MongoDB
  */
-export async function getParkedOffersFromDb(): Promise<any[]> {
+export async function getParkedOffersFromDb(): Promise<Record<string, unknown>[]> {
   try {
     const db = await getDb();
     if (!db) return [];
@@ -328,7 +331,7 @@ export async function getParkedOffersFromDb(): Promise<any[]> {
 /**
  * Queries all malls from MongoDB with fallback to static constants
  */
-export async function getMallsFromDb(): Promise<any[]> {
+export async function getMallsFromDb(): Promise<unknown[]> {
   try {
     const db = await getDb();
     if (db) {
@@ -344,7 +347,7 @@ export async function getMallsFromDb(): Promise<any[]> {
 /**
  * Queries stores by mallId or category
  */
-export async function getStoresFromDb(mallId?: string, cat?: string): Promise<any[]> {
+export async function getStoresFromDb(mallId?: string, cat?: string): Promise<unknown[]> {
   try {
     const db = await getDb();
     if (db) {
@@ -360,7 +363,8 @@ export async function getStoresFromDb(mallId?: string, cat?: string): Promise<an
 
   // Fallback
   let allStores = ALL_MALLS.flatMap((m) => m.stores);
-  if (mallId) allStores = allStores.filter((s) => (s as any).mallId === mallId);
+  if (mallId)
+    allStores = allStores.filter((s) => (s as unknown as { mallId?: string }).mallId === mallId);
   if (cat) allStores = allStores.filter((s) => s.cat.toLowerCase() === cat.toLowerCase());
   return allStores;
 }
@@ -374,7 +378,7 @@ export async function getProductsFromDb(params?: {
   search?: string;
   category?: string;
   limit?: number;
-}): Promise<any[]> {
+}): Promise<unknown[]> {
   const limit = params?.limit || 100;
   try {
     const db = await getDb();
@@ -400,10 +404,14 @@ export async function getProductsFromDb(params?: {
   // In-memory fallback
   let allProducts = ALL_MALLS.flatMap((m) => m.stores.flatMap((s) => s.products || []));
   if (params?.storeId) {
-    allProducts = allProducts.filter((p) => (p as any).storeId === params.storeId);
+    allProducts = allProducts.filter(
+      (p) => (p as unknown as { storeId?: string }).storeId === params.storeId,
+    );
   }
   if (params?.category) {
-    allProducts = allProducts.filter((p) => p.category.toLowerCase().includes(params.category!.toLowerCase()));
+    allProducts = allProducts.filter((p) =>
+      p.category.toLowerCase().includes(params.category!.toLowerCase()),
+    );
   }
   if (params?.search) {
     const q = params.search.toLowerCase();
@@ -438,17 +446,33 @@ export async function getMongoHealth(): Promise<{
     const startTime = Date.now();
     const db = await getDb();
     if (!db) {
-      return { connected: false, database: process.env.MONGODB_DB_NAME || "autocom_db", uriConfigured: true };
+      return {
+        connected: false,
+        database: process.env.MONGODB_DB_NAME || "autocom_db",
+        uriConfigured: true,
+      };
     }
     const ping = await db.command({ ping: 1 });
     const pingMs = Date.now() - startTime;
     const collections = await db.listCollections().toArray();
 
     const [mallCount, storeCount, productCount, orderCount] = await Promise.all([
-      db.collection("malls").countDocuments().catch(() => 0),
-      db.collection("stores").countDocuments().catch(() => 0),
-      db.collection("products").countDocuments().catch(() => 0),
-      db.collection("orders").countDocuments().catch(() => 0),
+      db
+        .collection("malls")
+        .countDocuments()
+        .catch(() => 0),
+      db
+        .collection("stores")
+        .countDocuments()
+        .catch(() => 0),
+      db
+        .collection("products")
+        .countDocuments()
+        .catch(() => 0),
+      db
+        .collection("orders")
+        .countDocuments()
+        .catch(() => 0),
     ]);
 
     return {

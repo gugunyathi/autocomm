@@ -198,7 +198,7 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
     const mongoHealth = await getMongoHealth();
     return jsonResponse({
       status: "HEALTHY",
-      service: "AutoCom Spatial Commerce Backend Engine",
+      service: "Autocomm Spatial Commerce Backend Engine",
       version: "3.0.0",
       timestamp: new Date().toISOString(),
       outletsActive: mongoHealth.stats?.storeCount || 40,
@@ -235,18 +235,31 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
     const { getMallsFromDb } = await import("./mongodb");
     const malls = await getMallsFromDb();
     return jsonResponse(
-      malls.map((m: any) => ({
-        id: m.id,
-        name: m.name,
-        shortName: m.shortName,
-        subtitle: m.subtitle,
-        address: m.address,
-        latitude: m.latitude,
-        longitude: m.longitude,
-        googleMapsUrl: m.googleMapsUrl,
-        radiusMeters: m.radiusMeters,
-        storeCount: m.stores ? m.stores.length : 8,
-      })),
+      malls.map(
+        (m: {
+          id: string;
+          name: string;
+          shortName: string;
+          subtitle: string;
+          address: string;
+          latitude: number;
+          longitude: number;
+          googleMapsUrl: string;
+          radiusMeters: number;
+          stores?: unknown[];
+        }) => ({
+          id: m.id,
+          name: m.name,
+          shortName: m.shortName,
+          subtitle: m.subtitle,
+          address: m.address,
+          latitude: m.latitude,
+          longitude: m.longitude,
+          googleMapsUrl: m.googleMapsUrl,
+          radiusMeters: m.radiusMeters,
+          storeCount: m.stores ? m.stores.length : 8,
+        }),
+      ),
     );
   }
 
@@ -433,14 +446,14 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
   if (pathname === "/api/paypal/audit-ledger" && method === "GET") {
     const { getOrdersFromDb } = await import("./mongodb");
     const dbOrders = await getOrdersFromDb(100);
-    
+
     // Merge database orders with in-memory store (deduplicated by orderId)
-    const orderMap = new Map<string, any>();
+    const orderMap = new Map<string, (typeof serverAuditStore)[0]>();
     for (const order of serverAuditStore) {
       orderMap.set(order.orderId, order);
     }
     for (const order of dbOrders) {
-      orderMap.set(order.orderId, order);
+      orderMap.set(order.orderId, order as (typeof serverAuditStore)[0]);
     }
     const allOrders = Array.from(orderMap.values()).sort(
       (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime(),

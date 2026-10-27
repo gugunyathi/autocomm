@@ -575,7 +575,7 @@ export const InteractiveDealCard = React.memo(function InteractiveDealCard({
               </div>
               <div>
                 <p className="text-[10px] text-muted-foreground">Settlement Protocol</p>
-                <p className="font-mono text-foreground">AutoCom-FIDO2</p>
+                <p className="font-mono text-foreground">Autocomm-FIDO2</p>
               </div>
               <div>
                 <p className="text-[10px] text-muted-foreground">Biometric Enclave</p>

@@ -100,7 +100,7 @@ export async function executeCrossRailFallback(
     itemTitle: item.title,
     reason: "FIAT_CARD_DECLINED_BY_ISSUER",
     message:
-      "⚠️ Traditional banking rail failed or declined. AutoCom has automatically unlocked native digital fallback rails to salvage your checkout session.",
+      "⚠️ Traditional banking rail failed or declined. Autocomm has automatically unlocked native digital fallback rails to salvage your checkout session.",
     pricing: {
       originalFiat: `${recoveryPriceMatrix.currencySymbol}${recoveryPriceMatrix.localFiatAmount} ${currencyCode}`,
       bitcoinSats: recoveryPriceMatrix.satsAmount,

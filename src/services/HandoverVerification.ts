@@ -107,7 +107,7 @@ export class HandoverVerificationEngine {
           650,
           "ZAR",
         );
-        console.log(`ℹ️ AutoCom Node recognized offline proof for item ${targetItemId}`);
+        console.log(`ℹ️ Autocomm Node recognized offline proof for item ${targetItemId}`);
       }
 
       const latestTx = DB.getTransactionByProof(proofHash, targetItemId);
