@@ -31,6 +31,10 @@ import {
 import { type PasskeyUser, getCurrentUser, signOutPasskey } from "@/lib/passkey-auth";
 import { ALL_MALLS, getMallById, type MallDefinition, type RealProduct } from "@/lib/malls";
 import { StoreProductsModal } from "@/components/StoreProductsModal";
+import { FloatingCreateAgentButton } from "@/components/agent/FloatingCreateAgentButton";
+import { CreateAgentModal } from "@/components/agent/CreateAgentModal";
+import { hasUserCreatedAgent, convertAgentIntentToWishlistItem } from "@/services/userAgentService";
+import type { UserPersonalAgent } from "@/types/userAgent";
 
 // Lazy-load heavy sub-applications and dialogs so initial mesh loading is instantaneous
 const PitchDeckModal = lazy(() =>
@@ -134,6 +138,12 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
   const [passkeyModalOpen, setPasskeyModalOpen] = useState(false);
   const [passkeyModalMode, setPasskeyModalMode] = useState<"signin" | "signup">("signin");
   const [walkthroughOpen, setWalkthroughOpen] = useState(false);
+  const [hasCreatedAgent, setHasCreatedAgent] = useState(() => hasUserCreatedAgent());
+  const [createAgentModalOpen, setCreateAgentModalOpen] = useState(false);
+
+  // Vertical floating + button appears ONLY for users who haven't created an agent or are not logged in
+  const shouldShowFloatingCreateAgent = !currentUser || !hasCreatedAgent;
+
   const isOnline = useOnlineStatus();
   const [lastCacheSync, setLastCacheSync] = useState<number | null>(null);
 
@@ -501,6 +511,47 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
   const [logs, setLogs] = useState<Log[]>([]);
   const [left, setLeft] = useState(0);
   const [viewport, setViewport] = useState({ w: 1000, h: 800 });
+
+  const handleAgentCreated = useCallback(
+    (agent: UserPersonalAgent) => {
+      setHasCreatedAgent(true);
+
+      // If user is guest/unauthenticated, automatically provision authenticated session
+      if (!currentUser) {
+        const newUser: PasskeyUser = {
+          id: `usr_${agent.name}_${Date.now().toString(36)}`,
+          name: agent.name,
+          displayName: `@${agent.fullName}`,
+          credentialId: `cred_${Math.random().toString(36).slice(2, 10)}`,
+          createdAt: Date.now(),
+          lastLoginAt: Date.now(),
+          deviceType: "Biometric Enclave",
+          agentBudget: agent.funding.preFundedBalanceZar,
+          intentTags: [agent.intent.category, agent.intent.whatToBuy].filter(Boolean),
+        };
+        setCurrentUser(newUser);
+      }
+
+      if (agent.funding.preFundedBalanceZar) {
+        setBudget(agent.funding.preFundedBalanceZar);
+      }
+
+      if (agent.intent.whatToBuy) {
+        setTags((prev) =>
+          Array.from(new Set([agent.intent.whatToBuy, agent.intent.category, ...prev])),
+        );
+      }
+
+      const wishItem = convertAgentIntentToWishlistItem(agent);
+      handleAddWishlistItem(wishItem);
+
+      notificationManager.sendPushNotification(
+        `Agent @${agent.fullName} Live`,
+        `Autonomous shopping active 24/7 for ${agent.intent.whatToBuy} under R${agent.intent.ceilingPriceZar}`,
+      );
+    },
+    [currentUser, handleAddWishlistItem],
+  );
 
   // Pulled-out cards placed anywhere on canvas
   const [pulledCards, setPulledCards] = useState<
@@ -1349,6 +1400,7 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
             setAgentNamesTab("leaderboard");
             setAgentNamesModalOpen(true);
           }}
+          onOpenCreateAgent={() => setCreateAgentModalOpen(true)}
           walletUsdcBalance={walletState.balances.USDC}
           activeChain={walletState.network}
           walletState={walletState}
@@ -1368,6 +1420,21 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
             handleSponsorStorage(campaignId, amount, "USDC");
           }}
           onUploadCampaign={handleCreateCampaign}
+        />
+
+        {/* Independent Vertical Floating + Button (Appears only if user hasn't created an agent or is not logged in) */}
+        <FloatingCreateAgentButton
+          isVisible={shouldShowFloatingCreateAgent}
+          onClick={() => setCreateAgentModalOpen(true)}
+        />
+
+        {/* Create Agent Modal */}
+        <CreateAgentModal
+          isOpen={createAgentModalOpen}
+          onClose={() => setCreateAgentModalOpen(false)}
+          currentUser={currentUser}
+          onAgentCreated={handleAgentCreated}
+          onLaunchMeshView={() => handleNavigateView("mesh")}
         />
 
         <PasskeyModal
@@ -3285,6 +3352,21 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
           onClose={() => setIsProductsModalOpen(false)}
           onBuyProduct={handleBuyStoreProduct}
           onParkProduct={handleParkStoreProduct}
+        />
+
+        {/* Independent Vertical Floating + Button in Mesh (Appears only if user hasn't created an agent or is not logged in) */}
+        <FloatingCreateAgentButton
+          isVisible={shouldShowFloatingCreateAgent}
+          onClick={() => setCreateAgentModalOpen(true)}
+        />
+
+        {/* Create Agent Modal in Mesh View */}
+        <CreateAgentModal
+          isOpen={createAgentModalOpen}
+          onClose={() => setCreateAgentModalOpen(false)}
+          currentUser={currentUser}
+          onAgentCreated={handleAgentCreated}
+          onLaunchMeshView={() => handleNavigateView("mesh")}
         />
       </Suspense>
     </main>

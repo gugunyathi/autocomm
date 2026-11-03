@@ -56,6 +56,7 @@ interface LandingPageProps {
   onOpenAgentNames?: () => void;
   onOpenOwnersDirectory?: () => void;
   onOpenLeaderboard?: () => void;
+  onOpenCreateAgent?: () => void;
   walletUsdcBalance?: number;
   activeChain?: string;
   // Commercialization Engine & Ad Library Props
@@ -118,6 +119,7 @@ export function LandingPage({
   onOpenAgentNames,
   onOpenOwnersDirectory,
   onOpenLeaderboard,
+  onOpenCreateAgent,
   walletUsdcBalance = 285.5,
   activeChain = "base",
   walletState = {
@@ -402,6 +404,16 @@ export function LandingPage({
               </div>
             ) : (
               <div className="flex items-center gap-1.5 sm:gap-2">
+                {onOpenCreateAgent && (
+                  <button
+                    onClick={onOpenCreateAgent}
+                    className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 px-2.5 sm:px-3.5 py-2 text-xs font-bold shadow-md shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer min-h-[40px] flex items-center gap-1.5"
+                    title="Create autonomous shopping agent"
+                  >
+                    <span className="font-mono text-sm leading-none">+</span>
+                    <span>Create Agent</span>
+                  </button>
+                )}
                 <button
                   onClick={() => onOpenPasskeyModal("signin")}
                   className="rounded-xl border border-primary/40 bg-primary/10 px-2.5 sm:px-3.5 py-2 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors flex items-center gap-1 min-h-[40px] cursor-pointer"
