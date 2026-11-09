@@ -224,44 +224,77 @@ export async function searchChannel3Products(
     (typeof process !== "undefined" && process.env?.["CHANNEL3_API_KEY"]) ||
     (typeof import.meta !== "undefined" && import.meta.env?.["VITE_CHANNEL3_API_KEY"]);
 
-  // If live Channel3 API Key is configured, attempt live upstream fetch
+  // If live Channel3 API Key is configured, execute official Channel3 POST /v1/search
   if (rawApiKey && rawApiKey !== "your_channel3_api_key_here") {
     try {
-      const response = await fetch(
-        `https://api.trychannel3.com/v1/products/search?query=${encodeURIComponent(query)}&limit=${limit}`,
-        {
-          headers: {
-            Authorization: `Bearer ${rawApiKey}`,
-            "Content-Type": "application/json",
-          },
+      const response = await fetch("https://api.trychannel3.com/v1/search", {
+        method: "POST",
+        headers: {
+          "x-api-key": rawApiKey,
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
-      );
+        body: JSON.stringify({
+          query: cleanQ,
+          limit,
+          config: {
+            mode: "agentic",
+          },
+        }),
+      });
 
       if (response.ok) {
-        const liveData = await response.json();
-        if (Array.isArray(liveData.products)) {
-          const mapped: Channel3Product[] = liveData.products.map(
-            (p: Record<string, unknown>, idx: number) => ({
-              id: String(p["id"] || `ch3_live_${idx}`),
-              sku: String(p["sku"] || `SKU-${idx}`),
-              title: String(p["title"] || p["name"] || "Retail Product"),
-              description: String(p["description"] || "Channel3 verified catalog product."),
-              retailer: String(p["retailer"] || p["merchant"] || "Bel Air Retailer"),
+        const liveData = (await response.json()) as {
+          products?: Array<{
+            id?: string;
+            title?: string;
+            description?: string;
+            brands?: Array<{ name?: string }>;
+            images?: Array<{ url?: string }>;
+            offers?: Array<{
+              price?: { price?: number; currency?: string };
+              domain?: string;
+              url?: string;
+              availability?: string;
+            }>;
+            structured_attributes?: Record<string, string[]>;
+          }>;
+        };
+
+        if (Array.isArray(liveData.products) && liveData.products.length > 0) {
+          const mapped: Channel3Product[] = liveData.products.map((p, idx) => {
+            const firstOffer = p.offers?.[0];
+            const priceVal = firstOffer?.price?.price ?? 500;
+            const currency = firstOffer?.price?.currency ?? "USD";
+            const priceUSD = currency === "USD" ? priceVal : convertZarToUsd(priceVal);
+            const priceZAR = currency === "ZAR" ? priceVal : Math.round(priceVal / ZAR_TO_USD_EXCHANGE_RATE);
+            const brandName = p.brands?.[0]?.name ?? "Retail Brand";
+            const imgUrl =
+              p.images?.[0]?.url ??
+              "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600";
+            const retailerName = firstOffer?.domain ?? "Bel Air Retailer";
+
+            return {
+              id: p.id ?? `ch3_live_${idx}`,
+              sku: `C3-${(p.id ?? String(idx)).slice(-8).toUpperCase()}`,
+              title: p.title ?? "Channel3 Product",
+              description: p.description ?? "Verified Channel3 live retail product offer.",
+              retailer: retailerName,
               storeId: "zara-fashion",
-              brand: String(p["brand"] || "Generic"),
-              category: String(p["category"] || "General"),
-              priceZAR: Number(p["priceZAR"] || Number(p["price"] || 500)),
-              priceUSD: convertZarToUsd(Number(p["priceZAR"] || Number(p["price"] || 500))),
-              originalPriceZAR: Number(p["originalPriceZAR"] || Number(p["price"] || 500)),
-              inStock: Boolean(p["inStock"] !== false),
-              stockCount: Number(p["stockCount"] || 10),
-              imageUrl: String(p["imageUrl"] || p["image"] || "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600"),
-              rating: Number(p["rating"] || 4.7),
-              reviewCount: Number(p["reviewCount"] || 50),
+              brand: brandName,
+              category: "Retail Goods",
+              priceZAR,
+              priceUSD,
+              originalPriceZAR: priceZAR,
+              inStock: firstOffer?.availability !== "OutOfStock",
+              stockCount: 12,
+              imageUrl: imgUrl,
+              rating: 4.8,
+              reviewCount: 94,
               merchantBotAvailable: true,
               maxNegotiationDiscount: 20,
-            }),
-          );
+            };
+          });
 
           return {
             results: mapped.slice(0, limit),
@@ -272,7 +305,7 @@ export async function searchChannel3Products(
         }
       }
     } catch {
-      // Graceful fallback to edge catalog
+      // Graceful fallback to edge catalog if offline or network failure
     }
   }
 
@@ -300,9 +333,68 @@ export async function searchChannel3Products(
 }
 
 /**
- * Retrieve a single product by ID from Channel3
+ * Retrieve a single product by ID from Channel3.
+ * Queries live Channel3 GET /v1/products/{id} with x-api-key header when configured.
  */
 export async function getChannel3ProductById(id: string): Promise<Channel3Product | null> {
+  const rawApiKey =
+    (typeof process !== "undefined" && process.env?.["CHANNEL3_API_KEY"]) ||
+    (typeof import.meta !== "undefined" && import.meta.env?.["VITE_CHANNEL3_API_KEY"]);
+
+  if (rawApiKey && rawApiKey !== "your_channel3_api_key_here") {
+    try {
+      const response = await fetch(`https://api.trychannel3.com/v1/products/${encodeURIComponent(id)}`, {
+        headers: {
+          "x-api-key": rawApiKey,
+          Accept: "application/json",
+        },
+      });
+      if (response.ok) {
+        const p = (await response.json()) as {
+          id?: string;
+          title?: string;
+          description?: string;
+          brands?: Array<{ name?: string }>;
+          images?: Array<{ url?: string }>;
+          offers?: Array<{
+            price?: { price?: number; currency?: string };
+            domain?: string;
+            availability?: string;
+          }>;
+        };
+
+        const firstOffer = p.offers?.[0];
+        const priceVal = firstOffer?.price?.price ?? 500;
+        const currency = firstOffer?.price?.currency ?? "USD";
+        const priceUSD = currency === "USD" ? priceVal : convertZarToUsd(priceVal);
+        const priceZAR = currency === "ZAR" ? priceVal : Math.round(priceVal / ZAR_TO_USD_EXCHANGE_RATE);
+
+        return {
+          id: p.id ?? id,
+          sku: `C3-${(p.id ?? id).slice(-8).toUpperCase()}`,
+          title: p.title ?? "Channel3 Product",
+          description: p.description ?? "Verified Channel3 live retail product offer.",
+          retailer: firstOffer?.domain ?? "Bel Air Retailer",
+          storeId: "zara-fashion",
+          brand: p.brands?.[0]?.name ?? "Retail Brand",
+          category: "Retail Goods",
+          priceZAR,
+          priceUSD,
+          originalPriceZAR: priceZAR,
+          inStock: firstOffer?.availability !== "OutOfStock",
+          stockCount: 10,
+          imageUrl: p.images?.[0]?.url ?? "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600",
+          rating: 4.8,
+          reviewCount: 94,
+          merchantBotAvailable: true,
+          maxNegotiationDiscount: 20,
+        };
+      }
+    } catch {
+      // Fallback to edge catalog
+    }
+  }
+
   const found = CURATED_CHANNEL3_PRODUCTS.find((p) => p.id === id);
   return found ?? null;
 }
