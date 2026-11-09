@@ -10,7 +10,7 @@ services:
     plan: starter
     region: oregon
     buildCommand: pnpm install --prod=false && pnpm run build
-    startCommand: pnpm run preview --host 0.0.0.0 --port $PORT
+    startCommand: pnpm run start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_VERSION

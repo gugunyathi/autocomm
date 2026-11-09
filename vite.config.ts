@@ -13,6 +13,7 @@ export default defineConfig({
     },
   },
   nitro: {
+    preset: "node-server",
     alias: {
       "punycode/": "punycode",
     },
