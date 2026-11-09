@@ -1010,56 +1010,56 @@ export function useAutoComPayments() {
 
   // Save states to local storage
   useEffect(() => {
-    if (typeof window !== "undefined" && isLoadedFromStorageRef.current) {
-      localStorage.setItem(STORAGE_WEB3_KEY, JSON.stringify(walletState));
+    if (typeof window !== "undefined" && typeof window.localStorage !== "undefined" && isLoadedFromStorageRef.current) {
+      window.localStorage.setItem(STORAGE_WEB3_KEY, JSON.stringify(walletState));
     }
   }, [walletState]);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && isLoadedFromStorageRef.current) {
-      localStorage.setItem(STORAGE_SHOPIFY_KEY, JSON.stringify(shopifyConfig));
+    if (typeof window !== "undefined" && typeof window.localStorage !== "undefined" && isLoadedFromStorageRef.current) {
+      window.localStorage.setItem(STORAGE_SHOPIFY_KEY, JSON.stringify(shopifyConfig));
     }
   }, [shopifyConfig]);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && isLoadedFromStorageRef.current) {
-      localStorage.setItem(STORAGE_CAMPAIGNS_KEY, JSON.stringify(campaigns));
+    if (typeof window !== "undefined" && typeof window.localStorage !== "undefined" && isLoadedFromStorageRef.current) {
+      window.localStorage.setItem(STORAGE_CAMPAIGNS_KEY, JSON.stringify(campaigns));
     }
   }, [campaigns]);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && isLoadedFromStorageRef.current) {
-      localStorage.setItem(STORAGE_DEBIT_KEY, JSON.stringify(autoDebitConfig));
+    if (typeof window !== "undefined" && typeof window.localStorage !== "undefined" && isLoadedFromStorageRef.current) {
+      window.localStorage.setItem(STORAGE_DEBIT_KEY, JSON.stringify(autoDebitConfig));
     }
   }, [autoDebitConfig]);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && isLoadedFromStorageRef.current) {
-      localStorage.setItem(STORAGE_WISHLIST_KEY, JSON.stringify(wishlist));
+    if (typeof window !== "undefined" && typeof window.localStorage !== "undefined" && isLoadedFromStorageRef.current) {
+      window.localStorage.setItem(STORAGE_WISHLIST_KEY, JSON.stringify(wishlist));
     }
   }, [wishlist]);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && isLoadedFromStorageRef.current) {
-      localStorage.setItem(STORAGE_API_CREDENTIALS_KEY, JSON.stringify(apiCredentials));
+    if (typeof window !== "undefined" && typeof window.localStorage !== "undefined" && isLoadedFromStorageRef.current) {
+      window.localStorage.setItem(STORAGE_API_CREDENTIALS_KEY, JSON.stringify(apiCredentials));
     }
   }, [apiCredentials]);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && isLoadedFromStorageRef.current) {
-      localStorage.setItem(STORAGE_ARBITRAGE_LEDGER_KEY, JSON.stringify(arbitrageLedger));
+    if (typeof window !== "undefined" && typeof window.localStorage !== "undefined" && isLoadedFromStorageRef.current) {
+      window.localStorage.setItem(STORAGE_ARBITRAGE_LEDGER_KEY, JSON.stringify(arbitrageLedger));
     }
   }, [arbitrageLedger]);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && isLoadedFromStorageRef.current) {
-      localStorage.setItem(STORAGE_AFFILIATES_KEY, JSON.stringify(syndicatedCampaigns));
+    if (typeof window !== "undefined" && typeof window.localStorage !== "undefined" && isLoadedFromStorageRef.current) {
+      window.localStorage.setItem(STORAGE_AFFILIATES_KEY, JSON.stringify(syndicatedCampaigns));
     }
   }, [syndicatedCampaigns]);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && isLoadedFromStorageRef.current) {
-      localStorage.setItem(STORAGE_ATTENTION_POOLS_KEY, JSON.stringify(attentionPools));
+    if (typeof window !== "undefined" && typeof window.localStorage !== "undefined" && isLoadedFromStorageRef.current) {
+      window.localStorage.setItem(STORAGE_ATTENTION_POOLS_KEY, JSON.stringify(attentionPools));
     }
   }, [attentionPools]);
 
