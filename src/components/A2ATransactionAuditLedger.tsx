@@ -304,10 +304,22 @@ const PayPalRefCellRenderer: React.FC<ICellRendererParams<A2ALedgerRow, string>>
   }
 
   if (row.paypalOrderId) {
+    const isRealPayPalId = !row.paypalOrderId.startsWith("ORD-SANDBOX-");
+    const linkUrl = isRealPayPalId
+      ? `https://www.sandbox.paypal.com/checkoutnow?token=${row.paypalOrderId}`
+      : `/api/paypal/orders/${row.paypalOrderId}`;
+
     return (
-      <span className="font-mono text-[11px] text-amber-300/90 truncate max-w-[120px]">
-        {row.paypalOrderId}
-      </span>
+      <a
+        href={linkUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-mono text-[11px] text-amber-300/90 hover:text-amber-200 hover:underline flex items-center gap-1 truncate max-w-[140px]"
+        title={`View PayPal Sandbox Order: ${row.paypalOrderId}`}
+      >
+        <span className="truncate">{row.paypalOrderId}</span>
+        <ExternalLink className="w-2.5 h-2.5 text-amber-400 shrink-0" />
+      </a>
     );
   }
 

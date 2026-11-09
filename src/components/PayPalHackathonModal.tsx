@@ -22,11 +22,12 @@ import {
   convertZarToUsd,
   ZAR_TO_USD_EXCHANGE_RATE,
 } from "../services/paypalService";
+import { PAYPAL_AGENT_TOOLS } from "../services/paypalAgentToolkit";
 
 export interface PayPalHackathonModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialTab?: "ag-grid" | "channel3" | "paypal" | "apimatic";
+  initialTab?: "ag-grid" | "channel3" | "paypal" | "apimatic" | "ai-toolkit";
 }
 
 export function PayPalHackathonModal({
@@ -34,17 +35,182 @@ export function PayPalHackathonModal({
   onClose,
   initialTab = "ag-grid",
 }: PayPalHackathonModalProps) {
-  const [activeTab, setActiveTab] = useState<"ag-grid" | "channel3" | "paypal" | "apimatic">(
-    initialTab,
-  );
+  const [activeTab, setActiveTab] = useState<
+    "ag-grid" | "channel3" | "paypal" | "apimatic" | "ai-toolkit"
+  >(initialTab);
 
   // Standalone PayPal Sandbox Tester State
   const [testStore, setTestStore] = useState<string>("woolworths-food");
   const [testPriceZar, setTestPriceZar] = useState<number>(220);
   const [testOrderId, setTestOrderId] = useState<string | null>(null);
   const [testTxId, setTestTxId] = useState<string | null>(null);
+  const [testApproveUrl, setTestApproveUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [stepLog, setStepLog] = useState<string[]>([]);
+
+  // AI Agent Toolkit & LLM Bridge State
+  const [selectedTool, setSelectedTool] = useState<string>("paypal_create_order");
+  const [toolParamsJson, setToolParamsJson] = useState<string>(
+    JSON.stringify(
+      {
+        storeId: "woolworths-food",
+        storeName: "Woolworths Food",
+        priceZAR: 220,
+        itemName: "Artisan Sourdough & Cheese Platter",
+      },
+      null,
+      2,
+    ),
+  );
+  const [toolResult, setToolResult] = useState<any>(null);
+  const [isExecutingTool, setIsExecutingTool] = useState<boolean>(false);
+  const [paypalStatus, setPaypalStatus] = useState<any>(null);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      fetch("/api/paypal/status")
+        .then((r) => r.json())
+        .then((data) => setPaypalStatus(data))
+        .catch(() => {});
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleToolSelect = (toolName: string) => {
+    setSelectedTool(toolName);
+    switch (toolName) {
+      case "paypal_create_order":
+        setToolParamsJson(
+          JSON.stringify(
+            {
+              storeId: "zara-fashion",
+              storeName: "Zara Fashion",
+              priceZAR: 450,
+              itemName: "Oversized Wool Hoodie",
+            },
+            null,
+            2,
+          ),
+        );
+        break;
+      case "paypal_capture_order":
+        setToolParamsJson(
+          JSON.stringify(
+            {
+              orderId: testOrderId || "237030418K829894R",
+            },
+            null,
+            2,
+          ),
+        );
+        break;
+      case "paypal_get_order_details":
+        setToolParamsJson(
+          JSON.stringify(
+            {
+              orderId: testOrderId || "237030418K829894R",
+            },
+            null,
+            2,
+          ),
+        );
+        break;
+      case "paypal_create_invoice":
+        setToolParamsJson(
+          JSON.stringify(
+            {
+              recipientEmail: "buyer-agent@autocom.dev",
+              items: [
+                {
+                  name: "Bel Air Mall Artisan Goods",
+                  quantity: 1,
+                  unitPriceUSD: 24.5,
+                  description: "Autonomous Agent Settlement",
+                },
+              ],
+              currency: "USD",
+              note: "Thank you for using AutoCom Autonomous Agent Commerce",
+            },
+            null,
+            2,
+          ),
+        );
+        break;
+      case "paypal_list_invoices":
+        setToolParamsJson(JSON.stringify({ pageSize: 5 }, null, 2));
+        break;
+      case "paypal_create_product":
+        setToolParamsJson(
+          JSON.stringify(
+            {
+              name: "Autonomous Bel Air Mall Pass",
+              description: "Agent delegation clearance pass",
+              type: "SERVICE",
+              category: "SERVICES",
+            },
+            null,
+            2,
+          ),
+        );
+        break;
+      case "paypal_list_products":
+        setToolParamsJson(JSON.stringify({ pageSize: 5 }, null, 2));
+        break;
+      case "paypal_agent_autonomous_settle":
+        setToolParamsJson(
+          JSON.stringify(
+            {
+              storeId: "nike-performance",
+              priceZAR: 1850,
+              itemName: "Air Zoom Pegasus 40",
+              agentConsented: true,
+            },
+            null,
+            2,
+          ),
+        );
+        break;
+      default:
+        setToolParamsJson("{}");
+    }
+  };
+
+  const handleExecuteAgentTool = async () => {
+    setIsExecutingTool(true);
+    setToolResult(null);
+    try {
+      let parsed = {};
+      try {
+        parsed = JSON.parse(toolParamsJson);
+      } catch {
+        throw new Error("Invalid JSON in tool parameters");
+      }
+
+      const res = await fetch("/api/paypal/agent-toolkit/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tool: selectedTool,
+          parameters: parsed,
+        }),
+      });
+
+      const data = await res.json();
+      setToolResult(data);
+      if (data?.result?.orderId) {
+        setTestOrderId(data.result.orderId);
+      }
+    } catch (err: any) {
+      setToolResult({
+        success: false,
+        tool: selectedTool,
+        error: err?.message || String(err),
+      });
+    } finally {
+      setIsExecutingTool(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -175,6 +341,18 @@ export function PayPalHackathonModal({
             >
               <FileCode className="w-3.5 h-3.5" />
               APIMatic OpenAPI Spec
+            </button>
+
+            <button
+              onClick={() => setActiveTab("ai-toolkit")}
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer whitespace-nowrap ${
+                activeTab === "ai-toolkit"
+                  ? "bg-sky-500 text-slate-950 font-black shadow-md"
+                  : "text-muted-foreground hover:text-white"
+              }`}
+            >
+              <Bot className="w-3.5 h-3.5" />
+              AI Agent Toolkit & LLM
             </button>
           </div>
         </div>
@@ -325,6 +503,184 @@ export function PayPalHackathonModal({
                 <pre className="max-h-[500px] overflow-auto font-mono text-[11px] text-teal-300 leading-relaxed pr-2">
                   {A2A_OPENAPI_SPEC_JSON}
                 </pre>
+              </div>
+            </div>
+          )}
+          {activeTab === "ai-toolkit" && (
+            <div className="space-y-4 max-w-5xl mx-auto">
+              {/* Header Card */}
+              <div className="glass p-5 rounded-2xl border border-sky-500/30 bg-sky-950/10 space-y-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-extrabold text-white font-mono flex items-center gap-2">
+                      <Bot className="w-5 h-5 text-sky-400" />
+                      PayPal Agent Toolkit & LLM Commerce Bridge
+                    </h3>
+                    <p className="text-xs text-slate-300 mt-0.5">
+                      Empower AI agents and LLMs to autonomously create orders, issue invoices, query
+                      catalogs, and execute settlements via Model Context Protocol (MCP) and function calling.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <a
+                      href="https://developer.paypal.com/ai-tools/toolkit/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-sky-300 font-mono text-[11px] font-bold transition-all"
+                    >
+                      <span>Toolkit Docs</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                    <a
+                      href="https://developer.paypal.com/ai-tools/build-with-llm/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-200 border border-sky-400/30 font-mono text-[11px] font-bold transition-all"
+                    >
+                      <span>Build with LLM</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                </div>
+
+                {/* Live Credentials & Status Banner */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 font-mono text-xs">
+                  <div className="p-2.5 rounded-xl bg-black/50 border border-white/10">
+                    <span className="text-[10px] text-muted-foreground uppercase block">
+                      Sandbox Connection
+                    </span>
+                    <span className="text-emerald-400 font-bold flex items-center gap-1.5 mt-0.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      {paypalStatus?.connected ? "ONLINE" : "VERIFIED"}
+                    </span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-black/50 border border-white/10">
+                    <span className="text-[10px] text-muted-foreground uppercase block">App ID</span>
+                    <span className="text-white font-bold truncate block mt-0.5">
+                      {paypalStatus?.appId || "APP-6YX62499CL803513D"}
+                    </span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-black/50 border border-white/10">
+                    <span className="text-[10px] text-muted-foreground uppercase block">
+                      Environment
+                    </span>
+                    <span className="text-sky-300 font-bold uppercase mt-0.5 block">
+                      {paypalStatus?.environment || "sandbox"}
+                    </span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-black/50 border border-white/10">
+                    <span className="text-[10px] text-muted-foreground uppercase block">
+                      Client ID
+                    </span>
+                    <span className="text-slate-300 truncate block mt-0.5">
+                      {paypalStatus?.clientIdMasked || "AVZv60...dAg6"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tool Caller Console */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {/* Tool Selector List */}
+                <div className="glass p-4 rounded-2xl border border-white/15 bg-black/40 space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                    <span className="text-xs font-mono font-bold text-white uppercase tracking-wider">
+                      Available Agent Tools
+                    </span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-sky-500/20 text-sky-300 font-bold">
+                      {PAYPAL_AGENT_TOOLS.length} Tools
+                    </span>
+                  </div>
+                  <div className="space-y-1.5 max-h-[420px] overflow-y-auto pr-1">
+                    {PAYPAL_AGENT_TOOLS.map((tool) => (
+                      <button
+                        key={tool.name}
+                        onClick={() => handleToolSelect(tool.name)}
+                        className={`w-full text-left p-2.5 rounded-xl font-mono text-xs transition-all cursor-pointer ${
+                          selectedTool === tool.name
+                            ? "bg-sky-500 text-slate-950 font-bold shadow-md"
+                            : "bg-white/5 hover:bg-white/10 text-slate-300"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="truncate">{tool.name}</span>
+                        </div>
+                        <p
+                          className={`text-[10px] line-clamp-1 mt-0.5 ${
+                            selectedTool === tool.name ? "text-slate-900" : "text-muted-foreground"
+                          }`}
+                        >
+                          {tool.description}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Parameter Editor & Invoker */}
+                <div className="lg:col-span-2 space-y-4">
+                  <div className="glass p-4 rounded-2xl border border-white/15 bg-black/50 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-xs font-mono font-bold text-sky-400">
+                          {selectedTool}
+                        </span>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          {PAYPAL_AGENT_TOOLS.find((t) => t.name === selectedTool)?.description}
+                        </p>
+                      </div>
+                      <button
+                        onClick={handleExecuteAgentTool}
+                        disabled={isExecutingTool}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-sky-400 to-primary hover:from-sky-300 text-slate-950 font-mono text-xs font-black shadow-lg transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                      >
+                        <Zap className={`w-3.5 h-3.5 ${isExecutingTool ? "animate-spin" : ""}`} />
+                        {isExecutingTool ? "Invoking Live Tool…" : "Execute Tool"}
+                      </button>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-mono text-muted-foreground uppercase block mb-1">
+                        Input Parameters (JSON Schema)
+                      </span>
+                      <textarea
+                        value={toolParamsJson}
+                        onChange={(e) => setToolParamsJson(e.target.value)}
+                        rows={6}
+                        className="w-full bg-black/80 border border-white/15 rounded-xl p-3 font-mono text-xs text-sky-300 focus:outline-none focus:ring-1 focus:ring-sky-400"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Execution Output Console */}
+                  {toolResult && (
+                    <div className="glass p-4 rounded-2xl border border-white/15 bg-black/80 space-y-2">
+                      <div className="flex items-center justify-between pb-2 border-b border-white/10 font-mono text-xs">
+                        <span className="text-muted-foreground uppercase text-[10px]">
+                          Tool Execution Response
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            toolResult.success
+                              ? "bg-emerald-500/20 text-emerald-400"
+                              : "bg-red-500/20 text-red-400"
+                          }`}
+                        >
+                          {toolResult.success ? "200 SUCCESS" : "ERROR"}
+                        </span>
+                      </div>
+                      {toolResult.agentRationale && (
+                        <div className="p-2.5 rounded-xl bg-sky-950/30 border border-sky-500/30 text-xs font-mono text-sky-200">
+                          🤖 <span className="font-bold">Agent Rationale:</span>{" "}
+                          {toolResult.agentRationale}
+                        </div>
+                      )}
+                      <pre className="max-h-[220px] overflow-auto font-mono text-[11px] text-teal-300 p-2 rounded-lg bg-black/60 border border-white/5">
+                        {JSON.stringify(toolResult, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}

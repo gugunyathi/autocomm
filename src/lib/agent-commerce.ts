@@ -27,7 +27,7 @@ export interface UserProfile {
   role: "buyer" | "merchant";
   allocatedBot: AIBot;
   walletBalance: number; // Pre-funded balance in ZAR (Option A)
-  paymentPreference: "A" | "B"; // 'A' = Wallet Ledger, 'B' = Direct PayShap/Stitch Prompt
+  paymentPreference: "A" | "B" | "C"; // 'A' = Wallet Ledger, 'B' = Direct PayShap/Stitch, 'C' = PayPal Autonomous Vault
   linkedBankId?: string;
 }
 
@@ -53,13 +53,15 @@ export interface NegotiationLog {
 
 export interface AgentTransaction {
   id: string;
-  type: "Wallet" | "Direct_Pay";
+  type: "Wallet" | "Direct_Pay" | "PayPal";
   userId: string;
   merchantId: string;
   amountZAR: number;
   productTitle: string;
   status: "COMPLETED" | "PENDING_USER_APPROVAL" | "REFUNDED" | "FAILED";
   stitchId?: string;
+  paypalOrderId?: string;
+  paypalCaptureId?: string;
   qrToken: string;
   timestamp: number;
   negotiatedDiscountPercent: number;

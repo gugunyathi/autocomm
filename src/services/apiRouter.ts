@@ -12,7 +12,23 @@
  */
 
 import { A2A_OPENAPI_SPEC_JSON, type A2AMessage } from "../types/a2aProtocol";
-import { ZAR_TO_USD_EXCHANGE_RATE, convertZarToUsd } from "./paypalService";
+import {
+  ZAR_TO_USD_EXCHANGE_RATE,
+  convertZarToUsd,
+  createRealPayPalOrder,
+  captureRealPayPalOrder,
+  getRealPayPalOrder,
+  createRealPayPalInvoice,
+  listRealPayPalInvoices,
+  createRealPayPalProduct,
+  listRealPayPalProducts,
+  verifyPayPalCredentials,
+} from "./paypalService";
+import {
+  PAYPAL_AGENT_TOOLS,
+  executePayPalAgentTool,
+  handlePayPalMcpRequest,
+} from "./paypalAgentToolkit";
 
 export interface BackendAuditOrder {
   orderId: string;
@@ -343,19 +359,27 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
     try {
       const body = await request.json();
       const storeId = String(body.storeId || "woolworths-food");
+      const storeName = body.storeName ? String(body.storeName) : undefined;
       const negotiatedPriceZAR = Number(body.negotiatedPriceZAR || 220);
-      const convertedUSD = convertZarToUsd(negotiatedPriceZAR);
+      const itemName = body.itemName || body.sku || "Bel Air Mall Purchase";
+      const sessionId = body.sessionId || `sess_${Date.now()}`;
 
-      const randomSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();
-      const orderId = `ORD-SANDBOX-${storeId.substring(0, 4).toUpperCase()}-${randomSuffix}`;
+      // Call live PayPal Orders v2 Sandbox API (with graceful fallback)
+      const payPalRes = await createRealPayPalOrder({
+        storeId,
+        storeName,
+        priceZAR: negotiatedPriceZAR,
+        itemName,
+        sessionId,
+      });
+
       const now = new Date().toISOString();
-
       const newOrder: BackendAuditOrder = {
-        orderId,
+        orderId: payPalRes.orderId,
         storeId,
         priceZAR: negotiatedPriceZAR,
-        amountUSD: convertedUSD,
-        exchangeRate: ZAR_TO_USD_EXCHANGE_RATE,
+        amountUSD: payPalRes.amountUSD,
+        exchangeRate: payPalRes.exchangeRate,
         status: "CREATED",
         createdAt: now,
         vaultRef: `VAULT_AUTONOMOUS_DELEGATE_${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
@@ -368,17 +392,21 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
 
       return jsonResponse(
         {
-          orderId,
-          status: "CREATED",
-          convertedUSD,
-          exchangeRate: ZAR_TO_USD_EXCHANGE_RATE,
+          orderId: payPalRes.orderId,
+          status: payPalRes.status,
+          convertedUSD: payPalRes.amountUSD,
+          exchangeRate: payPalRes.exchangeRate,
           timestamp: now,
           vaultConsentVerified: true,
+          links: payPalRes.links,
         },
         201,
       );
-    } catch {
-      return jsonResponse({ error: "Failed to process PayPal order creation" }, 400);
+    } catch (err: any) {
+      return jsonResponse(
+        { error: "Failed to process PayPal order creation", details: err?.message || String(err) },
+        400,
+      );
     }
   }
 
@@ -388,9 +416,12 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
       const body = await request.json();
       const orderId = String(body.orderId || "");
 
-      let existing = serverAuditStore.find((o) => o.orderId === orderId);
+      // Execute capture via live PayPal Orders API v2
+      const captureResult = await captureRealPayPalOrder(orderId);
+      const txId = captureResult.captureId || captureResult.transactionId;
       const now = new Date().toISOString();
-      const txId = `TX-PAYPAL-M2M-${Math.floor(1000000 + Math.random() * 9000000)}`;
+
+      let existing = serverAuditStore.find((o) => o.orderId === orderId);
 
       if (existing) {
         existing.status = "SETTLED";
@@ -423,9 +454,127 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
         settledAmountZAR: existing.priceZAR,
         timestamp: now,
         vaultAuthorizationRef: existing.vaultRef,
+        payer: captureResult.payer,
       });
-    } catch {
-      return jsonResponse({ error: "Failed to execute vaulted settlement capture" }, 400);
+    } catch (err: any) {
+      return jsonResponse(
+        { error: "Failed to execute vaulted settlement capture", details: err?.message || String(err) },
+        400,
+      );
+    }
+  }
+
+  // 6b. PayPal Live Credentials & Sandbox Health Status: GET /api/paypal/status
+  if (pathname === "/api/paypal/status" && method === "GET") {
+    const creds = await verifyPayPalCredentials();
+    return jsonResponse({
+      ...creds,
+      timestamp: new Date().toISOString(),
+      agentCommerceVersion: "3.0.0",
+      aiToolkitCompliant: true,
+      endpoints: {
+        createOrder: "/api/paypal/create-order",
+        checkoutSettle: "/api/paypal/checkout-settle",
+        auditLedger: "/api/paypal/audit-ledger",
+        tools: "/api/paypal/agent-toolkit/tools",
+        execute: "/api/paypal/agent-toolkit/execute",
+        mcp: "/api/paypal/mcp",
+      },
+    });
+  }
+
+  // 6c. PayPal Get Order Details: GET /api/paypal/order?id=... or /api/paypal/orders/:id
+  if (
+    (pathname === "/api/paypal/order" || pathname.startsWith("/api/paypal/orders/")) &&
+    method === "GET"
+  ) {
+    try {
+      const orderId =
+        url.searchParams.get("id") || pathname.split("/").filter(Boolean).pop() || "";
+      if (!orderId) {
+        return jsonResponse({ error: "Missing order id" }, 400);
+      }
+      const details = await getRealPayPalOrder(orderId);
+      return jsonResponse(details);
+    } catch (err: any) {
+      return jsonResponse({ error: err?.message || "Failed to fetch order details" }, 404);
+    }
+  }
+
+  // 6d. PayPal Invoices: GET /api/paypal/invoices & POST /api/paypal/invoices/create
+  if (pathname === "/api/paypal/invoices" && method === "GET") {
+    const pageSize = Number(url.searchParams.get("pageSize") || 10);
+    const invoices = await listRealPayPalInvoices(pageSize);
+    return jsonResponse(invoices);
+  }
+
+  if (pathname === "/api/paypal/invoices/create" && method === "POST") {
+    try {
+      const body = await request.json();
+      const invoice = await createRealPayPalInvoice(body);
+      return jsonResponse(invoice, 201);
+    } catch (err: any) {
+      return jsonResponse({ error: err?.message || "Failed to create invoice" }, 400);
+    }
+  }
+
+  // 6e. PayPal Catalog Products: GET /api/paypal/products & POST /api/paypal/products/create
+  if (pathname === "/api/paypal/products" && method === "GET") {
+    const pageSize = Number(url.searchParams.get("pageSize") || 10);
+    const products = await listRealPayPalProducts(pageSize);
+    return jsonResponse(products);
+  }
+
+  if (pathname === "/api/paypal/products/create" && method === "POST") {
+    try {
+      const body = await request.json();
+      const product = await createRealPayPalProduct(body);
+      return jsonResponse(product, 201);
+    } catch (err: any) {
+      return jsonResponse({ error: err?.message || "Failed to create catalog product" }, 400);
+    }
+  }
+
+  // 6f. PayPal Agent Toolkit Tools Manifest (Per https://developer.paypal.com/ai-tools/toolkit/): GET /api/paypal/agent-toolkit/tools
+  if (pathname === "/api/paypal/agent-toolkit/tools" && method === "GET") {
+    return jsonResponse({
+      toolkit: "@paypal/agent-toolkit",
+      version: "1.0.0",
+      description:
+        "PayPal Agent Toolkit tools manifest for LLMs, autonomous shopping bots, and AI agents operating in commercial environments.",
+      reference: "https://developer.paypal.com/ai-tools/toolkit/",
+      tools: PAYPAL_AGENT_TOOLS,
+    });
+  }
+
+  // 6g. PayPal Agent Toolkit Tool Execution: POST /api/paypal/agent-toolkit/execute
+  if (pathname === "/api/paypal/agent-toolkit/execute" && method === "POST") {
+    try {
+      const body = await request.json();
+      const toolName = body.tool || body.toolName || body.name;
+      const params = body.parameters || body.args || body.arguments || {};
+      const result = await executePayPalAgentTool(toolName, params);
+      return jsonResponse(result, result.success ? 200 : 400);
+    } catch (err: any) {
+      return jsonResponse({ error: err?.message || "Agent tool execution failed" }, 400);
+    }
+  }
+
+  // 6h. PayPal Model Context Protocol (MCP) Server: POST /api/paypal/mcp
+  if (pathname === "/api/paypal/mcp" && method === "POST") {
+    try {
+      const body = await request.json();
+      const mcpResponse = await handlePayPalMcpRequest(body);
+      return jsonResponse(mcpResponse);
+    } catch (err: any) {
+      return jsonResponse(
+        {
+          jsonrpc: "2.0",
+          id: null,
+          error: { code: -32700, message: "Parse error / Invalid MCP JSON-RPC" },
+        },
+        400,
+      );
     }
   }
 

@@ -185,7 +185,7 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
   const [agentDevPortalOpen, setAgentDevPortalOpen] = useState(false);
   const [paypalHackathonOpen, setPaypalHackathonOpen] = useState(false);
   const [paypalHackathonTab, setPaypalHackathonTab] = useState<
-    "ag-grid" | "channel3" | "paypal" | "apimatic"
+    "ag-grid" | "channel3" | "paypal" | "apimatic" | "ai-toolkit"
   >("ag-grid");
   const [agentNamesModalOpen, setAgentNamesModalOpen] = useState(false);
   const [agentNamesTab, setAgentNamesTab] = useState<

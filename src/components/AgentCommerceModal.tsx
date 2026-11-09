@@ -14,8 +14,35 @@ import {
   updateA2ATransactionStatus,
   runAgentNegotiation,
 } from "@/lib/agent-commerce";
-import type { Store, BoughtItem } from "@/lib/acn-data";
+import type { Store } from "@/lib/acn-data";
+import type { BoughtItem } from "@/components/BoughtItemsModal";
 import { getBitchatService } from "@/services/bitchat";
+
+function createFallbackStore(
+  merchantId: string,
+  title: string,
+  category: string,
+  priceZAR: number,
+  icon = "🛍️",
+  color = "oklch(0.8 0.17 70)",
+): Store {
+  return {
+    id: merchantId,
+    name: title.split("(")[0]?.trim() || title,
+    icon,
+    cat: category,
+    hue: "teal",
+    dist: 25,
+    item: title,
+    open: priceZAR,
+    tag: "Deal",
+    image: "",
+    lat: 0,
+    lng: 0,
+    bearing: 0,
+    brandBgColor: color,
+  };
+}
 
 interface AgentCommerceModalProps {
   isOpen: boolean;
@@ -82,14 +109,16 @@ export function AgentCommerceModal({
       title: `${s.item} (${s.name})`,
       originalPriceZAR: s.open,
       merchantId: s.id,
-      category: s.category,
+      category: s.cat,
       stockLevel: 10 + (s.open % 15),
       storeRef: s,
     })),
     ...defaultProducts,
   ];
 
-  const [selectedProduct, setSelectedProduct] = useState<ProductItem>(allProducts[0]);
+  const [selectedProduct, setSelectedProduct] = useState<ProductItem>(
+    () => allProducts[0] ?? defaultProducts[0]!,
+  );
   const [merchantBot, setMerchantBot] = useState<AIBot>(DEFAULT_MERCHANT_BOT);
 
   // Negotiation state
@@ -169,7 +198,7 @@ export function AgentCommerceModal({
     saveA2AProfile(updated);
   };
 
-  const handleUpdatePaymentPreference = (pref: "A" | "B") => {
+  const handleUpdatePaymentPreference = (pref: "A" | "B" | "C") => {
     const updated: UserProfile = {
       ...profile,
       paymentPreference: pref,
@@ -282,17 +311,15 @@ export function AgentCommerceModal({
       // Create voucher into Claimed Bag
       const bought: BoughtItem = {
         id: `bought_${Date.now()}_${txId}`,
-        store: selectedProduct.storeRef || {
-          id: selectedProduct.merchantId,
-          name: selectedProduct.title.split("(")[0].trim(),
-          bearing: 0,
-          dist: 25,
-          icon: "🛍️",
-          category: selectedProduct.category,
-          open: selectedProduct.originalPriceZAR,
-          color: "oklch(0.8 0.17 70)",
-          item: selectedProduct.title,
-        },
+        store:
+          selectedProduct.storeRef ||
+          createFallbackStore(
+            selectedProduct.merchantId,
+            selectedProduct.title,
+            selectedProduct.category,
+            selectedProduct.originalPriceZAR,
+            "🛍️",
+          ),
         item: selectedProduct.title,
         price: settledPrice,
         open: selectedProduct.originalPriceZAR,
@@ -304,6 +331,66 @@ export function AgentCommerceModal({
       if (typeof navigator !== "undefined" && "vibrate" in navigator) {
         navigator.vibrate?.([60, 40, 100]);
       }
+    }
+
+    // -----------------------------------------------------------------
+    // OPTION C: PAYPAL AUTONOMOUS AGENT SETTLEMENT (Sandbox M2M Vault)
+    // -----------------------------------------------------------------
+    else if (profile.paymentPreference === "C") {
+      import("@/services/paypalService").then(async ({ createAgentTransaction, executeVaultedAgentPayment }) => {
+        try {
+          const order = await createAgentTransaction(selectedProduct.merchantId, settledPrice);
+          const capture = await executeVaultedAgentPayment(order.orderId);
+
+          const newTx: AgentTransaction = {
+            id: capture.transactionId || txId,
+            type: "PayPal",
+            userId: profile.id,
+            merchantId: selectedProduct.merchantId,
+            amountZAR: settledPrice,
+            productTitle: `${selectedProduct.title} (PayPal Sandbox: ${order.orderId})`,
+            status: "COMPLETED",
+            paypalOrderId: order.orderId,
+            paypalCaptureId: capture.transactionId,
+            qrToken: `PAYPAL-${order.orderId}-${token}`,
+            timestamp: Date.now(),
+            negotiatedDiscountPercent: discountPercent,
+            originalPriceZAR: selectedProduct.originalPriceZAR,
+          };
+
+          saveA2ATransaction(newTx);
+          setCurrentTx(newTx);
+          setRecentTransactions((prev) => [newTx, ...prev]);
+          setIsProcessingPayment(false);
+
+          const bought: BoughtItem = {
+            id: `bought_paypal_${Date.now()}_${txId}`,
+            store:
+              selectedProduct.storeRef ||
+              createFallbackStore(
+                selectedProduct.merchantId,
+                selectedProduct.title,
+                selectedProduct.category,
+                selectedProduct.originalPriceZAR,
+                "🅿️",
+                "#0070ba",
+              ),
+            item: selectedProduct.title,
+            price: settledPrice,
+            open: selectedProduct.originalPriceZAR,
+            boughtAt: Date.now(),
+            qrToken: `PAYPAL-${order.orderId}`,
+          };
+          onClaimItem(bought);
+
+          if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+            navigator.vibrate?.([60, 40, 100]);
+          }
+        } catch (err) {
+          console.error("PayPal autonomous settlement failed:", err);
+          setIsProcessingPayment(false);
+        }
+      });
     }
 
     // -----------------------------------------------------------------
@@ -343,17 +430,15 @@ export function AgentCommerceModal({
         // Claim and dispatch item
         const bought: BoughtItem = {
           id: `bought_${Date.now()}_${txId}`,
-          store: selectedProduct.storeRef || {
-            id: selectedProduct.merchantId,
-            name: selectedProduct.title.split("(")[0].trim(),
-            bearing: 0,
-            dist: 25,
-            icon: "🛍️",
-            category: selectedProduct.category,
-            open: selectedProduct.originalPriceZAR,
-            color: "oklch(0.8 0.17 70)",
-            item: selectedProduct.title,
-          },
+          store:
+            selectedProduct.storeRef ||
+            createFallbackStore(
+              selectedProduct.merchantId,
+              selectedProduct.title,
+              selectedProduct.category,
+              selectedProduct.originalPriceZAR,
+              "🛍️",
+            ),
           item: selectedProduct.title,
           price: settledPrice,
           open: selectedProduct.originalPriceZAR,
@@ -426,17 +511,16 @@ export function AgentCommerceModal({
 
       const bought: BoughtItem = {
         id: `bought_ln_${Date.now()}`,
-        store: selectedProduct.storeRef || {
-          id: selectedProduct.merchantId,
-          name: selectedProduct.title.split("(")[0].trim(),
-          bearing: 0,
-          dist: 25,
-          icon: "⚡",
-          category: selectedProduct.category,
-          open: selectedProduct.originalPriceZAR,
-          color: "#f59e0b",
-          item: selectedProduct.title,
-        },
+        store:
+          selectedProduct.storeRef ||
+          createFallbackStore(
+            selectedProduct.merchantId,
+            selectedProduct.title,
+            selectedProduct.category,
+            selectedProduct.originalPriceZAR,
+            "⚡",
+            "#f59e0b",
+          ),
         item: selectedProduct.title,
         price: settledPrice,
         open: selectedProduct.originalPriceZAR,
@@ -596,7 +680,9 @@ export function AgentCommerceModal({
                     <span className="rounded-md bg-primary/20 text-primary font-mono text-[9px] px-1.5 py-0.5 font-bold">
                       {profile.paymentPreference === "A"
                         ? "Option A: Wallet"
-                        : "Option B: Direct Pay"}
+                        : profile.paymentPreference === "B"
+                          ? "Option B: Direct Pay"
+                          : "Option C: PayPal Sandbox"}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -810,7 +896,9 @@ export function AgentCommerceModal({
                             <span>
                               {profile.paymentPreference === "A"
                                 ? `Clear via Wallet (R${settledPrice.toFixed(2)})`
-                                : `PayShap Request-to-Pay (R${settledPrice.toFixed(2)})`}
+                                : profile.paymentPreference === "B"
+                                  ? `PayShap Request-to-Pay (R${settledPrice.toFixed(2)})`
+                                  : `PayPal Agent Vault (R${settledPrice.toFixed(2)} / $${(settledPrice * 0.054).toFixed(2)})`}
                             </span>
                           </>
                         )}
@@ -863,7 +951,7 @@ export function AgentCommerceModal({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Option A Card */}
                   <div
                     onClick={() => handleUpdatePaymentPreference("A")}
@@ -909,7 +997,7 @@ export function AgentCommerceModal({
                         e.stopPropagation();
                         setTopUpModalOpen(true);
                       }}
-                      className="w-full py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-mono text-[11px] font-bold transition-all border border-white/20"
+                      className="w-full py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-mono text-[11px] font-bold transition-all border border-white/20 cursor-pointer"
                     >
                       ＋ Top Up Wallet via Stitch Cash-In
                     </button>
@@ -952,6 +1040,45 @@ export function AgentCommerceModal({
                     <p className="text-[11px] text-accent leading-relaxed font-mono">
                       👉 "My agent must ping my banking app with a push prompt to manually approve
                       each deal."
+                    </p>
+                  </div>
+
+                  {/* Option C Card */}
+                  <div
+                    onClick={() => handleUpdatePaymentPreference("C")}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer space-y-3 ${
+                      profile.paymentPreference === "C"
+                        ? "border-[#0070ba] bg-[#0070ba]/20 shadow-blue ring-2 ring-[#0070ba]/50"
+                        : "border-white/15 bg-black/30 hover:border-white/30"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                            profile.paymentPreference === "C"
+                              ? "border-[#0070ba] bg-[#0070ba]"
+                              : "border-muted-foreground"
+                          }`}
+                        >
+                          {profile.paymentPreference === "C" && (
+                            <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                          )}
+                        </span>
+                        <h4 className="text-xs font-bold text-white">
+                          OPTION C: PayPal AI Agent Vault
+                        </h4>
+                      </div>
+                      <span className="rounded-full bg-[#0070ba]/30 text-sky-300 font-mono text-[9px] px-2 py-0.5 font-bold">
+                        Live Sandbox
+                      </span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-black/40 border border-white/10 font-mono text-xs flex items-center justify-between">
+                      <span className="text-muted-foreground">PayPal Agent Rail:</span>
+                      <span className="font-bold text-sky-400">Orders v2 & M2M Vault</span>
+                    </div>
+                    <p className="text-[11px] text-sky-300 leading-relaxed font-mono">
+                      👉 "Autonomous zero-click agent settlement converted to USD via PayPal Sandbox."
                     </p>
                   </div>
                 </div>

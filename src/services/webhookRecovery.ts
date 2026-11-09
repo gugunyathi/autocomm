@@ -135,8 +135,10 @@ export async function executeCrossRailFallback(
 
   // Deliver to Bitchat service
   try {
-    const bitchat = getBitchatService();
-    bitchat.emitTelemetry();
+    const bitchat = getBitchatService() as any;
+    if (typeof bitchat.emitTelemetry === "function") {
+      bitchat.emitTelemetry();
+    }
   } catch (_e) {
     // Bitchat not yet initialized in background
   }
