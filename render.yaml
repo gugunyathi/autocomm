@@ -9,12 +9,12 @@ services:
     runtime: node
     plan: starter
     region: oregon
-    buildCommand: pnpm install && pnpm run build
+    buildCommand: pnpm install --prod=false && pnpm run build
     startCommand: pnpm run preview --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/health
     envVars:
       - key: NODE_VERSION
-        value: 20.12.2
+        value: 22.14.0
       - key: PNPM_VERSION
         value: 9.0.0
       - key: PAYPAL_ENVIRONMENT

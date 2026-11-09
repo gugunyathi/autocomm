@@ -421,6 +421,7 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
       }, 350);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [currentTab, isOpen, deploySuccess, isVoiceMuted, speakCurrentQuestion]);
 
   // Real-time ANS name availability & pricing
@@ -449,12 +450,12 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
           statusText: canClaim
             ? isFree
               ? "Available · 100% Free Human Handle"
-              : `Available · ${pricing.tier}`
+              : `Available · ${pricing.tierLabel}`
             : "Handle Already Claimed / In Auction",
           priceUsd: pricing.priceUsd,
           priceZar: pricing.priceZar,
           isFree,
-          tier: pricing.tier,
+          tier: pricing.tierLabel,
         });
       } catch (e) {
         console.error("Name check error:", e);

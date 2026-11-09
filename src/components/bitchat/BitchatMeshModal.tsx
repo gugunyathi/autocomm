@@ -40,6 +40,7 @@ import {
 import { InventoryOptimizer, type OptimizationNotice } from "@/services/Optimizer";
 import {
   HandoverVerificationEngine,
+  generateOfflineCollectionTicket,
   type VerificationResult,
 } from "@/services/HandoverVerification";
 import { DB, GeoDB } from "@/services/database";

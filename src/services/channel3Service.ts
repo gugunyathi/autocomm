@@ -220,6 +220,7 @@ export async function searchChannel3Products(
   query: string;
 }> {
   const limit = options?.limit ?? 10;
+  const cleanQ = query.toLowerCase().trim();
   const rawApiKey =
     (typeof process !== "undefined" && process.env?.["CHANNEL3_API_KEY"]) ||
     (typeof import.meta !== "undefined" && import.meta.env?.["VITE_CHANNEL3_API_KEY"]);
@@ -310,7 +311,6 @@ export async function searchChannel3Products(
   }
 
   // Edge / Sandbox Fallback Search
-  const cleanQ = query.toLowerCase().trim();
   const filtered = CURATED_CHANNEL3_PRODUCTS.filter((prod) => {
     if (!cleanQ) return true;
     return (

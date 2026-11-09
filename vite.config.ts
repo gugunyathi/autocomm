@@ -23,7 +23,7 @@ export default defineConfig({
       routes: ["/"],
       crawlLinks: true,
     },
-  },
+  } as any,
   tanstackStart: {
     // Redirect TanStack Start entries to src/client.tsx and src/server.ts
     client: { entry: "client" },

@@ -257,31 +257,18 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
     const { getMallsFromDb } = await import("./mongodb");
     const malls = await getMallsFromDb();
     return jsonResponse(
-      malls.map(
-        (m: {
-          id: string;
-          name: string;
-          shortName: string;
-          subtitle: string;
-          address: string;
-          latitude: number;
-          longitude: number;
-          googleMapsUrl: string;
-          radiusMeters: number;
-          stores?: unknown[];
-        }) => ({
-          id: m.id,
-          name: m.name,
-          shortName: m.shortName,
-          subtitle: m.subtitle,
-          address: m.address,
-          latitude: m.latitude,
-          longitude: m.longitude,
-          googleMapsUrl: m.googleMapsUrl,
-          radiusMeters: m.radiusMeters,
-          storeCount: m.stores ? m.stores.length : 8,
-        }),
-      ),
+      malls.map((m: any) => ({
+        id: m.id,
+        name: m.name,
+        shortName: m.shortName,
+        subtitle: m.subtitle,
+        address: m.address,
+        latitude: m.latitude,
+        longitude: m.longitude,
+        googleMapsUrl: m.googleMapsUrl,
+        radiusMeters: m.radiusMeters,
+        storeCount: m.stores ? m.stores.length : 8,
+      })),
     );
   }
 
@@ -407,7 +394,7 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
       serverAuditStore.unshift(newOrder);
 
       // Persist to MongoDB in background
-      import("./mongodb").then((m) => m.persistOrderToDb(newOrder)).catch(() => {});
+      import("./mongodb").then((m) => m.persistOrderToDb(newOrder as any)).catch(() => {});
 
       return jsonResponse(
         {
@@ -463,7 +450,7 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
       }
 
       // Persist to MongoDB in background
-      import("./mongodb").then((m) => m.persistOrderToDb(existing)).catch(() => {});
+      import("./mongodb").then((m) => m.persistOrderToDb(existing as any)).catch(() => {});
 
       return jsonResponse({
         transactionId: txId,
@@ -709,7 +696,7 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
       orderMap.set(order.orderId, order);
     }
     for (const order of dbOrders) {
-      orderMap.set(order.orderId, order as (typeof serverAuditStore)[0]);
+      orderMap.set(String(order["orderId"] || ""), order as unknown as (typeof serverAuditStore)[0]);
     }
     const allOrders = Array.from(orderMap.values()).sort(
       (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime(),
@@ -896,7 +883,7 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
     try {
       const body = await request.json();
       const names = Array.isArray(body.names) ? body.names : [];
-      const paymentMethod = String(body.paymentMethod || "crypto");
+      const paymentMethod = (body.paymentMethod || "crypto") as any;
       const isAgent = paymentMethod === "x402" || body.isAgent === true;
 
       const { batchClaimAgentNames, validateRegistrationBatch } =
