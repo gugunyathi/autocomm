@@ -1,18 +1,17 @@
 # 🛒 AutoCom | Autonomous Spatial Commerce & Agent-to-Agent (A2A) Retail Engine
 
 > **Next-Generation Indoor Spatial Micro-Location Commerce Platform & Autonomous Machine-to-Machine (A2A) Micro-Deal Settlement Engine**
+> 🏆 **Submitted to the PayPal AI Hackathon 2026** · Live Production URL: **[https://autocomm.xyz](https://autocomm.xyz)**
 
+[![Live Production](https://img.shields.io/badge/Live_Production-https%3A%2F%2Fautocomm.xyz-10B981?style=for-the-badge&logo=google-chrome&logoColor=white)](https://autocomm.xyz)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-gugunyathi%2Fautocomm-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/gugunyathi/autocomm)
+![PayPal AI Toolkit](https://img.shields.io/badge/PayPal_AI-Agent_Toolkit_%26_MCP-003087?style=for-the-badge&logo=paypal&logoColor=white)
+![Channel3](https://img.shields.io/badge/Channel3-Product_Search_API_%26_MCP-FF4500?style=for-the-badge)
+![AG Grid](https://img.shields.io/badge/AG_Grid-v32_Quartz_Dark-E0234E?style=for-the-badge&logo=ag-grid&logoColor=white)
+![APIMatic](https://img.shields.io/badge/APIMatic-OpenAPI_3.0.3-4B0082?style=for-the-badge)
+![Render](https://img.shields.io/badge/Render-Blueprint_IaC-46E3B7?style=for-the-badge&logo=render&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/React-19.2-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![Vite](https://img.shields.io/badge/Vite-8.1-646CFF?style=for-the-badge&logo=vite&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
-![AG Grid](https://img.shields.io/badge/AG_Grid-v32_Community-E0234E?style=for-the-badge&logo=ag-grid&logoColor=white)
-![PayPal Sandbox](https://img.shields.io/badge/PayPal-Sandbox_Orders_v2-003087?style=for-the-badge&logo=paypal&logoColor=white)
-![Channel3](https://img.shields.io/badge/Channel3-WebRTC_Stream-FF4500?style=for-the-badge)
-![APIMatic](https://img.shields.io/badge/APIMatic-OpenAPI_3.0-4B0082?style=for-the-badge)
-![x402 Protocol](https://img.shields.io/badge/x402-HTTP_402_Agent_Payments-00E5FF?style=for-the-badge)
-![Multi--Chain](https://img.shields.io/badge/Crypto-Base_%7C_Arc_%7C_Solana-6366F1?style=for-the-badge)
-![Agent Names](https://img.shields.io/badge/.agent-Name_Registry_%26_Auctions-10B981?style=for-the-badge)
 ![PWA Ready](https://img.shields.io/badge/PWA-Installable-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white)
 
 ---
@@ -66,19 +65,26 @@ AutoCom bridges the physical and agentic commerce worlds by providing:
 
 All endpoints are hosted and available via the backend HTTP server with full CORS support (`Access-Control-Allow-Origin: *`):
 
-| Method | Endpoint                      | Description                                   | Request Payload                        | Response                                          |
-| :----- | :---------------------------- | :-------------------------------------------- | :------------------------------------- | :------------------------------------------------ |
-| `GET`  | `/api/health`                 | Service health telemetry & outlet stats       | None                                   | `{ status: "HEALTHY", outletsActive: 8, ... }`    |
-| `GET`  | `/api/mall/directory`         | 8-Outlet Bel Air Mall spatial catalog         | None                                   | Array of `MallOutlet` objects with GPS & bearings |
-| `POST` | `/api/agent/negotiate`        | A2A bilateral bargaining packet handler       | `A2AMessage` JSON                      | `A2AMessage` (Accept / Counter-Offer)             |
-| `POST` | `/api/paypal/create-order`    | Create PayPal Sandbox order with ZAR->USD     | `{ storeId, negotiatedPriceZAR, ... }` | `{ orderId, convertedUSD, exchangeRate, ... }`    |
-| `POST` | `/api/paypal/checkout-settle` | Zero-click vaulted M2M settlement             | `{ orderId, agentAuthorizationHash }`  | `{ transactionId, settledAmountUSD, success }`    |
-| `GET`  | `/api/paypal/audit-ledger`    | Real-time in-memory audit ledger records      | None                                   | `{ count: number, orders: [] }`                   |
-| `GET`  | `/api/openapi.json`           | Live OpenAPI 3.0.3 specification JSON         | None                                   | Full OpenAPI 3.0.3 Contract for APIMatic          |
-| `GET`  | `/api/names/search`           | Real-time .agent handle search & pricing      | `?query=handle`                        | Search result with tier, status, price, auction   |
-| `GET`  | `/api/names/directory`        | Full registry directory & auctions            | None                                   | `{ totalRegistered, auctions, secondary, ... }`   |
-| `GET`  | `/api/names/x402-quote`       | HTTP 402 payment challenge quote              | `?name=handle`                         | Challenge schema, pay-to addresses & cost         |
-| `POST` | `/api/names/claim`            | Claim handle (x402 / Base / Arc / SOL / Card) | Claim payload + x402 headers           | Claimed `AgentNameRecord` or HTTP 402 challenge   |
+| Method | Endpoint                            | Description                                        | Request Payload                        | Response                                          |
+| :----- | :---------------------------------- | :------------------------------------------------- | :------------------------------------- | :------------------------------------------------ |
+| `GET`  | `/api/health`                       | Service health telemetry & outlet stats            | None                                   | `{ status: "HEALTHY", outletsActive: 8, ... }`    |
+| `GET`  | `/api/mall/directory`               | 8-Outlet Bel Air Mall spatial catalog              | None                                   | Array of `MallOutlet` objects with GPS & bearings |
+| `POST` | `/api/agent/negotiate`              | A2A bilateral bargaining packet handler            | `A2AMessage` JSON                      | `A2AMessage` (Accept / Counter-Offer)             |
+| `POST` | `/api/paypal/create-order`          | Create PayPal Sandbox order with ZAR->USD          | `{ storeId, negotiatedPriceZAR, ... }` | `{ orderId, convertedUSD, exchangeRate, ... }`    |
+| `POST` | `/api/paypal/checkout-settle`       | Zero-click vaulted M2M settlement                  | `{ orderId, agentAuthorizationHash }`  | `{ transactionId, settledAmountUSD, success }`    |
+| `GET`  | `/api/paypal/status`                | PayPal Sandbox credentials & API health status     | None                                   | `{ verified, environment: "sandbox", ... }`       |
+| `GET`  | `/api/paypal/agent-toolkit/tools`   | PayPal AI Agent Toolkit Standard Tools Manifest    | None                                   | Official `@paypal/agent-toolkit` tools list       |
+| `POST` | `/api/paypal/agent-toolkit/execute` | Execute tool from PayPal AI Agent Toolkit          | `{ name: "...", arguments: { ... } }`  | Tool execution output JSON                        |
+| `POST` | `/api/paypal/mcp`                   | Model Context Protocol (MCP) JSON-RPC 2.0 Server   | MCP JSON-RPC 2.0 Payload               | Standard MCP Result or Tool Content               |
+| `GET`  | `/api/channel3/search`              | Channel3 Retail Product Search API (100M+ items)   | `?query=shoes&limit=5`                 | Channel3 Product Cards with prices & stock        |
+| `GET`  | `/api/channel3/tools`               | Channel3 MCP Tools Manifest (`trychannel3.com`)    | None                                   | List of Channel3 discovery tools                  |
+| `POST` | `/api/channel3/mcp`                 | Channel3 MCP JSON-RPC 2.0 Server                   | MCP JSON-RPC 2.0 Payload               | MCP Results for LLM agent shopping                |
+| `GET`  | `/api/paypal/audit-ledger`          | Real-time in-memory audit ledger records           | None                                   | `{ count: number, orders: [] }`                   |
+| `GET`  | `/api/openapi.json`                 | Live OpenAPI 3.0.3 specification JSON              | None                                   | Full OpenAPI 3.0.3 Contract for APIMatic          |
+| `GET`  | `/api/names/search`                 | Real-time .agent handle search & pricing           | `?query=handle`                        | Search result with tier, status, price, auction   |
+| `GET`  | `/api/names/directory`              | Full registry directory & auctions                 | None                                   | `{ totalRegistered, auctions, secondary, ... }`   |
+| `GET`  | `/api/names/x402-quote`             | HTTP 402 payment challenge quote                   | `?name=handle`                         | Challenge schema, pay-to addresses & cost         |
+| `POST` | `/api/names/claim`                  | Claim handle (x402 / Base / Arc / SOL / Card)      | Claim payload + x402 headers           | Claimed `AgentNameRecord` or HTTP 402 challenge   |
 | `POST` | `/api/names/bid`              | Place auction bid for reserved handle         | `{ name, bidder, bidAmountUSD, ... }`  | Updated auction state & top bidder                |
 | `POST` | `/api/names/buy-secondary`    | Instant P2P buyout from secondary market      | `{ listingId, buyer, paymentMethod }`  | Settled secondary trade & transferred ownership   |
 | `GET`  | `/api/names/skill.json`       | Agent Skill Manifest for autonomous bots      | None                                   | OpenAPI agent skill specification for x402 bot    |

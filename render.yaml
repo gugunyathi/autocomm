@@ -29,3 +29,4 @@ services:
         sync: false
       - key: VITE_SITE_URL
         value: https://autocomm.xyz
+

@@ -51,3 +51,4 @@ describe("Channel3 Retail Product Search & MCP Integration", () => {
     expect(data.dealsCount).toBeGreaterThan(0);
   });
 });
+
