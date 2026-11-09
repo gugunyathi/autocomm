@@ -314,6 +314,100 @@ export const A2A_OPENAPI_SPEC_JSON: string = JSON.stringify(
           },
         },
       },
+      "/api/paypal/agent-toolkit/tools": {
+        get: {
+          summary: "PayPal AI Agent Toolkit Standard Tools Manifest",
+          operationId: "getPayPalAgentTools",
+          description:
+            "Lists compliant PayPal AI Agent tools (Orders v2, Invoicing, Product Catalog, Vaulted Settlement) per developer.paypal.com/ai-tools/toolkit/.",
+          responses: {
+            "200": {
+              description: "Available PayPal AI Agent tools manifest.",
+            },
+          },
+        },
+      },
+      "/api/paypal/agent-toolkit/execute": {
+        post: {
+          summary: "Execute PayPal AI Agent Toolkit Tool",
+          operationId: "executePayPalAgentTool",
+          description: "Invokes an individual PayPal Agent Toolkit tool by name with structured arguments.",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["name", "arguments"],
+                  properties: {
+                    name: { type: "string", example: "paypal_create_order" },
+                    arguments: { type: "object" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "200": { description: "Successful tool execution result." },
+            "400": { description: "Execution error." },
+          },
+        },
+      },
+      "/api/paypal/mcp": {
+        post: {
+          summary: "PayPal Model Context Protocol (MCP) JSON-RPC Endpoint",
+          operationId: "handlePayPalMcpRpc",
+          description: "Handles Model Context Protocol JSON-RPC 2.0 requests (tools/list, tools/call) for LLM agents.",
+          responses: {
+            "200": { description: "Standard MCP JSON-RPC 2.0 response." },
+          },
+        },
+      },
+      "/api/channel3/search": {
+        get: {
+          summary: "Channel3 Retail Product Search API",
+          operationId: "searchChannel3Products",
+          description:
+            "Searches across 100M+ real retail products from 25,000+ retailers. Returns real price, stock status, and merchant bargaining bots.",
+          parameters: [
+            {
+              name: "query",
+              in: "query",
+              required: true,
+              schema: { type: "string", example: "Air Jordan 1" },
+            },
+            {
+              name: "limit",
+              in: "query",
+              required: false,
+              schema: { type: "integer", default: 10 },
+            },
+          ],
+          responses: {
+            "200": { description: "Matching Channel3 product cards." },
+          },
+        },
+      },
+      "/api/channel3/mcp": {
+        post: {
+          summary: "Channel3 Model Context Protocol (MCP) Server",
+          operationId: "handleChannel3McpRpc",
+          description: "MCP JSON-RPC 2.0 endpoint exposing Channel3 product discovery tools to AI agents.",
+          responses: {
+            "200": { description: "Standard MCP JSON-RPC 2.0 response." },
+          },
+        },
+      },
+      "/api/paypal/audit-ledger": {
+        get: {
+          summary: "Retrieve Live A2A Audit Ledger Records",
+          operationId: "getAuditLedgerRecords",
+          description: "Streams verified bilateral negotiation settlements and PayPal Sandbox transaction tokens.",
+          responses: {
+            "200": { description: "List of settled and pending A2A transactions." },
+          },
+        },
+      },
     },
     components: {
       schemas: {

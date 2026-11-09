@@ -316,7 +316,7 @@ export function PayPalHackathonModal({
               }`}
             >
               <Radio className="w-3.5 h-3.5" />
-              Channel3 Live Stream
+              Channel3 Retail & Live Mesh
             </button>
 
             <button

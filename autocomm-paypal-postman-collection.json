@@ -1,0 +1,231 @@
+{
+  "info": {
+    "_postman_id": "7f92b0c1-3e4b-4a8a-9f55-autocomm-paypal-2026",
+    "name": "AutoCom - PayPal AI Agent Commerce & Channel3 API Collection",
+    "description": "Production Postman collection for AutoCom's Autonomous Agent Commerce Engine submitted to the PayPal AI Hackathon 2026. Contains verified requests for PayPal Orders v2, Vaulted Settlement, Agent Toolkit MCP, and Channel3 Product Search.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://autocomm.xyz",
+      "type": "string"
+    },
+    {
+      "key": "orderId",
+      "value": "ORD-SANDBOX-ZARA-90A1B",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Health & Status",
+      "item": [
+        {
+          "name": "Service Health & Telemetry",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            }
+          }
+        },
+        {
+          "name": "PayPal Sandbox Credentials Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/paypal/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "paypal", "status"]
+            }
+          }
+        },
+        {
+          "name": "OpenAPI 3.0.3 Spec (APIMatic)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/openapi.json",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "openapi.json"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Channel3 Product Discovery",
+      "item": [
+        {
+          "name": "Channel3 Search Retail Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/channel3/search?query=cheese&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "channel3", "search"],
+              "query": [
+                { "key": "query", "value": "cheese" },
+                { "key": "limit", "value": "5" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Channel3 MCP Tools Manifest",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/channel3/tools",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "channel3", "tools"]
+            }
+          }
+        },
+        {
+          "name": "Channel3 MCP JSON-RPC tools/list",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"tools/list\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/channel3/mcp",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "channel3", "mcp"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. A2A Bilateral Bargaining",
+      "item": [
+        {
+          "name": "Dispatch A2A Counter-Offer Packet",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sender\": \"consumer_agent\",\n  \"type\": \"counter_offer\",\n  \"storeId\": \"woolworths-food\",\n  \"itemName\": \"Artisan Sourdough & Cheese Platter\",\n  \"price\": 175,\n  \"originalPrice\": 220,\n  \"agentRationale\": \"Proposing R175 based on midday clearance velocity and customer budget cap.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/agent/negotiate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "agent", "negotiate"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. PayPal AI Agent Orders & Vaulted Settlement",
+      "item": [
+        {
+          "name": "Create PayPal Sandbox Order (ZAR -> USD)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"storeId\": \"woolworths-food\",\n  \"negotiatedPriceZAR\": 175,\n  \"originalPriceZAR\": 220,\n  \"sku\": \"WW-GOURMET-CHEESE-01\",\n  \"vaultedAgentConsent\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/paypal/create-order",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "paypal", "create-order"]
+            }
+          }
+        },
+        {
+          "name": "Execute Vaulted Machine-to-Machine Capture",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"vaultRef\": \"VAULT_AUTONOMOUS_DELEGATE_771B\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/paypal/checkout-settle",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "paypal", "checkout-settle"]
+            }
+          }
+        },
+        {
+          "name": "Retrieve PayPal Audit Ledger",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/paypal/audit-ledger",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "paypal", "audit-ledger"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. PayPal AI Agent Toolkit & MCP Protocol",
+      "item": [
+        {
+          "name": "List PayPal Agent Toolkit Tools",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/paypal/agent-toolkit/tools",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "paypal", "agent-toolkit", "tools"]
+            }
+          }
+        },
+        {
+          "name": "Execute Agent Tool: Autonomous Settle",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"paypal_agent_autonomous_settle\",\n  \"arguments\": {\n    \"storeId\": \"nike-performance\",\n    \"negotiatedPriceZAR\": 1870,\n    \"sku\": \"NIKE-AIR-ZOOM-PEG-40\",\n    \"itemTitle\": \"Nike Air Zoom Pegasus 40\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/paypal/agent-toolkit/execute",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "paypal", "agent-toolkit", "execute"]
+            }
+          }
+        },
+        {
+          "name": "MCP JSON-RPC tools/list",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"tools/list\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/paypal/mcp",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "paypal", "mcp"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

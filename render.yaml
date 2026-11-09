@@ -1,0 +1,31 @@
+# Render Infrastructure as Code Blueprint
+# AutoCom - Autonomous Agent-to-Agent Spatial Commerce Mesh
+# Prepared for PayPal AI Hackathon 2026 (Render Sponsor Prize)
+# https://render.com
+
+services:
+  - type: web
+    name: autocomm
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: pnpm install && pnpm run build
+    startCommand: pnpm run preview --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 20.12.2
+      - key: PNPM_VERSION
+        value: 9.0.0
+      - key: PAYPAL_ENVIRONMENT
+        value: sandbox
+      - key: PAYPAL_SANDBOX_CLIENT_ID
+        sync: false
+      - key: PAYPAL_SANDBOX_CLIENT_SECRET
+        sync: false
+      - key: CHANNEL3_API_KEY
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: VITE_SITE_URL
+        value: https://autocomm.xyz

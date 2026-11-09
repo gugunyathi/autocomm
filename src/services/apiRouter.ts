@@ -29,6 +29,12 @@ import {
   executePayPalAgentTool,
   handlePayPalMcpRequest,
 } from "./paypalAgentToolkit";
+import {
+  searchChannel3Products,
+  getChannel3ProductById,
+  executeChannel3McpTool,
+  CHANNEL3_MCP_TOOLS,
+} from "./channel3Service";
 
 export interface BackendAuditOrder {
   orderId: string;
@@ -492,6 +498,9 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
         tools: "/api/paypal/agent-toolkit/tools",
         execute: "/api/paypal/agent-toolkit/execute",
         mcp: "/api/paypal/mcp",
+        channel3Search: "/api/channel3/search",
+        channel3Tools: "/api/channel3/tools",
+        channel3Mcp: "/api/channel3/mcp",
       },
     });
   }
@@ -579,6 +588,104 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
       const body = await request.json();
       const mcpResponse = await handlePayPalMcpRequest(body);
       return jsonResponse(mcpResponse);
+    } catch (err: any) {
+      return jsonResponse(
+        {
+          jsonrpc: "2.0",
+          id: null,
+          error: { code: -32700, message: "Parse error / Invalid MCP JSON-RPC" },
+        },
+        400,
+      );
+    }
+  }
+
+  // 6i. Channel3 Product Search API: GET /api/channel3/search?query=...&limit=...
+  if (pathname === "/api/channel3/search" && method === "GET") {
+    const query = url.searchParams.get("query") || "";
+    const limit = Number(url.searchParams.get("limit") || 10);
+    const category = url.searchParams.get("category") || undefined;
+    const retailer = url.searchParams.get("retailer") || undefined;
+    const data = await searchChannel3Products(query, { limit, category, retailer });
+    return jsonResponse(data);
+  }
+
+  // 6j. Channel3 Product Details: GET /api/channel3/products/:id
+  if (pathname.startsWith("/api/channel3/products/") && method === "GET") {
+    const productId = pathname.replace("/api/channel3/products/", "");
+    const product = await getChannel3ProductById(productId);
+    if (!product) {
+      return jsonResponse({ error: `Product '${productId}' not found in Channel3.` }, 404);
+    }
+    return jsonResponse(product);
+  }
+
+  // 6k. Channel3 MCP Tools Manifest: GET /api/channel3/tools
+  if (pathname === "/api/channel3/tools" && method === "GET") {
+    return jsonResponse({
+      provider: "Channel3",
+      mcpVersion: "2024-11-05",
+      description: "Channel3 E-Commerce Product Search and Data API for AI Agents",
+      tools: CHANNEL3_MCP_TOOLS,
+    });
+  }
+
+  // 6l. Channel3 MCP Tool Execution: POST /api/channel3/execute
+  if (pathname === "/api/channel3/execute" && method === "POST") {
+    try {
+      const body = await request.json();
+      const toolName = String(body["name"] || body["tool"] || "");
+      const args = (body["arguments"] || body["args"] || {}) as Record<string, unknown>;
+      const result = await executeChannel3McpTool(toolName, args);
+      return jsonResponse(result, result.success ? 200 : 400);
+    } catch (err: any) {
+      return jsonResponse({ error: err?.message || "Channel3 tool execution failed" }, 400);
+    }
+  }
+
+  // 6m. Channel3 Model Context Protocol (MCP) Server: POST /api/channel3/mcp
+  if (pathname === "/api/channel3/mcp" && method === "POST") {
+    try {
+      const body = await request.json();
+      const id = body["id"] ?? 1;
+      const methodMcp = body["method"];
+
+      if (methodMcp === "tools/list") {
+        return jsonResponse({
+          jsonrpc: "2.0",
+          id,
+          result: { tools: CHANNEL3_MCP_TOOLS },
+        });
+      }
+
+      if (methodMcp === "tools/call") {
+        const params = body["params"] || {};
+        const name = String(params["name"] || "");
+        const args = (params["arguments"] || {}) as Record<string, unknown>;
+        const execRes = await executeChannel3McpTool(name, args);
+        return jsonResponse({
+          jsonrpc: "2.0",
+          id,
+          result: {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(execRes.result ?? { error: execRes.error }, null, 2),
+              },
+            ],
+            isError: !execRes.success,
+          },
+        });
+      }
+
+      return jsonResponse({
+        jsonrpc: "2.0",
+        id,
+        result: {
+          serverInfo: { name: "channel3-mcp-server", version: "1.0.0" },
+          capabilities: { tools: {} },
+        },
+      });
     } catch (err: any) {
       return jsonResponse(
         {
