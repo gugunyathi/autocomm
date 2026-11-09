@@ -13,7 +13,7 @@ export interface PitchDeckSlide {
 export const PITCH_DECK_SLIDES: PitchDeckSlide[] = [
   {
     category: "COVER / VISION",
-    title: "AutoCom | Autonomous Spatial Commerce",
+    title: "Autocomm | Autonomous Spatial Commerce",
     subtitle: "The 24/7 Agent-to-Agent Micro-Deals Protocol for Physical Retail & Commuter Traffic",
     bullets: [
       "Executive Vision: We turn physical foot traffic and 50m commuter drive-by flow into instant, automated algorithmic retail sales with autonomous shopping agents.",
@@ -21,7 +21,7 @@ export const PITCH_DECK_SLIDES: PitchDeckSlide[] = [
       "Merchants: An agentic salesman that never sleeps. Push dynamic pricing and promos to foot and drive-by traffic 24/7/365, dynamically adjusting to daily sales targets.",
       "Brands: Users never miss promotional adverts as our spatial network converts billboard and digital impressions directly into closed, in-store sales 24/7.",
     ],
-    highlight: "Autonomous Agent-to-Agent Commerce Core · Ribbon Protocol Inc.",
+    highlight: "Autonomous Agent-to-Agent Commerce Core · Silvernest Pty Ltd",
     footerNote: "Confidential Investor Presentation · Seed Stage",
   },
   {
@@ -115,16 +115,16 @@ export const PITCH_DECK_SLIDES: PitchDeckSlide[] = [
   },
   {
     category: "COMPETITIVE ADVANTAGE",
-    title: "Why AutoCom Beats Google Ads, Meta Ads & Billboards",
+    title: "Why Autocomm Beats Google Ads, Meta Ads & Billboards",
     subtitle: "The shift from passive click models to guaranteed autonomous spatial conversion",
     bullets: [
       "Google & Meta Ads: Passive, ungrounded, desktop-bound, click-fraud vulnerable, zero negotiation, and negative ROI for physical brands and retailers.",
-      "AutoCom A2A Protocol: 100% spatial proximity (sub-meter corridor + 50m commuter), real-time intent match, automated algorithmic negotiation, and guaranteed foot traffic conversion.",
-      "Traditional Outdoor Billboards: Static, non-interactive, untrackable. AutoCom turns billboards into instant transactional beacon nodes.",
+      "Autocomm A2A Protocol: 100% spatial proximity (sub-meter corridor + 50m commuter), real-time intent match, automated algorithmic negotiation, and guaranteed foot traffic conversion.",
+      "Traditional Outdoor Billboards: Static, non-interactive, untrackable. Autocomm turns billboards into instant transactional beacon nodes.",
       "Our Moat: Patented IPS corridor grid algorithms + bidirectional agentic negotiation engine + decentralized biometric passkey architecture.",
     ],
     highlight:
-      "Google/Meta sell ad impressions. AutoCom delivers closed transactions directly into retail stores.",
+      "Google/Meta sell ad impressions. Autocomm delivers closed transactions directly into retail stores.",
   },
   {
     category: "TRACTION & ROADMAP",
@@ -169,7 +169,7 @@ export const PITCH_DECK_SLIDES: PitchDeckSlide[] = [
     ],
     highlight:
       "Join us in defining the autonomous agentic spatial commerce layer for the physical world.",
-    footerNote: "Contact: hello@ribbonprotocol.org · https://www.linkedin.com/in/gugunyathi/",
+    footerNote: "Contact: hello@autocomm.xyz · https://www.linkedin.com/in/gugunyathi/",
   },
 ];
 
@@ -218,7 +218,7 @@ export async function downloadPitchDeckPDF(): Promise<void> {
     doc.setFontSize(8);
     doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
     doc.text(
-      `AUTOCOM · PITCH DECK | SLIDE ${index + 1} OF ${PITCH_DECK_SLIDES.length}`,
+      `AUTOCOMM · PITCH DECK | SLIDE ${index + 1} OF ${PITCH_DECK_SLIDES.length}`,
       pageWidth - 16,
       10,
       {
@@ -379,7 +379,7 @@ export async function downloadPitchDeckPDF(): Promise<void> {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
-    const footer = slide.footerNote || "AutoCom · Autonomous Spatial Commerce · Confidential";
+    const footer = slide.footerNote || "Autocomm · Autonomous Spatial Commerce · Confidential";
     doc.text(footer, 16, pageHeight - 9);
 
     doc.text("INVESTOR PITCH DECK · SEED STAGE", pageWidth - 16, pageHeight - 9, {
@@ -388,5 +388,5 @@ export async function downloadPitchDeckPDF(): Promise<void> {
   });
 
   // Save / Trigger Download
-  doc.save("AutoCom_Pitch_Deck.pdf");
+  doc.save("Autocomm_Pitch_Deck.pdf");
 }

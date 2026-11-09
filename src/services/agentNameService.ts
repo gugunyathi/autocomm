@@ -911,7 +911,7 @@ export const INITIAL_NAME_RECORDS: AgentNameRecord[] = [
       reservePriceUsd: 50000,
       isBrandAuction: true,
       trademarkNotice:
-        "Reserved under AutoCom Brand Protection Program for authorized retail affiliates.",
+        "Reserved under Autocomm Brand Protection Program for authorized retail affiliates.",
       history: [
         {
           id: "bn-1",
@@ -979,7 +979,7 @@ export const INITIAL_NAME_RECORDS: AgentNameRecord[] = [
       minNextBidUsd: 86000,
       reservePriceUsd: 60000,
       isBrandAuction: true,
-      trademarkNotice: "Protected trademark tier under AutoCom namespace.",
+      trademarkNotice: "Protected trademark tier under Autocomm namespace.",
       history: [
         {
           id: "bg-1",
@@ -2267,7 +2267,7 @@ export async function claimAgentName(payload: ClaimNamePayload): Promise<{
     length: pricing.length,
     priceUsd: pricing.priceUsd,
     priceZar: pricing.priceZar,
-    description: `Registered ${payload.type} agent name on AutoCom Mesh.`,
+    description: `Registered ${payload.type} agent name on Autocomm Mesh.`,
     isRare: pricing.length <= 3,
     ownerType: payload.paymentMethod === "x402" ? "AI_AGENT" : "HUMAN_WALLET",
     ownerAddress: payload.network

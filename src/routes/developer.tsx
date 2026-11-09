@@ -5,17 +5,17 @@ import { AgentDevPortalModal } from "@/components/developer/AgentDevPortalModal"
 export const Route = createFileRoute("/developer")({
   head: () => ({
     meta: [
-      { title: "AutoCom - Agent API Tokens, Arbitrage Ledger & Developer Hub" },
+      { title: "Autocomm - Agent API Tokens, Arbitrage Ledger & Developer Hub" },
       {
         name: "description",
         content:
-          "Developer portal for AutoCom: Agent API key credentials, 1.5% Web3 arbitrage fee split ledger, bot negotiation playground, and technical how-to guides.",
+          "Developer portal for Autocomm: Agent API key credentials, 1.5% Web3 arbitrage fee split ledger, bot negotiation playground, and technical how-to guides.",
       },
-      { property: "og:title", content: "AutoCom Developer Hub" },
+      { property: "og:title", content: "Autocomm Developer Hub" },
       {
         property: "og:description",
         content:
-          "Developer portal for AutoCom: Agent API key credentials, 1.5% Web3 arbitrage fee split ledger, bot negotiation playground, and technical how-to guides.",
+          "Developer portal for Autocomm: Agent API key credentials, 1.5% Web3 arbitrage fee split ledger, bot negotiation playground, and technical how-to guides.",
       },
     ],
   }),

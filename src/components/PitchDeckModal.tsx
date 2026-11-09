@@ -75,7 +75,7 @@ export function PitchDeckModal({ isOpen, onClose }: PitchDeckModalProps) {
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h3 className="font-extrabold text-sm sm:text-base text-white truncate">
-                  AutoCom Pitch Deck
+                  Autocomm Pitch Deck
                 </h3>
                 <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono text-[10px] font-bold border border-amber-500/30 shrink-0">
                   Seed Stage
@@ -249,7 +249,7 @@ export function PitchDeckModal({ isOpen, onClose }: PitchDeckModalProps) {
 
           {/* Slide Footer with Page indicator */}
           <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-500 font-mono">
-            <span>{currentSlide.footerNote || "AutoCom · Ribbon Protocol Inc."}</span>
+            <span>{currentSlide.footerNote || "Autocomm · Silvernest Pty Ltd"}</span>
             <span>INVESTOR PITCH DECK · SEED STAGE</span>
           </div>
         </div>

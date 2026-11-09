@@ -673,7 +673,7 @@ export function AgentNameServiceModal({
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5 font-sans">
-                        AutoCom Sovereign Agent Identifier · Sub-second routing beacon
+                        Autocomm Sovereign Agent Identifier · Sub-second routing beacon
                       </p>
                     </div>
 
@@ -1016,7 +1016,7 @@ export function AgentNameServiceModal({
                 <div>
                   <h3 className="text-sm font-extrabold text-white font-mono flex items-center gap-2">
                     <Trophy className="w-4 h-4 text-amber-400" />
-                    AutoCom Agent Name Sales Leaderboard
+                    Autocomm Agent Name Sales Leaderboard
                   </h3>
                   <p className="text-xs text-muted-foreground font-sans">
                     All-time highest value transactions across Primary Registrations, Secondary
@@ -1716,7 +1716,7 @@ export function AgentNameServiceModal({
                     placeholder="agent_identifier"
                   />
                   <div className="text-[10px] text-slate-400 font-sans">
-                    Agent will dispatch signed HTTP 402 proof voucher directly to AutoCom
+                    Agent will dispatch signed HTTP 402 proof voucher directly to Autocomm
                     clearinghouse.
                   </div>
                 </div>

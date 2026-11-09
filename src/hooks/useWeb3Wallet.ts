@@ -338,7 +338,7 @@ export function useWeb3Wallet(): Web3WalletHookReturn {
       amountUsdc: 0.45,
       gasFeeUsd: 0.0012,
       status: "CONFIRMED",
-      recipient: "AutoCom Decentralized IPFS Pinning Pool",
+      recipient: "Autocomm Decentralized IPFS Pinning Pool",
       notes: "Decentralized 12-Node IPFS Storage Micro-Fee",
     },
   ]);
@@ -492,7 +492,7 @@ export function useWeb3Wallet(): Web3WalletHookReturn {
       amountUsdc,
       recipientAddress = "0x981A4b61C8d72835eB1bdb0ACB33d3FA3351EE43",
       campaignId,
-      purpose = "AutoCom Decentralized IPFS Storage Micro-Fee",
+      purpose = "Autocomm Decentralized IPFS Storage Micro-Fee",
     }: {
       amountUsdc: number;
       recipientAddress?: string;

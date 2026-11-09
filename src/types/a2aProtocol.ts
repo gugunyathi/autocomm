@@ -1,5 +1,5 @@
 /**
- * AutoCom Agent-to-Agent (A2A) Autonomous Commerce Protocol
+ * Autocomm Agent-to-Agent (A2A) Autonomous Commerce Protocol
  * Specification & OpenAPI 3.0 Document Definition for APIMatic SDK Generation
  *
  * Designed for Machine-to-Machine (M2M) Micro-Negotiations across
@@ -7,7 +7,7 @@
  */
 
 /**
- * Valid actors in the AutoCom autonomous bargaining lifecycle.
+ * Valid actors in the Autocomm autonomous bargaining lifecycle.
  */
 export type A2ASender = "consumer_agent" | "merchant_bot";
 
@@ -23,7 +23,7 @@ export type A2ANegotiationStatus =
   "BARGAINING" | "OFFER_ACCEPTED" | "PAYMENT_PENDING" | "SETTLED_VIA_PAYPAL" | "REJECTED";
 
 /**
- * Standard supported currency code for AutoCom domestic settlements.
+ * Standard supported currency code for Autocomm domestic settlements.
  */
 export type A2ACurrency = "ZAR" | "USD";
 
@@ -159,14 +159,14 @@ export const A2A_OPENAPI_SPEC_JSON: string = JSON.stringify(
   {
     openapi: "3.0.3",
     info: {
-      title: "AutoCom Agent-to-Agent (A2A) Autonomous Commerce API",
+      title: "Autocomm Agent-to-Agent (A2A) Autonomous Commerce API",
       version: "1.0.0",
       description:
-        "Production OpenAPI specification for AutoCom bilateral machine-to-machine negotiation and automated PayPal Sandbox micro-settlements for South African retail outlets. Optimized for APIMatic SDK generation.",
+        "Production OpenAPI specification for Autocomm bilateral machine-to-machine negotiation and automated PayPal Sandbox micro-settlements for South African retail outlets. Optimized for APIMatic SDK generation.",
       contact: {
-        name: "AutoCom Engineering · Ribbon Protocol Inc.",
-        url: "https://ribbonprotocol.org",
-        email: "api@ribbonprotocol.org",
+        name: "Autocomm Engineering · Silvernest Pty Ltd",
+        url: "https://autocomm.xyz",
+        email: "hello@autocomm.xyz",
       },
       license: {
         name: "Apache 2.0",
@@ -175,12 +175,12 @@ export const A2A_OPENAPI_SPEC_JSON: string = JSON.stringify(
     },
     servers: [
       {
-        url: "https://api.autocom.ribbonprotocol.org/v1",
-        description: "AutoCom Live Agent Mesh Production Gateway",
+        url: "https://api.autocomm.xyz/v1",
+        description: "Autocomm Live Agent Mesh Production Gateway",
       },
       {
-        url: "https://sandbox.autocom.ribbonprotocol.org/v1",
-        description: "AutoCom PayPal Sandbox / Test Mesh",
+        url: "https://sandbox.autocomm.xyz/v1",
+        description: "Autocomm PayPal Sandbox / Test Mesh",
       },
     ],
     paths: {

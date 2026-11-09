@@ -6,7 +6,7 @@ export const Route = createFileRoute("/owners")({
   head: () => ({
     meta: [
       {
-        title: "AutoCom - Directory of .agent Name Owners & Verified Handles",
+        title: "Autocomm - Directory of .agent Name Owners & Verified Handles",
       },
       {
         name: "description",
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/owners")({
       },
       {
         property: "og:title",
-        content: "AutoCom - Directory of .agent Name Owners",
+        content: "Autocomm - Directory of .agent Name Owners",
       },
       {
         property: "og:description",

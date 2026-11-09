@@ -460,7 +460,7 @@ export const MARKETPLACE_CATALOGUE: MarketplaceProduct[] = [
   // 1. Physical Hardware Assets
   {
     id: "hw-beacon-submeter",
-    name: "AutoCom Sub-Meter Proximity Beacon (v3.2)",
+    name: "Autocomm Sub-Meter Proximity Beacon (v3.2)",
     category: "HARDWARE_BEACON",
     priceZar: 1450,
     priceUsdc: 80,
@@ -481,7 +481,7 @@ export const MARKETPLACE_CATALOGUE: MarketplaceProduct[] = [
   },
   {
     id: "hw-edge-gateway",
-    name: "AutoCom Edge AI Smart Retail Gateway",
+    name: "Autocomm Edge AI Smart Retail Gateway",
     category: "EDGE_DEVICE",
     priceZar: 5800,
     priceUsdc: 320,
@@ -569,7 +569,7 @@ export const MARKETPLACE_CATALOGUE: MarketplaceProduct[] = [
   },
   {
     id: "fin-consumer-shield",
-    name: "AutoCom Deal Protection & Micro-Insurance",
+    name: "Autocomm Deal Protection & Micro-Insurance",
     category: "CONSUMER_INSURANCE",
     priceZar: 75,
     priceUsdc: 4.2,
@@ -591,7 +591,7 @@ export const MARKETPLACE_CATALOGUE: MarketplaceProduct[] = [
   },
   {
     id: "fin-bnpl-split4",
-    name: "AutoCom BNPL 4-Pay Pass (0% Interest)",
+    name: "Autocomm BNPL 4-Pay Pass (0% Interest)",
     category: "BNPL_PLAN",
     priceZar: 0,
     priceUsdc: 0,
@@ -1295,7 +1295,7 @@ export function useAutoComPayments() {
           "Meta Ads API",
           "Google Ads API",
           "Programmatic DOOH Billboards",
-          "AutoCom Spatial Mesh",
+          "Autocomm Spatial Mesh",
         ],
       };
     },
@@ -1602,7 +1602,7 @@ export function useAutoComPayments() {
               ? "BNPL_INSTALLMENT"
               : "MALL_DEAL_PURCHASE",
         status: "confirmed",
-        recipient: "AutoCom Protocol Treasury Node",
+        recipient: "Autocomm Protocol Treasury Node",
         metadata: { itemTitle: product.name, tier: product.category },
       };
 

@@ -844,7 +844,7 @@ export const JACKAL_CREEK_MALL: MallDefinition = {
       mallName: "Jackal Creek Corner Shopping Mall",
       mallUrl: "https://maps.app.goo.gl/UUnJgkXS8RxqGthD8",
       promoDetails:
-        "MyM Deals: R25 off any Large Extra Value Meal when ordered through AutoCom proximity link.",
+        "MyM Deals: R25 off any Large Extra Value Meal when ordered through Autocomm proximity link.",
       products: [
         {
           id: "mc-1",

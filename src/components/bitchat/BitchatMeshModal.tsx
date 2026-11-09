@@ -1610,7 +1610,7 @@ export function BitchatMeshModal({ isOpen, onClose, onEngageDealInSim }: Bitchat
               <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-4">
                 <h3 className="text-base font-bold text-white flex items-center gap-2">
                   <Cpu className="h-5 w-5 text-teal-400" />
-                  <span>BitChat Architecture in AutoCom</span>
+                  <span>BitChat Architecture in Autocomm</span>
                 </h3>
 
                 <p className="text-white/90">

@@ -21,11 +21,11 @@ export function PWAInstallButton({ className = "", variant = "compact" }: PWAIns
       <button
         onClick={install}
         className={`glass flex items-center gap-1.5 rounded-full px-2.5 sm:px-3 py-1.5 text-xs font-mono text-primary hover:text-white hover:border-primary transition-all cursor-pointer shadow-teal active:scale-95 ${className}`}
-        title="Install AutoCom App"
-        aria-label="Install AutoCom App"
+        title="Install Autocomm App"
+        aria-label="Install Autocomm App"
       >
         <span>📲</span>
-        <span>{variant === "full" ? "Install AutoCom App" : "Install"}</span>
+        <span>{variant === "full" ? "Install Autocomm App" : "Install"}</span>
       </button>
     );
   }

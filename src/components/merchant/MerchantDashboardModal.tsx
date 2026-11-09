@@ -1461,12 +1461,12 @@ export function MerchantDashboardModal({
 
               <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3">
                 <h4 className="text-xs font-mono uppercase tracking-wider text-slate-300 font-bold">
-                  Tokenized Attention Economics: Why AutoCom Outperforms Google &amp; Meta
+                  Tokenized Attention Economics: Why Autocomm Outperforms Google &amp; Meta
                 </h4>
                 <div className="space-y-2 text-xs text-slate-400 leading-relaxed">
                   <p>
                     Traditional banner ads suffer from 42% ad-blocker drop-off and less than 1.2%
-                    click-through. AutoCom replaces passive ads with{" "}
+                    click-through. Autocomm replaces passive ads with{" "}
                     <strong>spatial tokenized micro-deals</strong> consumed directly by autonomous
                     software agents acting on behalf of nearby consumers.
                   </p>

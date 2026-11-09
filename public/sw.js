@@ -1,4 +1,4 @@
-// AutoCom PWA Service Worker - Offline Resilience & Asset Caching
+// Autocomm PWA Service Worker - Offline Resilience & Asset Caching
 const CACHE_NAME = "autocom-cache-v1";
 
 const PRECACHE_ASSETS = ["/", "/favicon.ico", "/manifest.webmanifest"];
@@ -61,7 +61,7 @@ self.addEventListener("fetch", (event) => {
           const fallbackShell = await caches.match("/");
           return (
             fallbackShell ||
-            new Response("Offline - AutoCom Cache Available", {
+            new Response("Offline - Autocomm Cache Available", {
               status: 200,
               headers: { "Content-Type": "text/html" },
             })

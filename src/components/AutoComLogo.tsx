@@ -20,7 +20,7 @@ export function AutoComLogo({ className = "", size = "md", animated = true }: Au
   return (
     <div
       className={`relative grid place-items-center rounded-2xl bg-gradient-to-br from-primary/25 via-background to-accent/20 border border-primary/40 shadow-teal ${sizeClasses[size]} ${className}`}
-      aria-label="AutoCom Live AI Shopping Agent"
+      aria-label="Autocomm Live AI Shopping Agent"
     >
       {/* Live AI Pulse Ring */}
       {animated && (

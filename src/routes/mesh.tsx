@@ -4,13 +4,13 @@ import { AutoComApp } from "@/components/AutoComApp";
 export const Route = createFileRoute("/mesh")({
   head: () => ({
     meta: [
-      { title: "AutoCom - 3D Proximity Mesh & Realtime Agentic Commerce" },
+      { title: "Autocomm - 3D Proximity Mesh & Realtime Agentic Commerce" },
       {
         name: "description",
         content:
           "Where your live AI shopping agent negotiates deals within 50 meters on a spinning proximity sphere, protected by biometric passkeys.",
       },
-      { property: "og:title", content: "AutoCom - 3D Proximity Mesh" },
+      { property: "og:title", content: "Autocomm - 3D Proximity Mesh" },
       {
         property: "og:description",
         content:

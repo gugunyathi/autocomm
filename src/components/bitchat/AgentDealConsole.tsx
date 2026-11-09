@@ -157,7 +157,7 @@ export function AgentDealConsole({
           <div className="flex items-center gap-2">
             <span className="text-xl">🛒</span>
             <h2 className="text-base sm:text-lg font-bold text-amber-400">
-              AutoCom Checkout Station
+              Autocomm Checkout Station
             </h2>
           </div>
           <p className="text-xs text-muted-foreground font-mono mt-0.5">

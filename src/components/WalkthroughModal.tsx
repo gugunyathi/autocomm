@@ -69,7 +69,7 @@ const STEPS: Step[] = [
     badge: "Proximity & Budget",
     icon: "🏢",
     description:
-      "AutoCom uses real-time satellite accuracy to switch between Indoor 20m and Outdoor 50m meshes automatically.",
+      "Autocomm uses real-time satellite accuracy to switch between Indoor 20m and Outdoor 50m meshes automatically.",
     details: [
       "Tap the bottom Environment icon to switch or lock modes",
       "Set your hard budget ceiling and intent keywords in Agent Control",
@@ -127,7 +127,7 @@ export function WalkthroughModal({ isOpen, onClose, onComplete }: WalkthroughMod
         <div className="flex items-center justify-between border-b border-white/10 pb-3">
           <div className="flex items-center gap-2">
             <span className="rounded-full bg-primary/20 px-2.5 py-0.5 font-mono text-[10px] font-bold text-primary">
-              AutoCom Guide · {currentStep + 1} of {STEPS.length}
+              Autocomm Guide · {currentStep + 1} of {STEPS.length}
             </span>
             <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
               {step.badge}

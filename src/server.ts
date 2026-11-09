@@ -57,7 +57,7 @@ export default {
         return await handleIncomingHttpTraffic(request);
       }
 
-      // Handle AutoCom REST APIs (A2A, PayPal Sandbox, Mall Directory, APIMatic Spec, Health)
+      // Handle Autocomm REST APIs (A2A, PayPal Sandbox, Mall Directory, APIMatic Spec, Health)
       if (url.pathname.startsWith("/api/")) {
         const { handleApiRoute } = await import("./services/apiRouter");
         const apiResponse = await handleApiRoute(request, url);
