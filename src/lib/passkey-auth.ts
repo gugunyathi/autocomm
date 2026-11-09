@@ -97,13 +97,13 @@ export async function createPasskeyRegistration(
     try {
       const credential = (await navigator.credentials.create({
         publicKey: {
-          challenge,
+          challenge: challenge as unknown as BufferSource,
           rp: {
             name: "Autonomous Commerce Network",
             id: window.location.hostname === "localhost" ? "localhost" : window.location.hostname,
           },
           user: {
-            id: userId,
+            id: userId as unknown as BufferSource,
             name: username.toLowerCase().replace(/\s+/g, "_"),
             displayName: displayName || username,
           },
@@ -168,7 +168,7 @@ export async function authenticateWithPasskey(specificUserId?: string): Promise<
     try {
       await navigator.credentials.get({
         publicKey: {
-          challenge,
+          challenge: challenge as unknown as BufferSource,
           timeout: 60000,
           userVerification: "preferred",
           rpId: window.location.hostname === "localhost" ? "localhost" : window.location.hostname,

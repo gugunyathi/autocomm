@@ -1092,12 +1092,18 @@ export function useAutoComPayments() {
       recipient: "User Autonomous Wallet",
     };
 
+    const balanceKey: "USDC" | "ERC_X402" | "ZAR" =
+      (asset as string) === "ERC-X402" || (asset as string) === "ERC_X402"
+        ? "ERC_X402"
+        : (asset as string) === "ZAR_FIAT" || (asset as string) === "ZAR"
+          ? "ZAR"
+          : "USDC";
+
     setWalletState((prev) => ({
       ...prev,
       balances: {
         ...prev.balances,
-        [asset === "ERC-X402" ? "ERC_X402" : asset]:
-          (prev.balances[asset === "ERC-X402" ? "ERC_X402" : asset] || 0) + amount,
+        [balanceKey]: (prev.balances[balanceKey] || 0) + amount,
       },
       transactions: [newTx, ...prev.transactions],
     }));
@@ -1396,25 +1402,28 @@ export function useAutoComPayments() {
       if (isPriorityInstantDrop) {
         // STRICTLY HIGHER than 50% -> Instant Conversion to Shopping Bag (🛍)
         const boughtItem: BoughtItem = {
+          id: `bought-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
           store: {
             id: storeId,
             name: storeName,
             cat: category || "Retail",
             item: item,
             open: originalPriceZar,
-            floor: discountedPrice,
+            tag: `${discountPercent}% OFF`,
+            hue: "teal",
+            lat: 0,
+            lng: 0,
+            bearing: 0,
             dist: 12,
             icon: "⚡",
-            image: imageUrl,
+            image: imageUrl || "",
             specialBadge: `Instant ${discountPercent}% Drop`,
           },
+          item: item,
           price: discountedPrice,
-          counter: 1,
-          expires: Date.now() + 86400000 * 7,
-          total: 86400,
+          open: originalPriceZar,
           boughtAt: Date.now(),
-          orderNumber: `AUTOBAG-${Date.now().toString().slice(-6)}`,
-          posPasskeyToken: `PASSKEY-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+          qrToken: `PASSKEY-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
         };
 
         // Record on-chain transaction
@@ -1468,17 +1477,21 @@ export function useAutoComPayments() {
             cat: category || "Retail",
             item: item,
             open: originalPriceZar,
-            floor: discountedPrice,
+            tag: `${discountPercent}% Off`,
+            hue: "amber",
+            lat: 0,
+            lng: 0,
+            bearing: 0,
             dist: 18,
             icon: "🏷️",
-            image: imageUrl,
+            image: imageUrl || "",
             specialBadge: `${discountPercent}% Off`,
           },
           price: discountedPrice,
-          originalPrice: originalPriceZar,
-          discountPercent: discountPercent,
+          counter: 1,
+          open: originalPriceZar,
+          expires: Date.now() + 86400000 * 3,
           parkedAt: Date.now(),
-          expiresAt: Date.now() + 86400000 * 3,
         };
 
         if (onParkedAdded) onParkedAdded(parkedOffer);

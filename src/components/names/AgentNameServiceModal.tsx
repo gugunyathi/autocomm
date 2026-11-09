@@ -961,10 +961,9 @@ export function AgentNameServiceModal({
                       <div className="flex items-center gap-1.5">
                         <span className="text-base font-black text-white">{owner.fullName}</span>
                         {owner.verified && (
-                          <ShieldCheck
-                            className="w-4 h-4 text-cyan-400"
-                            title="Verified Enterprise or Anchor Store"
-                          />
+                          <span title="Verified Enterprise or Anchor Store">
+                            <ShieldCheck className="w-4 h-4 text-cyan-400" />
+                          </span>
                         )}
                       </div>
                       <span

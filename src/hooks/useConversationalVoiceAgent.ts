@@ -389,12 +389,12 @@ export function useConversationalVoiceAgent({
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    interface ExtendedWindow extends Window {
+    interface ExtendedWindow {
       SpeechRecognition?: new () => SpeechRecognitionLike;
       webkitSpeechRecognition?: new () => SpeechRecognitionLike;
     }
 
-    const extWin = window as ExtendedWindow;
+    const extWin = window as unknown as ExtendedWindow;
     const SpeechClass = extWin.SpeechRecognition || extWin.webkitSpeechRecognition;
 
     if (SpeechClass) {
