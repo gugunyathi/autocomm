@@ -16,7 +16,7 @@ services:
       - key: NODE_VERSION
         value: 22.14.0
       - key: PNPM_VERSION
-        value: 9.0.0
+        value: 10.17.1
       - key: PAYPAL_ENVIRONMENT
         value: sandbox
       - key: PAYPAL_SANDBOX_CLIENT_ID
