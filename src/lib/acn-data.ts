@@ -25,6 +25,10 @@ export type Store = {
   mallUrl?: string; // Google Maps link to the shopping centre
   promoDetails?: string; // Extended sale / deal offer promo description
   mallId?: string;
+  websiteUrl?: string;
+  specialsUrl?: string;
+  departmentLinks?: import("./mall-types").DepartmentLinks;
+  liveWebsitePromo?: import("./mall-types").LiveWebsitePromo;
   products?: import("./mall-types").RealProduct[];
 };
 

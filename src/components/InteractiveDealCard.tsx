@@ -528,6 +528,71 @@ export const InteractiveDealCard = React.memo(function InteractiveDealCard({
         </div>
       </div>
 
+      {/* Live Store Website Promo & Category Links (e.g. Mr Price Black Friday 50% Off) */}
+      {deal.store.liveWebsitePromo && (
+        <div className="mt-2.5 p-2.5 rounded-xl border border-red-500/40 bg-gradient-to-r from-red-950/60 to-slate-900 text-left text-xs space-y-1.5 shadow-md">
+          <div className="flex items-center justify-between gap-1.5">
+            <span className="font-extrabold text-red-300 text-[11px] truncate">
+              🔥 {deal.store.liveWebsitePromo.title}
+            </span>
+            <span className="font-mono text-[9px] font-black bg-red-600 text-white px-1.5 py-0.5 rounded">
+              {deal.store.liveWebsitePromo.discountPercent}% OFF
+            </span>
+          </div>
+          <p className="text-[10px] text-slate-300 leading-tight">
+            {deal.store.liveWebsitePromo.ruleText}
+          </p>
+          {deal.store.liveWebsitePromo.departmentLinks && (
+            <div className="flex flex-wrap gap-1 pt-1 border-t border-white/10">
+              {deal.store.liveWebsitePromo.departmentLinks.mens && (
+                <a
+                  href={deal.store.liveWebsitePromo.departmentLinks.mens}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-0.5 px-2 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-700 text-[9px] font-bold text-slate-200 hover:text-red-400 flex items-center gap-1"
+                >
+                  <span>👔 Men&apos;s</span>
+                  <span className="text-[8px]">↗</span>
+                </a>
+              )}
+              {deal.store.liveWebsitePromo.departmentLinks.womens && (
+                <a
+                  href={deal.store.liveWebsitePromo.departmentLinks.womens}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-0.5 px-2 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-700 text-[9px] font-bold text-slate-200 hover:text-red-400 flex items-center gap-1"
+                >
+                  <span>👗 Women&apos;s</span>
+                  <span className="text-[8px]">↗</span>
+                </a>
+              )}
+              {deal.store.liveWebsitePromo.departmentLinks.kids && (
+                <a
+                  href={deal.store.liveWebsitePromo.departmentLinks.kids}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-0.5 px-2 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-700 text-[9px] font-bold text-slate-200 hover:text-red-400 flex items-center gap-1"
+                >
+                  <span>🧒 Kids&apos;</span>
+                  <span className="text-[8px]">↗</span>
+                </a>
+              )}
+              {deal.store.liveWebsitePromo.sourceUrl && (
+                <a
+                  href={deal.store.liveWebsitePromo.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-0.5 px-2 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-700 text-[9px] font-bold text-slate-400 hover:text-white flex items-center gap-1"
+                >
+                  <span>mrp.com</span>
+                  <span className="text-[8px]">↗</span>
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Pricing comparison */}
       <div className="mt-3 flex items-baseline gap-2.5">
         <span className="text-2xl sm:text-3xl font-extrabold text-accent">R{deal.price}</span>

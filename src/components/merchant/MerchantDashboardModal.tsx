@@ -35,8 +35,14 @@ import {
   Activity,
   AlertCircle,
   Copy,
-  Check,
 } from "lucide-react";
+import {
+  runStoreCrawlerCheck,
+  ingestStoreDiscountUrl,
+  getStoredCrawledSpecials,
+  getDeliveredAgentCards,
+  PRESET_WEBSITE_TARGETS,
+} from "@/services/storeCrawlerService";
 
 interface MerchantDashboardModalProps {
   isOpen: boolean;
@@ -114,11 +120,38 @@ export function MerchantDashboardModal({
   walletState,
 }: MerchantDashboardModalProps) {
   const [activeTab, setActiveTab] = useState<
-    "upload" | "syndication" | "campaigns" | "shopify" | "analytics"
+    "upload" | "syndication" | "campaigns" | "shopify" | "analytics" | "crawler"
   >("upload");
   const [isSyncingShopify, setIsSyncingShopify] = useState(false);
   const [apiKeyInput, setApiKeyInput] = useState(shopifyConfig.apiKey);
   const [domainInput, setDomainInput] = useState(shopifyConfig.shopDomain);
+
+  // Store Website Crawler & Specials Ingestion State
+  const [crawlerUrlInput, setCrawlerUrlInput] = useState(
+    "https://www.mrp.com/en_za/black-friday/denim-shorts-buy-2-get-50-off-the-lowest-priced-item",
+  );
+  const [crawlerStoreId, setCrawlerStoreId] = useState("mrprice-blueberry");
+  const [crawlerDiscountPercent, setCrawlerDiscountPercent] = useState(50);
+  const [crawlerTitle, setCrawlerTitle] = useState(
+    "Mr Price Black Friday 50% Off: Buy 2 Denim Shorts, Get 50% Off Lowest Priced Item",
+  );
+  const [crawlerRule, setCrawlerRule] = useState(
+    "Buy 2 Get 50% Off lowest priced item across Men's, Women's & Kids' Denim Shorts",
+  );
+  const [crawlerMensUrl, setCrawlerMensUrl] = useState(
+    "https://www.mrp.com/en_za/men/clothing/shorts/denim-shorts",
+  );
+  const [crawlerWomensUrl, setCrawlerWomensUrl] = useState(
+    "https://www.mrp.com/en_za/women/clothing/shorts/denim-shorts",
+  );
+  const [crawlerKidsUrl, setCrawlerKidsUrl] = useState(
+    "https://www.mrp.com/en_za/kids/clothing/shorts",
+  );
+  const [isCrawlingNow, setIsCrawlingNow] = useState(false);
+  const [isIngestingCrawlerUrl, setIsIngestingCrawlerUrl] = useState(false);
+  const [crawlerToast, setCrawlerToast] = useState<string | null>(null);
+  const [crawlerSpecials, setCrawlerSpecials] = useState(getStoredCrawledSpecials());
+  const [crawlerDeliveredCards, setCrawlerDeliveredCards] = useState(getDeliveredAgentCards());
 
   // Drag-and-Drop & Processing State
   const [isDragging, setIsDragging] = useState(false);
@@ -486,6 +519,23 @@ export function MerchantDashboardModal({
           >
             <BarChart3 className="w-4 h-4 text-rose-400" />
             <span>Agent Analytics</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab("crawler");
+              setCrawlerSpecials(getStoredCrawledSpecials());
+              setCrawlerDeliveredCards(getDeliveredAgentCards());
+            }}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap border ${
+              activeTab === "crawler"
+                ? "bg-teal-500/20 text-teal-300 border-teal-500/50 shadow-sm"
+                : "text-slate-400 border-transparent hover:text-slate-200"
+            }`}
+          >
+            <Globe className="w-4 h-4 text-cyan-400" />
+            <span>🌐 Store Web Crawler &amp; Specials</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           </button>
         </div>
 
@@ -1476,6 +1526,296 @@ export function MerchantDashboardModal({
                     cryptographic proof of intent, and automatically closes the sale before the
                     shopper walks out of range.
                   </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 6: STORE WEB CRAWLER, URL INGESTION & AGENT SPECIALS */}
+          {activeTab === "crawler" && (
+            <div className="space-y-4 text-left">
+              {crawlerToast && (
+                <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs flex items-center justify-between">
+                  <span>{crawlerToast}</span>
+                  <button
+                    type="button"
+                    onClick={() => setCrawlerToast(null)}
+                    className="text-slate-400 hover:text-white"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
+              {/* RADAR STATUS & MANUAL CRAWL TRIGGER */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-emerald-400 flex items-center justify-center text-slate-950 shadow-md">
+                    <Globe className="w-5 h-5 stroke-[2.5]" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      <span>Store Website &amp; DOOH Billboard Crawler</span>
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Periodically checks all 40 mall stores and roadside billboards for Black
+                      Friday sales and discount links
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={isCrawlingNow}
+                  onClick={async () => {
+                    setIsCrawlingNow(true);
+                    try {
+                      const res = await runStoreCrawlerCheck();
+                      setCrawlerSpecials(getStoredCrawledSpecials());
+                      setCrawlerDeliveredCards(getDeliveredAgentCards());
+                      setCrawlerToast(
+                        `Crawled ${res.storesCheckedCount} stores & ${res.billboardsCheckedCount} billboards. Delivered ${res.newDeliveredCardsCount} specials to active agents!`,
+                      );
+                    } finally {
+                      setIsCrawlingNow(false);
+                    }
+                  }}
+                  className="py-2 px-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isCrawlingNow ? "animate-spin" : ""}`} />
+                  <span>{isCrawlingNow ? "Crawling Stores..." : "Crawl All Websites Now"}</span>
+                </button>
+              </div>
+
+              {/* LIVE MR PRICE BLACK FRIDAY 50% SPECIAL FEATURED */}
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-red-950/60 to-slate-950 border border-red-500/40 shadow-lg space-y-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <span className="px-2.5 py-1 rounded-lg bg-red-600 text-white font-black text-xs">
+                      MRP
+                    </span>
+                    <div>
+                      <div className="text-sm font-black text-white">
+                        Mr Price (Blueberry Square Mall &amp; Online)
+                      </div>
+                      <div className="text-xs font-semibold text-red-300">
+                        Buy 2 Denim Shorts, Get 50% Off Lowest Priced Item · Black Friday Special
+                      </div>
+                    </div>
+                  </div>
+
+                  <a
+                    href="https://www.mrp.com/en_za/black-friday/denim-shorts-buy-2-get-50-off-the-lowest-priced-item"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-1 px-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center gap-1"
+                  >
+                    <span>mrp.com Link</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-red-500/20">
+                  <a
+                    href="https://www.mrp.com/en_za/men/clothing/shorts/denim-shorts"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-red-500/40 text-xs font-semibold flex items-center justify-between group"
+                  >
+                    <span className="text-slate-200 group-hover:text-red-400">
+                      👔 Men&apos;s Denim Shorts
+                    </span>
+                    <ExternalLink className="w-3 h-3 text-slate-500" />
+                  </a>
+                  <a
+                    href="https://www.mrp.com/en_za/women/clothing/shorts/denim-shorts"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-red-500/40 text-xs font-semibold flex items-center justify-between group"
+                  >
+                    <span className="text-slate-200 group-hover:text-red-400">
+                      👗 Women&apos;s Denim Shorts
+                    </span>
+                    <ExternalLink className="w-3 h-3 text-slate-500" />
+                  </a>
+                  <a
+                    href="https://www.mrp.com/en_za/kids/clothing/shorts"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-red-500/40 text-xs font-semibold flex items-center justify-between group"
+                  >
+                    <span className="text-slate-200 group-hover:text-red-400">
+                      🧒 Kids&apos; Denim Shorts
+                    </span>
+                    <ExternalLink className="w-3 h-3 text-slate-500" />
+                  </a>
+                </div>
+              </div>
+
+              {/* INGEST FORM FOR MERCHANTS */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Plus className="w-4 h-4 text-emerald-400" />
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                    Merchant Discounted URL Ingestion &amp; Inventory Delivery
+                  </h4>
+                </div>
+
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!crawlerUrlInput.trim()) return;
+                    setIsIngestingCrawlerUrl(true);
+                    try {
+                      const target = PRESET_WEBSITE_TARGETS.find(
+                        (t) => t.storeId === crawlerStoreId,
+                      );
+                      const res = await ingestStoreDiscountUrl({
+                        url: crawlerUrlInput,
+                        storeId: crawlerStoreId,
+                        storeName: target?.storeName || "Retail Store",
+                        discountPercent: crawlerDiscountPercent,
+                        promoTitle: crawlerTitle,
+                        ruleText: crawlerRule,
+                        departmentLinks: {
+                          mens: crawlerMensUrl || undefined,
+                          womens: crawlerWomensUrl || undefined,
+                          kids: crawlerKidsUrl || undefined,
+                        },
+                      });
+                      setCrawlerToast(res.message);
+                      setCrawlerSpecials(getStoredCrawledSpecials());
+                      setCrawlerDeliveredCards(getDeliveredAgentCards());
+                    } finally {
+                      setIsIngestingCrawlerUrl(false);
+                    }
+                  }}
+                  className="space-y-3"
+                >
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                      Discounted Items Promotion URL
+                    </label>
+                    <input
+                      type="url"
+                      value={crawlerUrlInput}
+                      onChange={(e) => setCrawlerUrlInput(e.target.value)}
+                      placeholder="https://www.mrp.com/en_za/black-friday/..."
+                      required
+                      className="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-xl py-2 px-3 text-xs font-mono text-slate-100 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                        Select Store
+                      </label>
+                      <select
+                        value={crawlerStoreId}
+                        onChange={(e) => setCrawlerStoreId(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-xl py-2 px-3 text-xs text-slate-100 focus:outline-none"
+                      >
+                        {PRESET_WEBSITE_TARGETS.map((t) => (
+                          <option key={t.storeId} value={t.storeId}>
+                            {t.storeName} ({t.mallName})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                        Discount %: {crawlerDiscountPercent}% OFF
+                      </label>
+                      <input
+                        type="range"
+                        min="10"
+                        max="90"
+                        step="5"
+                        value={crawlerDiscountPercent}
+                        onChange={(e) => setCrawlerDiscountPercent(Number(e.target.value))}
+                        className="w-full accent-emerald-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                        Campaign Title
+                      </label>
+                      <input
+                        type="text"
+                        value={crawlerTitle}
+                        onChange={(e) => setCrawlerTitle(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-xl py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                        Deal Rule
+                      </label>
+                      <input
+                        type="text"
+                        value={crawlerRule}
+                        onChange={(e) => setCrawlerRule(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-xl py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isIngestingCrawlerUrl}
+                    className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {isIngestingCrawlerUrl ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span>Updating Inventory &amp; Delivering to Agents...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-4 h-4 stroke-[2.5]" />
+                        <span>Update Merchant Inventory &amp; Deliver Cards to Agents</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
+
+              {/* RECENTLY DELIVERED AGENT CARDS FEED */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Live Cards Delivered to Sovereign Shopping Agents (
+                    {crawlerDeliveredCards.length})
+                  </h4>
+                  <span className="text-[10px] text-slate-500 font-mono">Auto-Delivered 24/7</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {crawlerDeliveredCards.map((card) => (
+                    <div
+                      key={card.id}
+                      className="p-3.5 rounded-2xl bg-slate-950 border border-emerald-500/30 text-xs space-y-2 shadow"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-bold text-slate-100">{card.storeName}</span>
+                        <span className="px-2 py-0.5 rounded font-black text-[10px] bg-emerald-500/20 text-emerald-400">
+                          {card.discountPercent}% OFF
+                        </span>
+                      </div>
+                      <p className="text-slate-300 font-medium text-[11px] leading-tight">
+                        {card.title}
+                      </p>
+                      <div className="text-[10px] text-emerald-400 font-mono">
+                        Delivered to: {card.deliveredToAgent} (Score: {card.matchScore}%)
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

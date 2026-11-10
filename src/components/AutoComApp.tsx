@@ -35,7 +35,13 @@ import { FloatingCreateAgentButton } from "@/components/agent/FloatingCreateAgen
 import { CreateAgentModal } from "@/components/agent/CreateAgentModal";
 import { hasUserCreatedAgent, convertAgentIntentToWishlistItem } from "@/services/userAgentService";
 import type { UserPersonalAgent } from "@/types/userAgent";
-import { AgentPayLaterLoanCard } from "@/components/paypal/AgentPayLaterLoanCard";
+import { WebsiteSpecialsScannerModal } from "@/components/merchant/WebsiteSpecialsScannerModal";
+import {
+  startPeriodicStoreCrawler,
+  decorateStoresWithCrawledSpecials,
+  getDeliveredAgentCards,
+  type DeliveredSpecialCard,
+} from "@/services/storeCrawlerService";
 
 // Lazy-load heavy sub-applications and dialogs so initial mesh loading is instantaneous
 const PitchDeckModal = lazy(() =>
@@ -142,6 +148,32 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
   const [hasCreatedAgent, setHasCreatedAgent] = useState(() => hasUserCreatedAgent());
   const [createAgentModalOpen, setCreateAgentModalOpen] = useState(false);
 
+  // Store Website & DOOH Billboard Specials Crawler State
+  const [crawlerModalOpen, setCrawlerModalOpen] = useState(false);
+  const [crawledVersion, setCrawledVersion] = useState(0);
+  const [activeSpecialCardAlert, setActiveSpecialCardAlert] = useState<DeliveredSpecialCard | null>(
+    null,
+  );
+
+  // Periodically check websites of all stores in malls listed and roadside billboards (Mr Price 50% Black Friday, etc.)
+  useEffect(() => {
+    const stopCrawler = startPeriodicStoreCrawler(45000, () => {
+      setCrawledVersion((v) => v + 1);
+      const cards = getDeliveredAgentCards();
+      if (cards.length > 0 && !cards[0].isRead && !cards[0].isClaimed) {
+        setActiveSpecialCardAlert(cards[0]);
+      }
+    });
+
+    // Check delivered cards on initial load
+    const initialCards = getDeliveredAgentCards();
+    if (initialCards.length > 0 && !initialCards[0].isRead && !initialCards[0].isClaimed) {
+      setActiveSpecialCardAlert(initialCards[0]);
+    }
+
+    return () => stopCrawler();
+  }, []);
+
   // Vertical floating + button appears ONLY for users who haven't created an agent or are not logged in
   const shouldShowFloatingCreateAgent = !currentUser || !hasCreatedAgent;
 
@@ -196,7 +228,7 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
   const [agentDevPortalOpen, setAgentDevPortalOpen] = useState(false);
   const [paypalHackathonOpen, setPaypalHackathonOpen] = useState(false);
   const [paypalHackathonTab, setPaypalHackathonTab] = useState<
-    "ag-grid" | "channel3" | "paypal" | "apimatic" | "ai-toolkit"
+    "ag-grid" | "channel3" | "paypal" | "apimatic"
   >("ag-grid");
   const [agentNamesModalOpen, setAgentNamesModalOpen] = useState(false);
   const [agentNamesTab, setAgentNamesTab] = useState<
@@ -430,13 +462,11 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
     else if (mode === "auto") setOutdoor(autoDetectedAs === "outdoor");
   };
 
-  // Dynamic store directory: when at a shopping mall, loads the 8 physical retail outlets of that mall!
+  // Dynamic store directory: loads physical retail outlets of the mall, decorated with live website specials!
   const stores = useMemo(() => {
-    if (isAtBelAir) {
-      return currentMall.stores;
-    }
-    return outdoor ? OUTDOOR : INDOOR;
-  }, [isAtBelAir, currentMall, outdoor]);
+    const rawStores = isAtBelAir ? currentMall.stores : outdoor ? OUTDOOR : INDOOR;
+    return decorateStoresWithCrawledSpecials(rawStores);
+  }, [isAtBelAir, currentMall, outdoor, crawledVersion]);
 
   // Effective speed & dynamic mobility state inference
   const effectiveSpeed = useMemo(() => {
@@ -1818,8 +1848,72 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
               );
             })}
           </div>
+
+          {/* Live Store Website & Billboard Specials Crawler Banner */}
+          <div className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-white/10 text-[9.5px] font-mono">
+            <button
+              onClick={() => setCrawlerModalOpen(true)}
+              className="flex items-center gap-1.5 text-cyan-300 hover:text-white transition-colors cursor-pointer truncate text-left"
+              title="Open Store Website & Billboard Specials Crawler"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shrink-0" />
+              <span className="font-bold text-white">🌐 Store Specials:</span>
+              <span className="truncate text-red-300 font-semibold">
+                Mr Price 50% Black Friday (Men, Women &amp; Kids)
+              </span>
+            </button>
+            <button
+              onClick={() => setCrawlerModalOpen(true)}
+              className="px-2 py-0.5 rounded-md bg-red-600/30 hover:bg-red-600/50 text-red-200 border border-red-500/40 text-[9px] font-bold shrink-0 transition-all cursor-pointer"
+            >
+              Specials Radar ↗
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Floating Agent Delivered Special Card Toast Alert */}
+      {activeSpecialCardAlert && (
+        <div className="relative z-40 w-full max-w-lg sm:max-w-xl mx-auto px-3 sm:px-4 mt-1.5 pointer-events-auto animate-in slide-in-from-top duration-300">
+          <div className="p-2.5 rounded-2xl bg-gradient-to-r from-red-950/90 via-slate-900/95 to-slate-950/90 border border-red-500/50 shadow-2xl flex items-center justify-between gap-2.5 backdrop-blur-xl">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="px-2 py-0.5 rounded-md bg-red-600 text-white font-black text-[10px] shrink-0">
+                {activeSpecialCardAlert.brandLogoSymbol || "DEAL"}
+              </span>
+              <div className="min-w-0">
+                <div className="text-xs font-bold text-white truncate flex items-center gap-1.5">
+                  <span>🤖 Agent Matched: {activeSpecialCardAlert.storeName}</span>
+                  <span className="px-1.5 py-0.2 rounded font-mono text-[9px] bg-amber-400 text-slate-950 font-black">
+                    {activeSpecialCardAlert.discountPercent}% OFF
+                  </span>
+                </div>
+                <div className="text-[10px] text-red-300 font-medium truncate">
+                  {activeSpecialCardAlert.title}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                onClick={() => {
+                  setCrawlerModalOpen(true);
+                  setActiveSpecialCardAlert(null);
+                }}
+                className="py-1 px-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-[10px] shadow transition-colors cursor-pointer"
+              >
+                View Deal
+              </button>
+              <button
+                onClick={() => setActiveSpecialCardAlert(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white transition-colors"
+                aria-label="Dismiss alert"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Independent Floating Quick Controls: Park (Left), Volume & Silence (Center), Bag (Right) */}
       <div className="relative z-30 w-full max-w-lg sm:max-w-xl md:max-w-2xl mx-auto px-3 sm:px-4 mt-1.5 -mb-2 flex justify-between items-center pointer-events-auto">
@@ -2408,6 +2502,25 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
               </div>
               <span className="text-[8.5px] font-mono text-purple-300 sm:hidden leading-none truncate max-w-full pointer-events-none">
                 Mall Sim
+              </span>
+            </button>
+
+            {/* Store Website & Billboard Specials Crawler Button */}
+            <button
+              onClick={() => safeBottomAction(() => setCrawlerModalOpen(true))}
+              className="glass relative snap-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 rounded-2xl px-2.5 sm:px-3.5 py-2 sm:py-2.5 border border-cyan-500/50 bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 shadow-[0_0_12px_rgba(6,182,212,0.3)] active:scale-95 transition-all cursor-pointer backdrop-blur-2xl ring-1 ring-cyan-500/30 shrink-0 select-none"
+              aria-label="Open Store Website Specials Radar"
+              title="Store Website & Billboard Specials Radar"
+            >
+              <span className="text-base sm:text-lg shrink-0 pointer-events-none">🌐</span>
+              <div className="text-left hidden sm:block min-w-0 pointer-events-none">
+                <p className="font-mono text-[8px] uppercase tracking-wider text-cyan-300 leading-none">
+                  Live Deals
+                </p>
+                <p className="text-[11px] font-bold text-white truncate">Web Specials</p>
+              </div>
+              <span className="text-[8.5px] font-mono text-cyan-300 sm:hidden leading-none truncate max-w-full pointer-events-none">
+                Specials
               </span>
             </button>
 
@@ -3036,17 +3149,6 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
                     </button>
                   </div>
                 </div>
-
-                {/* PayPal Pay Later Credit Line (6-Month Autonomous Micro-Credit Plan) */}
-                <div className="mt-4">
-                  <AgentPayLaterLoanCard
-                    ownerAddress={currentUser?.id || "0x49B0E1F8C2224424B10a82B93E94d1F3238385a4"}
-                    agentId="bot_buyer_muse_za"
-                    agentName="Muse-ZA (Autonomous Buyer)"
-                    ownerName={currentUser?.displayName || currentUser?.name || "Gugu"}
-                    showCreateSimulator={true}
-                  />
-                </div>
               </div>
 
               {/* Live Activity Stream Section */}
@@ -3364,6 +3466,12 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
           onClose={() => setIsProductsModalOpen(false)}
           onBuyProduct={handleBuyStoreProduct}
           onParkProduct={handleParkStoreProduct}
+        />
+
+        {/* Store Website & Billboard Specials Crawler & Delivery Modal */}
+        <WebsiteSpecialsScannerModal
+          isOpen={crawlerModalOpen}
+          onClose={() => setCrawlerModalOpen(false)}
         />
 
         {/* Independent Vertical Floating + Button in Mesh (Appears only if user hasn't created an agent or is not logged in) */}

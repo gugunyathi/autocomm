@@ -122,8 +122,81 @@ export const StoreProductsModal: React.FC<StoreProductsModalProps> = ({
           </button>
         </div>
 
+        {/* Live Store Website Promo & Department Links (e.g. Mr Price Black Friday 50% Off) */}
+        {store.liveWebsitePromo && (
+          <div className="my-2 p-3 rounded-2xl border border-red-500/40 bg-gradient-to-r from-red-950/70 via-slate-900 to-slate-950 text-white shrink-0 shadow-lg">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-1.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2 py-0.5 rounded text-[10px] font-black bg-red-600 text-white">
+                  {store.companyLogoSymbol || "SPECIAL"}
+                </span>
+                <span className="text-xs font-bold text-red-200">
+                  {store.liveWebsitePromo.title}
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-slate-950">
+                  {store.liveWebsitePromo.discountPercent}% OFF
+                </span>
+              </div>
+              {store.liveWebsitePromo.sourceUrl && (
+                <a
+                  href={store.liveWebsitePromo.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] text-red-300 hover:text-white font-semibold flex items-center gap-1 shrink-0"
+                >
+                  <span>View on store website</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-300 font-medium mb-2">
+              {store.liveWebsitePromo.ruleText}
+            </p>
+            {store.liveWebsitePromo.departmentLinks && (
+              <div className="flex flex-wrap items-center gap-2 pt-1.5 border-t border-white/10">
+                <span className="text-[10px] uppercase font-bold text-slate-400">
+                  Specials Depts:
+                </span>
+                {store.liveWebsitePromo.departmentLinks.mens && (
+                  <a
+                    href={store.liveWebsitePromo.departmentLinks.mens}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-1 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-[10px] text-slate-200 font-semibold flex items-center gap-1 transition-colors"
+                  >
+                    <span>👔 Men&apos;s</span>
+                    <ExternalLink className="w-2.5 h-2.5 text-slate-400" />
+                  </a>
+                )}
+                {store.liveWebsitePromo.departmentLinks.womens && (
+                  <a
+                    href={store.liveWebsitePromo.departmentLinks.womens}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-1 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-[10px] text-slate-200 font-semibold flex items-center gap-1 transition-colors"
+                  >
+                    <span>👗 Women&apos;s</span>
+                    <ExternalLink className="w-2.5 h-2.5 text-slate-400" />
+                  </a>
+                )}
+                {store.liveWebsitePromo.departmentLinks.kids && (
+                  <a
+                    href={store.liveWebsitePromo.departmentLinks.kids}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-1 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-[10px] text-slate-200 font-semibold flex items-center gap-1 transition-colors"
+                  >
+                    <span>🧒 Kids&apos;</span>
+                    <ExternalLink className="w-2.5 h-2.5 text-slate-400" />
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Promo details banner */}
-        {store.promoDetails && (
+        {store.promoDetails && !store.liveWebsitePromo && (
           <div className="my-2.5 p-2.5 rounded-xl border border-accent/40 bg-accent/10 flex items-center gap-2 text-xs text-amber-200 shrink-0">
             <Zap className="h-4 w-4 text-accent shrink-0" />
             <span className="font-mono text-[11px] leading-tight">{store.promoDetails}</span>

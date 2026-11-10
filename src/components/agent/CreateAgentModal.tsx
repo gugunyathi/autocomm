@@ -23,6 +23,8 @@ import {
   Trash2,
   ChevronRight,
   ChevronLeft,
+  ChevronUp,
+  ChevronDown,
   ArrowRight,
   Plus,
   Send,
@@ -556,6 +558,65 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
     }
   }, [deviceMode]);
 
+  // Scroll container ref & modern subtle indicators state (replacing old-school OS scrollbars)
+  const contentScrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollUp, setCanScrollUp] = useState(false);
+  const [canScrollDown, setCanScrollDown] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  const checkScrollPosition = useCallback(() => {
+    const el = contentScrollRef.current;
+    if (!el) return;
+    const { scrollTop, scrollHeight, clientHeight } = el;
+    const maxScroll = scrollHeight - clientHeight;
+    setCanScrollUp(scrollTop > 12);
+    setCanScrollDown(maxScroll > 12 && scrollTop < maxScroll - 12);
+    if (maxScroll > 0) {
+      setScrollProgress(Math.min(100, Math.max(0, Math.round((scrollTop / maxScroll) * 100))));
+    } else {
+      setScrollProgress(0);
+    }
+  }, []);
+
+  // Prevent background body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
+
+  // Recalculate scroll indicator states whenever tab, device mode, or content changes
+  useEffect(() => {
+    if (!isOpen) return;
+    checkScrollPosition();
+    const timeoutId = setTimeout(checkScrollPosition, 60);
+    const handleResize = () => checkScrollPosition();
+    window.addEventListener("resize", handleResize);
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [isOpen, currentTab, deviceMode, uploadedBills, checkScrollPosition]);
+
+  // Modern subtle smooth scroll actions for mobile & laptop
+  const handleScrollUp = () => {
+    contentScrollRef.current?.scrollBy({ top: -180, behavior: "smooth" });
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+      navigator.vibrate?.(10);
+    }
+  };
+
+  const handleScrollDown = () => {
+    contentScrollRef.current?.scrollBy({ top: 180, behavior: "smooth" });
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+      navigator.vibrate?.(10);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -681,7 +742,7 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
 
         {/* SUCCESS CONFIRMATION SCREEN */}
         {deploySuccess && createdAgentRecord ? (
-          <div className="flex-1 p-6 sm:p-8 flex flex-col items-center justify-center text-center overflow-y-auto">
+          <div className="flex-1 p-6 sm:p-8 flex flex-col items-center justify-center text-center overflow-y-auto no-scrollbar">
             <div className="relative mb-5">
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 shadow-xl shadow-emerald-500/30 animate-bounce">
                 <CheckCircle2 className="w-8 h-8 stroke-[2.5]" />
@@ -836,563 +897,620 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
               </div>
             </div>
 
-            {/* SINGLE CLEAN SCROLLABLE PAGE CONTAINER */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
-              {/* PAGE 1: AGENT NAME & ANS PRICING */}
-              {currentTab === "name" && (
-                <div className="space-y-4 animate-in fade-in duration-150">
-                  <div>
-                    <label
-                      htmlFor="step-agent-name-input"
-                      className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5"
+            {/* SCROLLABLE VIEWPORT WITH MODERN SUBTLE ARROWS (ZERO OLD-SCHOOL BROWSER SCROLLBARS) */}
+            <div className="relative flex-1 min-h-0 flex flex-col overflow-hidden">
+              {/* Modern subtle top scroll arrow & gradient indicator */}
+              {canScrollUp && (
+                <>
+                  <div className="pointer-events-none absolute top-0 inset-x-0 h-8 bg-gradient-to-b from-slate-900/90 to-transparent z-10" />
+                  <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
+                    <button
+                      type="button"
+                      onClick={handleScrollUp}
+                      className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/90 hover:bg-slate-900 text-slate-300 hover:text-emerald-300 border border-slate-700/80 hover:border-emerald-500/40 shadow-lg text-[11px] font-semibold backdrop-blur-md transition-all cursor-pointer group"
+                      aria-label="Scroll content up"
                     >
-                      Choose Your Personalized Agent Name (.agent)
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="step-agent-name-input"
-                        type="text"
-                        value={agentNameInput}
-                        onChange={(e) => setAgentNameInput(e.target.value)}
-                        placeholder="e.g. gugu, sneakerhead, deals"
-                        maxLength={24}
-                        className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 rounded-xl py-2.5 pl-3.5 pr-20 text-sm font-semibold text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-mono"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                        .agent
-                      </span>
-                    </div>
-
-                    <div className="mt-2 flex items-center justify-between text-xs">
-                      {isCheckingName ? (
-                        <span className="text-slate-400 flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
-                          Checking ANS availability...
-                        </span>
-                      ) : nameAvailability ? (
-                        <div className="flex items-center justify-between w-full">
-                          <span
-                            className={`flex items-center gap-1 font-medium ${
-                              nameAvailability.canClaim ? "text-emerald-400" : "text-amber-400"
-                            }`}
-                          >
-                            {nameAvailability.canClaim ? (
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                            ) : (
-                              <AlertCircle className="w-3.5 h-3.5" />
-                            )}
-                            {nameAvailability.statusText}
-                          </span>
-
-                          <span className="font-mono text-slate-300">
-                            {nameAvailability.isFree ? (
-                              <span className="text-emerald-400 font-bold">
-                                100% Free ($0 / R0)
-                              </span>
-                            ) : (
-                              <span>
-                                ${nameAvailability.priceUsd} USDC · R
-                                {nameAvailability.priceZar.toLocaleString()}
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-slate-500 text-[11px]">
-                          Handles with 7+ letters are 100% free forever for human personal agents.
-                        </span>
-                      )}
-                    </div>
+                      <ChevronUp className="w-3.5 h-3.5 text-emerald-400 group-hover:-translate-y-0.5 transition-transform" />
+                      <span>Scroll up</span>
+                    </button>
                   </div>
+                </>
+              )}
 
-                  {/* Suggestion Chips */}
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
-                      Suggested Sovereign Names:
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {["sneakerhead", "gugu", "zarahunter", "lisa", "bargainscout"].map((n) => (
-                        <button
-                          key={n}
-                          type="button"
-                          onClick={() => setAgentNameInput(n)}
-                          className="text-xs px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-emerald-300 hover:border-emerald-500/40 transition-colors"
-                        >
-                          @{n}.agent
-                        </button>
-                      ))}
-                    </div>
+              {/* Modern subtle bottom scroll arrow & gradient indicator */}
+              {canScrollDown && (
+                <>
+                  <div className="pointer-events-none absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-slate-900/90 to-transparent z-10" />
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
+                    <button
+                      type="button"
+                      onClick={handleScrollDown}
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-950/95 hover:bg-slate-900 text-slate-200 hover:text-emerald-300 border border-emerald-500/40 hover:border-emerald-400 shadow-xl shadow-emerald-500/10 text-[11px] font-semibold backdrop-blur-md transition-all cursor-pointer group animate-pulse"
+                      aria-label="Scroll for more content"
+                    >
+                      <span>Scroll for more</span>
+                      <ChevronDown className="w-3.5 h-3.5 text-emerald-400 group-hover:translate-y-0.5 transition-transform" />
+                    </button>
                   </div>
+                </>
+              )}
 
-                  {/* Privacy Guarantee */}
-                  <div className="p-3 rounded-xl bg-slate-950/60 border border-emerald-500/20 flex items-start gap-2.5">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                      Zero-Knowledge Enclave: Your real name, address, and cards stay sealed on your
-                      device. Only your sovereign <strong className="text-slate-200">.agent</strong>{" "}
-                      handle is presented to stores.
-                    </p>
-                  </div>
+              {/* Modern ultra-slim subtle scroll progress track (non-blocking) */}
+              {(canScrollUp || canScrollDown) && (
+                <div className="absolute right-1 top-8 bottom-8 w-1 rounded-full bg-slate-800/30 pointer-events-none z-10 flex flex-col justify-start">
+                  <div
+                    className="w-1 rounded-full bg-emerald-400/70 shadow-[0_0_8px_rgba(52,211,153,0.5)] transition-all duration-150"
+                    style={{
+                      height: "32px",
+                      marginTop: `${(scrollProgress / 100) * 80}%`,
+                    }}
+                  />
                 </div>
               )}
 
-              {/* PAGE 2: WHAT TO BUY & SIZES */}
-              {currentTab === "wish" && (
-                <div className="space-y-4 animate-in fade-in duration-150">
-                  <div>
-                    <label
-                      htmlFor="step-what-to-buy-input"
-                      className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5"
-                    >
-                      What product or deal do you want?
-                    </label>
-                    <input
-                      id="step-what-to-buy-input"
-                      type="text"
-                      value={whatToBuy}
-                      onChange={(e) => setWhatToBuy(e.target.value)}
-                      placeholder="e.g. Nike Air Jordan 1 Retro, Black wool winter coat, Espresso beans"
-                      className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 rounded-xl py-2.5 px-3.5 text-sm font-medium text-slate-100 placeholder:text-slate-600 focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                      Category
-                    </label>
-                    <div className="flex flex-wrap gap-1.5">
-                      {PRESET_CATEGORIES.map((cat) => (
-                        <button
-                          key={cat}
-                          type="button"
-                          onClick={() => setCategory(cat)}
-                          className={`text-xs px-2.5 py-1 rounded-lg border transition-colors ${
-                            category === cat
-                              ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
-                              : "bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200"
-                          }`}
-                        >
-                          {cat}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* SINGLE CLEAN SCROLLABLE PAGE CONTAINER WITH HIDDEN BROWSER SCROLLBAR */}
+              <div
+                ref={contentScrollRef}
+                onScroll={checkScrollPosition}
+                className="flex-1 overflow-y-auto no-scrollbar p-4 sm:p-6 space-y-4 overscroll-contain"
+              >
+                {/* PAGE 1: AGENT NAME & ANS PRICING */}
+                {currentTab === "name" && (
+                  <div className="space-y-4 animate-in fade-in duration-150">
                     <div>
                       <label
-                        htmlFor="step-sizes-input"
-                        className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1"
+                        htmlFor="step-agent-name-input"
+                        className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5"
                       >
-                        Size / Dimensions
+                        Choose Your Personalized Agent Name (.agent)
                       </label>
-                      <input
-                        id="step-sizes-input"
-                        type="text"
-                        value={sizes}
-                        onChange={(e) => setSizes(e.target.value)}
-                        placeholder="e.g. UK 9 / EU 43, Medium, 32W"
-                        className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none"
-                      />
-                      <div className="flex flex-wrap gap-1 mt-1.5">
-                        {PRESET_SIZES.slice(0, 4).map((sz) => (
+                      <div className="relative">
+                        <input
+                          id="step-agent-name-input"
+                          type="text"
+                          value={agentNameInput}
+                          onChange={(e) => setAgentNameInput(e.target.value)}
+                          placeholder="e.g. gugu, sneakerhead, deals"
+                          maxLength={24}
+                          className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 rounded-xl py-2.5 pl-3.5 pr-20 text-sm font-semibold text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-mono"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                          .agent
+                        </span>
+                      </div>
+
+                      <div className="mt-2 flex items-center justify-between text-xs">
+                        {isCheckingName ? (
+                          <span className="text-slate-400 flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+                            Checking ANS availability...
+                          </span>
+                        ) : nameAvailability ? (
+                          <div className="flex items-center justify-between w-full">
+                            <span
+                              className={`flex items-center gap-1 font-medium ${
+                                nameAvailability.canClaim ? "text-emerald-400" : "text-amber-400"
+                              }`}
+                            >
+                              {nameAvailability.canClaim ? (
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                              ) : (
+                                <AlertCircle className="w-3.5 h-3.5" />
+                              )}
+                              {nameAvailability.statusText}
+                            </span>
+
+                            <span className="font-mono text-slate-300">
+                              {nameAvailability.isFree ? (
+                                <span className="text-emerald-400 font-bold">
+                                  100% Free ($0 / R0)
+                                </span>
+                              ) : (
+                                <span>
+                                  ${nameAvailability.priceUsd} USDC · R
+                                  {nameAvailability.priceZar.toLocaleString()}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-500 text-[11px]">
+                            Handles with 7+ letters are 100% free forever for human personal agents.
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Suggestion Chips */}
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
+                        Suggested Sovereign Names:
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {["sneakerhead", "gugu", "zarahunter", "lisa", "bargainscout"].map((n) => (
                           <button
-                            key={sz}
+                            key={n}
                             type="button"
-                            onClick={() => setSizes(sz)}
-                            className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 hover:text-emerald-300"
+                            onClick={() => setAgentNameInput(n)}
+                            className="text-xs px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-emerald-300 hover:border-emerald-500/40 transition-colors"
                           >
-                            {sz}
+                            @{n}.agent
                           </button>
                         ))}
                       </div>
                     </div>
 
-                    <div>
-                      <label
-                        htmlFor="step-preferences-input"
-                        className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1"
-                      >
-                        Color & Condition Preferences
-                      </label>
-                      <input
-                        id="step-preferences-input"
-                        type="text"
-                        value={preferences}
-                        onChange={(e) => setPreferences(e.target.value)}
-                        placeholder="e.g. Black or Navy, Brand new in box"
-                        className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none"
-                      />
+                    {/* Privacy Guarantee */}
+                    <div className="p-3 rounded-xl bg-slate-950/60 border border-emerald-500/20 flex items-start gap-2.5">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                      <p className="text-[11px] text-slate-400 leading-relaxed">
+                        Zero-Knowledge Enclave: Your real name, address, and cards stay sealed on
+                        your device. Only your sovereign{" "}
+                        <strong className="text-slate-200">.agent</strong> handle is presented to
+                        stores.
+                      </p>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* PAGE 3: STORES & REFERENCE LINKS */}
-              {currentTab === "stores" && (
-                <div className="space-y-4 animate-in fade-in duration-150">
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center gap-1.5">
-                      <Store className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Select Mall Flagships to Monitor</span>
-                    </label>
+                {/* PAGE 2: WHAT TO BUY & SIZES */}
+                {currentTab === "wish" && (
+                  <div className="space-y-4 animate-in fade-in duration-150">
+                    <div>
+                      <label
+                        htmlFor="step-what-to-buy-input"
+                        className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5"
+                      >
+                        What product or deal do you want?
+                      </label>
+                      <input
+                        id="step-what-to-buy-input"
+                        type="text"
+                        value={whatToBuy}
+                        onChange={(e) => setWhatToBuy(e.target.value)}
+                        placeholder="e.g. Nike Air Jordan 1 Retro, Black wool winter coat, Espresso beans"
+                        className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 rounded-xl py-2.5 px-3.5 text-sm font-medium text-slate-100 placeholder:text-slate-600 focus:outline-none"
+                      />
+                    </div>
 
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                      {POPULAR_MALL_STORES.map((s) => {
-                        const isSelected = selectedStores.includes(s);
-                        return (
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                        Category
+                      </label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {PRESET_CATEGORIES.map((cat) => (
                           <button
-                            key={s}
+                            key={cat}
                             type="button"
-                            onClick={() => handleToggleStore(s)}
-                            className={`text-xs px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
-                              isSelected
+                            onClick={() => setCategory(cat)}
+                            className={`text-xs px-2.5 py-1 rounded-lg border transition-colors ${
+                              category === cat
                                 ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
                                 : "bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200"
                             }`}
                           >
-                            {isSelected ? "✓ " : "+ "}
-                            {s}
+                            {cat}
                           </button>
-                        );
-                      })}
-                    </div>
-
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={storeInput}
-                        onChange={(e) => setStoreInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            handleAddCustomStore();
-                          }
-                        }}
-                        placeholder="Or enter custom store name or URL..."
-                        className="flex-1 bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddCustomStore}
-                        className="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
-                      >
-                        Add Store
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Reference Links */}
-                  <div>
-                    <label
-                      htmlFor="step-reference-link-input"
-                      className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center gap-1.5"
-                    >
-                      <LinkIcon className="w-3.5 h-3.5 text-cyan-400" />
-                      <span>External Item Reference URLs</span>
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        id="step-reference-link-input"
-                        type="url"
-                        value={referenceUrlInput}
-                        onChange={(e) => setReferenceUrlInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            handleAddReferenceLink();
-                          }
-                        }}
-                        placeholder="Paste link e.g. takealot.com/... or nike.com/..."
-                        className="flex-1 bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddReferenceLink}
-                        className="py-2 px-3 rounded-xl bg-cyan-900/60 hover:bg-cyan-800 text-cyan-300 text-xs font-semibold border border-cyan-500/30 flex items-center gap-1"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>Add</span>
-                      </button>
-                    </div>
-
-                    {referenceLinks.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mt-2">
-                        {referenceLinks.map((link, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-cyan-300 max-w-[280px]"
-                          >
-                            <span className="truncate">{link.replace(/^https?:\/\//, "")}</span>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setReferenceLinks(referenceLinks.filter((_, i) => i !== idx))
-                              }
-                              className="text-slate-500 hover:text-rose-400"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
                         ))}
                       </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* PAGE 4: BUDGET & 24/7 SCHEDULE */}
-              {currentTab === "budget" && (
-                <div className="space-y-4 animate-in fade-in duration-150">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label
-                        htmlFor="step-target-price-input"
-                        className="block text-xs font-bold text-slate-300 mb-1"
-                      >
-                        Target Bargain Price
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">
-                          R
-                        </span>
-                        <input
-                          id="step-target-price-input"
-                          type="number"
-                          value={targetPriceZar}
-                          onChange={(e) =>
-                            setTargetPriceZar(Math.max(1, parseInt(e.target.value) || 0))
-                          }
-                          className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 pl-7 pr-3 text-xs font-bold text-slate-100 focus:outline-none"
-                        />
-                      </div>
                     </div>
 
-                    <div>
-                      <label
-                        htmlFor="step-ceiling-price-input"
-                        className="block text-xs font-bold text-slate-300 mb-1"
-                      >
-                        Absolute Max Ceiling
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">
-                          R
-                        </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label
+                          htmlFor="step-sizes-input"
+                          className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1"
+                        >
+                          Size / Dimensions
+                        </label>
                         <input
-                          id="step-ceiling-price-input"
-                          type="number"
-                          value={ceilingPriceZar}
-                          onChange={(e) =>
-                            setCeilingPriceZar(
-                              Math.max(targetPriceZar, parseInt(e.target.value) || 0),
-                            )
-                          }
-                          className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 pl-7 pr-3 text-xs font-bold text-slate-100 focus:outline-none"
+                          id="step-sizes-input"
+                          type="text"
+                          value={sizes}
+                          onChange={(e) => setSizes(e.target.value)}
+                          placeholder="e.g. UK 9 / EU 43, Medium, 32W"
+                          className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none"
+                        />
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {PRESET_SIZES.slice(0, 4).map((sz) => (
+                            <button
+                              key={sz}
+                              type="button"
+                              onClick={() => setSizes(sz)}
+                              className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 hover:text-emerald-300"
+                            >
+                              {sz}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="step-preferences-input"
+                          className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1"
+                        >
+                          Color & Condition Preferences
+                        </label>
+                        <input
+                          id="step-preferences-input"
+                          type="text"
+                          value={preferences}
+                          onChange={(e) => setPreferences(e.target.value)}
+                          placeholder="e.g. Black or Navy, Brand new in box"
+                          className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none"
                         />
                       </div>
                     </div>
                   </div>
+                )}
 
-                  {/* Pre-Funded Wallet */}
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center gap-1.5">
-                      <Wallet className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Pre-Funded Wallet Allocation</span>
-                    </label>
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {[500, 1000, 2500, 5000].map((amt) => (
+                {/* PAGE 3: STORES & REFERENCE LINKS */}
+                {currentTab === "stores" && (
+                  <div className="space-y-4 animate-in fade-in duration-150">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center gap-1.5">
+                        <Store className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Select Mall Flagships to Monitor</span>
+                      </label>
+
+                      <div className="flex flex-wrap gap-1.5 mb-3">
+                        {POPULAR_MALL_STORES.map((s) => {
+                          const isSelected = selectedStores.includes(s);
+                          return (
+                            <button
+                              key={s}
+                              type="button"
+                              onClick={() => handleToggleStore(s)}
+                              className={`text-xs px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
+                                isSelected
+                                  ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                                  : "bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200"
+                              }`}
+                            >
+                              {isSelected ? "✓ " : "+ "}
+                              {s}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={storeInput}
+                          onChange={(e) => setStoreInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleAddCustomStore();
+                            }
+                          }}
+                          placeholder="Or enter custom store name or URL..."
+                          className="flex-1 bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none"
+                        />
                         <button
-                          key={amt}
                           type="button"
-                          onClick={() => setPreFundedBalanceZar(amt)}
-                          className={`text-xs px-3 py-1.5 rounded-xl font-bold border transition-colors cursor-pointer ${
-                            preFundedBalanceZar === amt
-                              ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-sm"
+                          onClick={handleAddCustomStore}
+                          className="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
+                        >
+                          Add Store
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Reference Links */}
+                    <div>
+                      <label
+                        htmlFor="step-reference-link-input"
+                        className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center gap-1.5"
+                      >
+                        <LinkIcon className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>External Item Reference URLs</span>
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          id="step-reference-link-input"
+                          type="url"
+                          value={referenceUrlInput}
+                          onChange={(e) => setReferenceUrlInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleAddReferenceLink();
+                            }
+                          }}
+                          placeholder="Paste link e.g. takealot.com/... or nike.com/..."
+                          className="flex-1 bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddReferenceLink}
+                          className="py-2 px-3 rounded-xl bg-cyan-900/60 hover:bg-cyan-800 text-cyan-300 text-xs font-semibold border border-cyan-500/30 flex items-center gap-1"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Add</span>
+                        </button>
+                      </div>
+
+                      {referenceLinks.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {referenceLinks.map((link, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-cyan-300 max-w-[280px]"
+                            >
+                              <span className="truncate">{link.replace(/^https?:\/\//, "")}</span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setReferenceLinks(referenceLinks.filter((_, i) => i !== idx))
+                                }
+                                className="text-slate-500 hover:text-rose-400"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* PAGE 4: BUDGET & 24/7 SCHEDULE */}
+                {currentTab === "budget" && (
+                  <div className="space-y-4 animate-in fade-in duration-150">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label
+                          htmlFor="step-target-price-input"
+                          className="block text-xs font-bold text-slate-300 mb-1"
+                        >
+                          Target Bargain Price
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">
+                            R
+                          </span>
+                          <input
+                            id="step-target-price-input"
+                            type="number"
+                            value={targetPriceZar}
+                            onChange={(e) =>
+                              setTargetPriceZar(Math.max(1, parseInt(e.target.value) || 0))
+                            }
+                            className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 pl-7 pr-3 text-xs font-bold text-slate-100 focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="step-ceiling-price-input"
+                          className="block text-xs font-bold text-slate-300 mb-1"
+                        >
+                          Absolute Max Ceiling
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">
+                            R
+                          </span>
+                          <input
+                            id="step-ceiling-price-input"
+                            type="number"
+                            value={ceilingPriceZar}
+                            onChange={(e) =>
+                              setCeilingPriceZar(
+                                Math.max(targetPriceZar, parseInt(e.target.value) || 0),
+                              )
+                            }
+                            className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 pl-7 pr-3 text-xs font-bold text-slate-100 focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Pre-Funded Wallet */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center gap-1.5">
+                        <Wallet className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Pre-Funded Wallet Allocation</span>
+                      </label>
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {[500, 1000, 2500, 5000].map((amt) => (
+                          <button
+                            key={amt}
+                            type="button"
+                            onClick={() => setPreFundedBalanceZar(amt)}
+                            className={`text-xs px-3 py-1.5 rounded-xl font-bold border transition-colors cursor-pointer ${
+                              preFundedBalanceZar === amt
+                                ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-sm"
+                                : "bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200"
+                            }`}
+                          >
+                            R{amt.toLocaleString()}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">
+                          R
+                        </span>
+                        <input
+                          type="number"
+                          value={preFundedBalanceZar}
+                          onChange={(e) =>
+                            setPreFundedBalanceZar(Math.max(0, parseInt(e.target.value) || 0))
+                          }
+                          className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 pl-7 pr-3 text-xs font-bold text-slate-100 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* 24/7 vs Custom Schedule */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Operating Schedule</span>
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setIs24_7(true)}
+                          className={`p-2.5 rounded-xl border text-left cursor-pointer transition-colors ${
+                            is24_7
+                              ? "bg-emerald-950/40 text-emerald-300 border-emerald-500/50 shadow-sm"
                               : "bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200"
                           }`}
                         >
-                          R{amt.toLocaleString()}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">
-                        R
-                      </span>
-                      <input
-                        type="number"
-                        value={preFundedBalanceZar}
-                        onChange={(e) =>
-                          setPreFundedBalanceZar(Math.max(0, parseInt(e.target.value) || 0))
-                        }
-                        className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 pl-7 pr-3 text-xs font-bold text-slate-100 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* 24/7 vs Custom Schedule */}
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Operating Schedule</span>
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setIs24_7(true)}
-                        className={`p-2.5 rounded-xl border text-left cursor-pointer transition-colors ${
-                          is24_7
-                            ? "bg-emerald-950/40 text-emerald-300 border-emerald-500/50 shadow-sm"
-                            : "bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200"
-                        }`}
-                      >
-                        <div className="text-xs font-bold flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                          24/7 Always Active
-                        </div>
-                        <div className="text-[10px] text-slate-400">Night flash drops</div>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setIs24_7(false)}
-                        className={`p-2.5 rounded-xl border text-left cursor-pointer transition-colors ${
-                          !is24_7
-                            ? "bg-emerald-950/40 text-emerald-300 border-emerald-500/50 shadow-sm"
-                            : "bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200"
-                        }`}
-                      >
-                        <div className="text-xs font-bold">Custom Window</div>
-                        <div className="text-[10px] text-slate-400">Set wake & sleep hours</div>
-                      </button>
-                    </div>
-
-                    {!is24_7 && (
-                      <div className="flex items-center gap-3 mt-2 p-2.5 rounded-xl bg-slate-950 border border-slate-800">
-                        <div className="flex-1">
-                          <span className="text-[10px] text-slate-400 block mb-1">Wake Up:</span>
-                          <input
-                            type="time"
-                            value={activeFrom}
-                            onChange={(e) => setActiveFrom(e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-700 rounded-lg p-1 text-xs text-slate-100"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <span className="text-[10px] text-slate-400 block mb-1">Sleep At:</span>
-                          <input
-                            type="time"
-                            value={sleepAt}
-                            onChange={(e) => setSleepAt(e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-700 rounded-lg p-1 text-xs text-slate-100"
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* PAGE 5: MEMORY VAULT & PASSPORT SUMMARY */}
-              {currentTab === "memory" && (
-                <div className="space-y-4 animate-in fade-in duration-150">
-                  {/* Summary Card */}
-                  <div className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-950 to-slate-900 border border-emerald-500/30 text-xs space-y-2 shadow-lg">
-                    <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">🤖</span>
-                        <span className="font-mono text-sm font-black text-slate-100">
-                          @{agentNameInput || "myagent"}.agent
-                        </span>
-                      </div>
-                      <span className="text-emerald-400 font-bold font-mono">
-                        {nameAvailability?.isFree
-                          ? "Free Sovereign Handle"
-                          : `$${nameAvailability?.priceUsd || 0} USDC`}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 text-[11px]">
-                      <div>
-                        <span className="text-slate-400">Wish: </span>
-                        <span className="text-slate-200 font-medium">
-                          {whatToBuy || "Mall Deals"}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-slate-400">Size: </span>
-                        <span className="text-slate-200 font-medium">{sizes || "Any"}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-400">Bargain: </span>
-                        <span className="text-emerald-400 font-bold">
-                          R{targetPriceZar} (Max R{ceilingPriceZar})
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-slate-400">Pre-funded: </span>
-                        <span className="text-slate-200 font-bold">R{preFundedBalanceZar}</span>
-                      </div>
-                      <div className="col-span-2">
-                        <span className="text-slate-400">Stores: </span>
-                        <span className="text-slate-300">{selectedStores.join(", ")}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Receipt & Bill Upload Zone */}
-                  <div>
-                    <div
-                      onClick={() => fileInputRef.current?.click()}
-                      className="border border-dashed border-slate-700 hover:border-emerald-500/60 rounded-xl p-4 flex items-center justify-center gap-3 text-center cursor-pointer bg-slate-950/40 hover:bg-slate-950 transition-colors"
-                    >
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*,.pdf,.txt,.csv"
-                        onChange={handleBillFileUpload}
-                        className="hidden"
-                      />
-                      <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
-                        {isUploadingBill ? (
-                          <Sparkles className="w-4 h-4 animate-spin text-emerald-300" />
-                        ) : (
-                          <Upload className="w-4 h-4" />
-                        )}
-                      </div>
-                      <div className="text-left">
-                        <div className="text-xs font-bold text-slate-200">
-                          {isUploadingBill
-                            ? "Indexing Receipt Items..."
-                            : "Upload Past Shopping Receipts / Bills"}
-                        </div>
-                        <div className="text-[10px] text-slate-400">
-                          Indexes past prices into agent memory vault for negotiation leverage
-                        </div>
-                      </div>
-                    </div>
-
-                    {uploadedBills.length > 0 && (
-                      <div className="mt-2 space-y-1.5">
-                        {uploadedBills.map((bill) => (
-                          <div
-                            key={bill.id}
-                            className="p-2 rounded-lg bg-slate-950 border border-slate-800 text-xs flex items-center justify-between"
-                          >
-                            <span className="text-slate-300 font-medium truncate max-w-[200px]">
-                              🧾 {bill.fileName}
-                            </span>
-                            <span className="text-emerald-400 font-bold">
-                              R{bill.totalSpentZar}
-                            </span>
+                          <div className="text-xs font-bold flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                            24/7 Always Active
                           </div>
-                        ))}
+                          <div className="text-[10px] text-slate-400">Night flash drops</div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setIs24_7(false)}
+                          className={`p-2.5 rounded-xl border text-left cursor-pointer transition-colors ${
+                            !is24_7
+                              ? "bg-emerald-950/40 text-emerald-300 border-emerald-500/50 shadow-sm"
+                              : "bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200"
+                          }`}
+                        >
+                          <div className="text-xs font-bold">Custom Window</div>
+                          <div className="text-[10px] text-slate-400">Set wake & sleep hours</div>
+                        </button>
                       </div>
-                    )}
+
+                      {!is24_7 && (
+                        <div className="flex items-center gap-3 mt-2 p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                          <div className="flex-1">
+                            <span className="text-[10px] text-slate-400 block mb-1">Wake Up:</span>
+                            <input
+                              type="time"
+                              value={activeFrom}
+                              onChange={(e) => setActiveFrom(e.target.value)}
+                              className="w-full bg-slate-900 border border-slate-700 rounded-lg p-1 text-xs text-slate-100"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <span className="text-[10px] text-slate-400 block mb-1">Sleep At:</span>
+                            <input
+                              type="time"
+                              value={sleepAt}
+                              onChange={(e) => setSleepAt(e.target.value)}
+                              className="w-full bg-slate-900 border border-slate-700 rounded-lg p-1 text-xs text-slate-100"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+
+                {/* PAGE 5: MEMORY VAULT & PASSPORT SUMMARY */}
+                {currentTab === "memory" && (
+                  <div className="space-y-4 animate-in fade-in duration-150">
+                    {/* Summary Card */}
+                    <div className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-950 to-slate-900 border border-emerald-500/30 text-xs space-y-2 shadow-lg">
+                      <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">🤖</span>
+                          <span className="font-mono text-sm font-black text-slate-100">
+                            @{agentNameInput || "myagent"}.agent
+                          </span>
+                        </div>
+                        <span className="text-emerald-400 font-bold font-mono">
+                          {nameAvailability?.isFree
+                            ? "Free Sovereign Handle"
+                            : `$${nameAvailability?.priceUsd || 0} USDC`}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-[11px]">
+                        <div>
+                          <span className="text-slate-400">Wish: </span>
+                          <span className="text-slate-200 font-medium">
+                            {whatToBuy || "Mall Deals"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400">Size: </span>
+                          <span className="text-slate-200 font-medium">{sizes || "Any"}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400">Bargain: </span>
+                          <span className="text-emerald-400 font-bold">
+                            R{targetPriceZar} (Max R{ceilingPriceZar})
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400">Pre-funded: </span>
+                          <span className="text-slate-200 font-bold">R{preFundedBalanceZar}</span>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-slate-400">Stores: </span>
+                          <span className="text-slate-300">{selectedStores.join(", ")}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Receipt & Bill Upload Zone */}
+                    <div>
+                      <div
+                        onClick={() => fileInputRef.current?.click()}
+                        className="border border-dashed border-slate-700 hover:border-emerald-500/60 rounded-xl p-4 flex items-center justify-center gap-3 text-center cursor-pointer bg-slate-950/40 hover:bg-slate-950 transition-colors"
+                      >
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*,.pdf,.txt,.csv"
+                          onChange={handleBillFileUpload}
+                          className="hidden"
+                        />
+                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                          {isUploadingBill ? (
+                            <Sparkles className="w-4 h-4 animate-spin text-emerald-300" />
+                          ) : (
+                            <Upload className="w-4 h-4" />
+                          )}
+                        </div>
+                        <div className="text-left">
+                          <div className="text-xs font-bold text-slate-200">
+                            {isUploadingBill
+                              ? "Indexing Receipt Items..."
+                              : "Upload Past Shopping Receipts / Bills"}
+                          </div>
+                          <div className="text-[10px] text-slate-400">
+                            Indexes past prices into agent memory vault for negotiation leverage
+                          </div>
+                        </div>
+                      </div>
+
+                      {uploadedBills.length > 0 && (
+                        <div className="mt-2 space-y-1.5">
+                          {uploadedBills.map((bill) => (
+                            <div
+                              key={bill.id}
+                              className="p-2 rounded-lg bg-slate-950 border border-slate-800 text-xs flex items-center justify-between"
+                            >
+                              <span className="text-slate-300 font-medium truncate max-w-[200px]">
+                                🧾 {bill.fileName}
+                              </span>
+                              <span className="text-emerald-400 font-bold">
+                                R{bill.totalSpentZar}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* QUICK SPOKEN / TYPED HELPER BAR */}
