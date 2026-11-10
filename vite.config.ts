@@ -13,7 +13,7 @@ export default defineConfig({
     },
   },
   nitro: {
-    preset: "node-server",
+    preset: process.env.NITRO_PRESET || (process.env.VERCEL ? "vercel" : "node-server"),
     alias: {
       "punycode/": "punycode",
     },
