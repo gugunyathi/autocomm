@@ -459,3 +459,47 @@ export interface WishlistItem {
     timestamp: number;
   };
 }
+
+// --- PayPal Pay Later Autonomous Credit (6-Month Agent Micro-Credit) ---
+export interface PayLaterInstallment {
+  installmentNumber: number; // 1 to 6
+  dueDate: string; // ISO 8601 date string (Month +30d increments)
+  amountZAR: number;
+  amountUSD: number;
+  status: "PENDING" | "PAID";
+  paidAt?: string;
+  paypalCaptureId?: string;
+}
+
+export interface AgentPayLaterLoan {
+  id: string; // e.g. "LOAN-PAYLATER-..."
+  agentId: string;
+  agentName: string;
+  ownerAddress: string;
+  ownerName: string;
+  storeId: string;
+  storeName: string;
+  itemTitle: string;
+  principalZAR: number;
+  principalUSD: number;
+  platformFeePercent: number; // 0.5% protocol fee
+  platformFeeZAR: number; // principalZAR * 0.005
+  platformFeeUSD: number; // principalUSD * 0.005
+  totalSecuredZAR: number; // principalZAR + platformFeeZAR
+  totalSecuredUSD: number;
+  totalRepaymentZAR?: number;
+  totalRepaymentUSD?: number;
+  tenureMonths: 6; // Fixed 6-month repayment plan by default
+  monthlyInstallmentZAR: number; // totalSecuredZAR / 6
+  monthlyInstallmentUSD: number;
+  installments: PayLaterInstallment[];
+  paidInstallmentsCount: number;
+  remainingBalanceZAR: number;
+  remainingBalanceUSD: number;
+  status: "ACTIVE_REPAYMENT" | "SETTLED" | "DEFAULTED";
+  createdAt: string;
+  nextPaymentDueDate: string;
+  paypalOrderId: string;
+  paypalCaptureId: string;
+}
+

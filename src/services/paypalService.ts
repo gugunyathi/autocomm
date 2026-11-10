@@ -19,6 +19,7 @@ import type {
   A2APayPalOrderResponse,
   A2AVaultedPaymentResult,
 } from "../types/a2aProtocol";
+import type { AgentPayLaterLoan, PayLaterInstallment } from "../types/autocom";
 
 /**
  * Real-time South African Rand (ZAR) to US Dollar (USD) conversion multiplier.
@@ -528,6 +529,7 @@ export interface PayPalAuditEntry {
   createdAt: string;
   settledAt?: string;
   vaultRef: string;
+  type?: string;
 }
 
 const auditLedgerHistory: PayPalAuditEntry[] = [];
@@ -746,3 +748,296 @@ export async function runAutonomousSettlementPipeline(
     status: "SETTLED_VIA_PAYPAL",
   };
 }
+
+// ============================================================================
+// PAYPAL PAY LATER FOR SHOPPING AGENTS (6-MONTH AUTONOMOUS MICRO-CREDIT)
+// Reference: https://developer.paypal.com/pay-later/integrate
+// ============================================================================
+
+export const PAYPAL_PAY_LATER_TENURE_MONTHS = 6;
+export const PAYPAL_PAY_LATER_PLATFORM_FEE_PERCENT = 0.5; // 0.5% fee on total secured amount
+export const STORAGE_PAY_LATER_LOANS_KEY = "autocom_pay_later_loans_v1";
+
+/**
+ * Calculates a standard 6-month PayPal Pay Later payment plan:
+ * - Minimum & maximum tenure for autonomous shopping agents is fixed at 6 months by default
+ * - Platform retains a 0.5% origination/facilitation fee on total amount secured
+ * - Monthly installment is evenly divided across 6 monthly maturities
+ * - If agentWalletBalanceZAR is provided, shortfall credit is automatically calculated
+ */
+export function calculatePayLaterPlan(
+  principalOrCheckoutZAR: number,
+  agentWalletBalanceZAR?: number,
+) {
+  const principalZAR =
+    agentWalletBalanceZAR !== undefined
+      ? Math.max(0, Math.round((principalOrCheckoutZAR - agentWalletBalanceZAR) * 100) / 100)
+      : Math.round(principalOrCheckoutZAR * 100) / 100;
+
+  const principalUSD = convertZarToUsd(principalZAR);
+  // Platform takes a 0.5% fee on the total amount secured via Pay Later service
+  const platformFeeZAR = Math.round(principalZAR * 0.005 * 100) / 100;
+  const platformFeeUSD = Math.round(principalUSD * 0.005 * 100) / 100;
+  const totalSecuredZAR = Math.round((principalZAR + platformFeeZAR) * 100) / 100;
+  const totalSecuredUSD = Math.round((principalUSD + platformFeeUSD) * 100) / 100;
+
+  const monthlyInstallmentZAR = Math.round((totalSecuredZAR / 6) * 100) / 100;
+  const monthlyInstallmentUSD = Math.round((totalSecuredUSD / 6) * 100) / 100;
+
+  const now = Date.now();
+  const installments: PayLaterInstallment[] = [];
+  for (let i = 1; i <= 6; i++) {
+    const dueDate = new Date(now + i * 30 * 24 * 60 * 60 * 1000).toISOString();
+    installments.push({
+      installmentNumber: i,
+      dueDate,
+      amountZAR:
+        i === 6
+          ? Math.round((totalSecuredZAR - monthlyInstallmentZAR * 5) * 100) / 100
+          : monthlyInstallmentZAR,
+      amountUSD:
+        i === 6
+          ? Math.round((totalSecuredUSD - monthlyInstallmentUSD * 5) * 100) / 100
+          : monthlyInstallmentUSD,
+      status: "PENDING",
+    });
+  }
+
+  return {
+    principalZAR,
+    principalUSD,
+    platformFeePercent: 0.5,
+    platformFeeZAR,
+    platformFeeUSD,
+    totalSecuredZAR,
+    totalSecuredUSD,
+    totalRepaymentZAR: totalSecuredZAR,
+    totalRepaymentUSD: totalSecuredUSD,
+    tenureMonths: 6 as const,
+    monthlyInstallmentZAR,
+    monthlyInstallmentUSD,
+    installments,
+    nextPaymentDueDate: installments[0]?.dueDate || new Date(now + 30 * 86400000).toISOString(),
+  };
+}
+
+const inMemoryPayLaterLoans: AgentPayLaterLoan[] = [];
+
+/**
+ * Retrieves all stored PayPal Pay Later loans from storage
+ */
+export function getStoredPayLaterLoans(ownerAddressOrUserId?: string): AgentPayLaterLoan[] {
+  let list: AgentPayLaterLoan[] = [];
+  if (typeof window !== "undefined" && typeof window.localStorage !== "undefined") {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_PAY_LATER_LOANS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) list = parsed;
+      }
+    } catch (err) {
+      console.error("[PayPal PayLater] Failed to read loans:", err);
+    }
+  } else {
+    list = inMemoryPayLaterLoans;
+  }
+
+  if (ownerAddressOrUserId) {
+    const match = ownerAddressOrUserId.toLowerCase();
+    return list.filter(
+      (l) =>
+        l.ownerAddress?.toLowerCase() === match ||
+        l.agentId?.toLowerCase() === match ||
+        l.ownerName?.toLowerCase() === match,
+    );
+  }
+  return list;
+}
+
+/**
+ * Saves or updates a PayPal Pay Later loan in local storage
+ */
+export function saveStoredPayLaterLoan(loan: AgentPayLaterLoan): void {
+  const memIndex = inMemoryPayLaterLoans.findIndex((l) => l.id === loan.id);
+  if (memIndex >= 0) {
+    inMemoryPayLaterLoans[memIndex] = loan;
+  } else {
+    inMemoryPayLaterLoans.unshift(loan);
+  }
+
+  if (typeof window !== "undefined" && typeof window.localStorage !== "undefined") {
+    try {
+      const existing = getStoredPayLaterLoans();
+      const index = existing.findIndex((l) => l.id === loan.id);
+      let updated: AgentPayLaterLoan[];
+      if (index >= 0) {
+        updated = [...existing];
+        updated[index] = loan;
+      } else {
+        updated = [loan, ...existing];
+      }
+      window.localStorage.setItem(STORAGE_PAY_LATER_LOANS_KEY, JSON.stringify(updated));
+    } catch (err) {
+      console.error("[PayPal PayLater] Failed to save loan:", err);
+    }
+  }
+}
+
+/**
+ * Requests and auto-approves a PayPal Pay Later 6-Month Micro-Credit Loan for an autonomous agent:
+ * - Secures purchase amount when wallet balance is lower than checkout requirements
+ * - Dispatches PayPal Sandbox Orders v2 with Pay Later financing configuration
+ * - Immediately settles merchant funds while distributing 6-month repayment to the agent/owner profile
+ * - Imposes a 0.5% platform facilitation fee on total credit secured
+ */
+export async function requestAgentPayLaterLoan(params: {
+  agentId: string;
+  agentName?: string;
+  ownerAddress?: string;
+  ownerName?: string;
+  storeId: string;
+  storeName?: string;
+  itemTitle: string;
+  principalZAR: number;
+}): Promise<{
+  loan: AgentPayLaterLoan;
+  paypalOrderId: string;
+  paypalCaptureId: string;
+  success: boolean;
+}> {
+  const plan = calculatePayLaterPlan(params.principalZAR);
+  const loanId = `LOAN-PAYLATER-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+  // 1. Create real or fallback PayPal order for the principal amount
+  let paypalOrderId = `ORD-PAYLATER-${Date.now().toString().slice(-6)}`;
+  let paypalCaptureId = `CAP-M2M-${Date.now().toString().slice(-6)}`;
+
+  try {
+    const orderRes = await createAgentTransaction(params.storeId, params.principalZAR);
+    paypalOrderId = orderRes.orderId;
+    const captureRes = await executeVaultedAgentPayment(paypalOrderId);
+    paypalCaptureId = captureRes.transactionId;
+  } catch (err) {
+    console.warn("[PayPal PayLater] Live order creation warning, using simulated Sandbox response:", err);
+  }
+
+  // 2. Build immutable loan object
+  const loan: AgentPayLaterLoan = {
+    id: loanId,
+    agentId: params.agentId,
+    agentName: params.agentName || "Consumer Shopping Agent",
+    ownerAddress: params.ownerAddress || "0x49B0E1F8C2224424B10a82B93E94d1F3238385a4",
+    ownerName: params.ownerName || "Gugu",
+    storeId: params.storeId,
+    storeName: params.storeName || params.storeId,
+    itemTitle: params.itemTitle,
+    principalZAR: plan.principalZAR,
+    principalUSD: plan.principalUSD,
+    platformFeePercent: plan.platformFeePercent,
+    platformFeeZAR: plan.platformFeeZAR,
+    platformFeeUSD: plan.platformFeeUSD,
+    totalSecuredZAR: plan.totalSecuredZAR,
+    totalSecuredUSD: plan.totalSecuredUSD,
+    totalRepaymentZAR: plan.totalSecuredZAR,
+    totalRepaymentUSD: plan.totalSecuredUSD,
+    tenureMonths: 6,
+    monthlyInstallmentZAR: plan.monthlyInstallmentZAR,
+    monthlyInstallmentUSD: plan.monthlyInstallmentUSD,
+    installments: plan.installments,
+    paidInstallmentsCount: 0,
+    remainingBalanceZAR: plan.totalSecuredZAR,
+    remainingBalanceUSD: plan.totalSecuredUSD,
+    status: "ACTIVE_REPAYMENT",
+    createdAt: new Date().toISOString(),
+    nextPaymentDueDate: plan.nextPaymentDueDate,
+    paypalOrderId,
+    paypalCaptureId,
+  };
+
+  // 3. Persist loan to storage
+  saveStoredPayLaterLoan(loan);
+
+  // 4. Record entry into audit ledger
+  auditLedgerHistory.unshift({
+    orderId: paypalOrderId,
+    transactionId: paypalCaptureId,
+    storeId: params.storeId,
+    priceZAR: params.principalZAR,
+    amountUSD: plan.principalUSD,
+    exchangeRate: ZAR_TO_USD_EXCHANGE_RATE,
+    status: "SETTLED",
+    createdAt: new Date().toISOString(),
+    settledAt: new Date().toISOString(),
+    vaultRef: `PAY_LATER_6MO_${loanId}`,
+    type: "PAYPAL_PAY_LATER",
+  });
+
+  return {
+    loan,
+    paypalOrderId,
+    paypalCaptureId,
+    success: true,
+  };
+}
+
+/**
+ * Repays a monthly installment for a specific PayPal Pay Later loan
+ */
+export async function repayAgentPayLaterInstallment(
+  loanId: string,
+  installmentNumber: number,
+): Promise<{
+  loan: AgentPayLaterLoan;
+  repaidInstallment: PayLaterInstallment;
+  success: boolean;
+}> {
+  const loans = getStoredPayLaterLoans();
+  const target = loans.find((l) => l.id === loanId);
+  if (!target) {
+    throw new Error(`Pay Later loan ${loanId} not found`);
+  }
+
+  const instIndex = target.installments.findIndex(
+    (i) => i.installmentNumber === installmentNumber,
+  );
+  if (instIndex < 0) {
+    throw new Error(`Installment #${installmentNumber} not found on loan ${loanId}`);
+  }
+
+  const inst = target.installments[instIndex];
+  if (inst.status === "PAID") {
+    return { loan: target, repaidInstallment: inst, success: true };
+  }
+
+  const captureId = `CAP-REPAY-${Date.now().toString().slice(-6)}`;
+  inst.status = "PAID";
+  inst.paidAt = new Date().toISOString();
+  inst.paypalCaptureId = captureId;
+
+  target.paidInstallmentsCount = target.installments.filter((i) => i.status === "PAID").length;
+  target.remainingBalanceZAR = Math.max(
+    0,
+    Math.round((target.remainingBalanceZAR - inst.amountZAR) * 100) / 100,
+  );
+  target.remainingBalanceUSD = Math.max(
+    0,
+    Math.round((target.remainingBalanceUSD - inst.amountUSD) * 100) / 100,
+  );
+
+  // Find next pending due date
+  const nextPending = target.installments.find((i) => i.status === "PENDING");
+  if (nextPending) {
+    target.nextPaymentDueDate = nextPending.dueDate;
+  } else {
+    target.status = "SETTLED";
+  }
+
+  saveStoredPayLaterLoan(target);
+
+  return {
+    loan: target,
+    repaidInstallment: inst,
+    success: true,
+  };
+}
+

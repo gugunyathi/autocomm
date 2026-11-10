@@ -23,6 +23,7 @@ import {
   ZAR_TO_USD_EXCHANGE_RATE,
 } from "../services/paypalService";
 import { PAYPAL_AGENT_TOOLS } from "../services/paypalAgentToolkit";
+import { AgentPayLaterLoanCard } from "./paypal/AgentPayLaterLoanCard";
 
 export interface PayPalHackathonModalProps {
   isOpen: boolean;
@@ -165,6 +166,36 @@ export function PayPalHackathonModal({
               priceZAR: 1850,
               itemName: "Air Zoom Pegasus 40",
               agentConsented: true,
+            },
+            null,
+            2,
+          ),
+        );
+        break;
+      case "paypal_pay_later_calculate_plan":
+        setToolParamsJson(
+          JSON.stringify(
+            {
+              amountZAR: 1850,
+              agentWalletBalanceZAR: 450,
+            },
+            null,
+            2,
+          ),
+        );
+        break;
+      case "paypal_pay_later_apply":
+        setToolParamsJson(
+          JSON.stringify(
+            {
+              agentId: "bot_buyer_muse_za",
+              agentName: "Muse-ZA (Autonomous Buyer)",
+              ownerAddress: "0x49B0E1F8C2224424B10a82B93E94d1F3238385a4",
+              ownerName: "Gugu",
+              checkoutAmountZAR: 1850,
+              agentWalletBalanceZAR: 450,
+              storeName: "Nike Performance",
+              itemName: "Air Zoom Pegasus 40",
             },
             null,
             2,
@@ -469,6 +500,17 @@ export function PayPalHackathonModal({
                   )}
                 </div>
               )}
+
+              {/* PayPal Pay Later: 6-Month Agent Autonomous Credit Line */}
+              <div className="pt-2">
+                <AgentPayLaterLoanCard
+                  ownerAddress="0x49B0E1F8C2224424B10a82B93E94d1F3238385a4"
+                  agentId="bot_buyer_muse_za"
+                  agentName="Muse-ZA (Autonomous Buyer)"
+                  ownerName="Gugu (Agent Owner)"
+                  showCreateSimulator={true}
+                />
+              </div>
             </div>
           )}
 

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Zap } from "lucide-react";
 import {
   AIBot,
   UserProfile,
@@ -17,6 +18,8 @@ import {
 import type { Store } from "@/lib/acn-data";
 import type { BoughtItem } from "@/components/BoughtItemsModal";
 import { getBitchatService } from "@/services/bitchat";
+import { AgentPayLaterLoanCard } from "@/components/paypal/AgentPayLaterLoanCard";
+import { calculatePayLaterPlan, requestAgentPayLaterLoan } from "@/services/paypalService";
 
 function createFallbackStore(
   merchantId: string,
@@ -454,6 +457,89 @@ export function AgentCommerceModal({
     }
   };
 
+  // PayPal Pay Later Autonomous Micro-Credit Clearance (6-Month Plan)
+  const handleExecutePayLaterClearance = async () => {
+    if (settledPrice === null) return;
+    setIsProcessingPayment(true);
+
+    try {
+      const plan = calculatePayLaterPlan(settledPrice);
+      const res = await requestAgentPayLaterLoan({
+        agentId: profile.allocatedBot.id,
+        agentName: profile.allocatedBot.name,
+        ownerAddress: profile.id,
+        ownerName: profile.name,
+        storeId: selectedProduct.merchantId,
+        storeName: selectedProduct.storeRef?.name || selectedProduct.merchantId,
+        itemTitle: selectedProduct.title,
+        principalZAR: settledPrice,
+      });
+
+      const txId = res.loan.id;
+      const token = `PAYLATER-6MO-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+      const discountPercent = Math.round(
+        ((selectedProduct.originalPriceZAR - settledPrice) / selectedProduct.originalPriceZAR) * 100,
+      );
+
+      const newTx: AgentTransaction = {
+        id: txId,
+        type: "PayPal_PayLater",
+        userId: profile.id,
+        merchantId: selectedProduct.merchantId,
+        amountZAR: settledPrice,
+        productTitle: `${selectedProduct.title} (PayPal Pay Later: 6 Mos @ R${plan.monthlyInstallmentZAR.toFixed(2)}/mo)`,
+        status: "COMPLETED",
+        payLaterLoanId: res.loan.id,
+        paypalOrderId: res.paypalOrderId,
+        paypalCaptureId: res.paypalCaptureId,
+        qrToken: token,
+        timestamp: Date.now(),
+        negotiatedDiscountPercent: discountPercent,
+        originalPriceZAR: selectedProduct.originalPriceZAR,
+      };
+
+      saveA2ATransaction(newTx);
+      setCurrentTx(newTx);
+      setRecentTransactions((prev) => [newTx, ...prev]);
+
+      const existingLoans = profile.payLaterLoans || [];
+      const updatedProfile: UserProfile = {
+        ...profile,
+        payLaterLoans: [res.loan, ...existingLoans],
+      };
+      setProfile(updatedProfile);
+      saveA2AProfile(updatedProfile);
+
+      const bought: BoughtItem = {
+        id: `bought_paylater_${Date.now()}_${txId}`,
+        store:
+          selectedProduct.storeRef ||
+          createFallbackStore(
+            selectedProduct.merchantId,
+            selectedProduct.title,
+            selectedProduct.category,
+            selectedProduct.originalPriceZAR,
+            "⚡",
+            "#0284c7",
+          ),
+        item: selectedProduct.title,
+        price: settledPrice,
+        open: selectedProduct.originalPriceZAR,
+        boughtAt: Date.now(),
+        qrToken: `PAYLATER-${res.paypalOrderId}`,
+      };
+      onClaimItem(bought);
+
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate?.([60, 40, 100]);
+      }
+    } catch (err) {
+      console.error("[PayLater Clearance]", err);
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
   const handleExecuteBitchatLightningClearance = async () => {
     if (settledPrice === null) return;
     setIsProcessingPayment(true);
@@ -858,67 +944,125 @@ export function AgentCommerceModal({
               </div>
 
               {/* Settlement Confirmation & Instant Clearance Action Box */}
-              {settledPrice !== null && (
-                <div className="glass p-5 rounded-3xl border-2 border-accent bg-accent/15 shadow-amber animate-scale-in space-y-4">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div>
-                      <span className="rounded-full bg-accent text-accent-foreground font-mono text-[9px] font-black px-2.5 py-0.5 uppercase tracking-wider">
-                        🎉 Parameter Alignment Succeeded
-                      </span>
-                      <h3 className="text-lg font-black text-white mt-1">
-                        Final Negotiated Rate: R{settledPrice.toFixed(2)}
-                      </h3>
-                      <p className="text-xs text-accent font-mono">
-                        Saved R{(selectedProduct.originalPriceZAR - settledPrice).toFixed(2)} (-
-                        {Math.round(
-                          ((selectedProduct.originalPriceZAR - settledPrice) /
-                            selectedProduct.originalPriceZAR) *
-                            100,
-                        )}
-                        % discount from R{selectedProduct.originalPriceZAR})
-                      </p>
-                    </div>
+              {settledPrice !== null && (() => {
+                const payLaterPlan = calculatePayLaterPlan(settledPrice);
+                const hasShortfall = profile.paymentPreference === "A" && profile.walletBalance < settledPrice;
 
-                    <div className="flex items-center gap-3 w-full sm:w-auto">
-                      <button
-                        onClick={handleExecuteClearance}
-                        disabled={isProcessingPayment}
-                        className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-accent text-accent-foreground font-mono text-xs font-black hover:bg-accent/90 shadow-xl transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2 shrink-0"
-                      >
-                        {isProcessingPayment ? (
-                          <>
-                            <span className="animate-spin">⏳</span>
-                            <span>Settling Rails...</span>
-                          </>
-                        ) : (
-                          <>
-                            <span>💳</span>
-                            <span>
-                              {profile.paymentPreference === "A"
-                                ? `Clear via Wallet (R${settledPrice.toFixed(2)})`
-                                : profile.paymentPreference === "B"
-                                  ? `PayShap Request-to-Pay (R${settledPrice.toFixed(2)})`
-                                  : `PayPal Agent Vault (R${settledPrice.toFixed(2)} / $${(settledPrice * 0.054).toFixed(2)})`}
-                            </span>
-                          </>
-                        )}
-                      </button>
-
-                      <button
-                        onClick={handleExecuteBitchatLightningClearance}
-                        disabled={isProcessingPayment}
-                        className="w-full sm:w-auto px-4 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black font-mono text-xs font-black shadow-amber transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
-                        title="Settle instantly over BitChat Lightning Mesh (Satoshis)"
-                      >
-                        <span>⚡</span>
-                        <span>
-                          BitChat Lightning ({Math.round(settledPrice * 35).toLocaleString()} Sats)
+                return (
+                  <div className="glass p-5 rounded-3xl border-2 border-accent bg-accent/15 shadow-amber animate-scale-in space-y-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div>
+                        <span className="rounded-full bg-accent text-accent-foreground font-mono text-[9px] font-black px-2.5 py-0.5 uppercase tracking-wider">
+                          🎉 Parameter Alignment Succeeded
                         </span>
-                      </button>
+                        <h3 className="text-lg font-black text-white mt-1">
+                          Final Negotiated Rate: R{settledPrice.toFixed(2)}
+                        </h3>
+                        <p className="text-xs text-accent font-mono">
+                          Saved R{(selectedProduct.originalPriceZAR - settledPrice).toFixed(2)} (-
+                          {Math.round(
+                            ((selectedProduct.originalPriceZAR - settledPrice) /
+                              selectedProduct.originalPriceZAR) *
+                              100,
+                          )}
+                          % discount from R{selectedProduct.originalPriceZAR})
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+                        <button
+                          onClick={handleExecuteClearance}
+                          disabled={isProcessingPayment}
+                          className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-accent text-accent-foreground font-mono text-xs font-black hover:bg-accent/90 shadow-xl transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2 shrink-0"
+                        >
+                          {isProcessingPayment ? (
+                            <>
+                              <span className="animate-spin">⏳</span>
+                              <span>Settling Rails...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>💳</span>
+                              <span>
+                                {profile.paymentPreference === "A"
+                                  ? `Clear via Wallet (R${settledPrice.toFixed(2)})`
+                                  : profile.paymentPreference === "B"
+                                    ? `PayShap Request-to-Pay (R${settledPrice.toFixed(2)})`
+                                    : `PayPal Agent Vault (R${settledPrice.toFixed(2)} / $${(settledPrice * 0.054).toFixed(2)})`}
+                              </span>
+                            </>
+                          )}
+                        </button>
+
+                        <button
+                          onClick={handleExecutePayLaterClearance}
+                          disabled={isProcessingPayment}
+                          className="w-full sm:w-auto px-4 py-3 rounded-2xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/40 text-sky-300 font-mono text-xs font-bold transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
+                          title="Split into 6 monthly installments with 0.5% platform fee via PayPal Pay Later"
+                        >
+                          <span>⚡</span>
+                          <span>Pay Later (6 Mos @ R{payLaterPlan.monthlyInstallmentZAR.toFixed(2)}/mo)</span>
+                        </button>
+
+                        <button
+                          onClick={handleExecuteBitchatLightningClearance}
+                          disabled={isProcessingPayment}
+                          className="w-full sm:w-auto px-3.5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black font-mono text-xs font-black shadow-amber transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
+                          title="Settle instantly over BitChat Lightning Mesh (Satoshis)"
+                        >
+                          <span>⚡</span>
+                          <span>
+                            BitChat Lightning ({Math.round(settledPrice * 35).toLocaleString()} Sats)
+                          </span>
+                        </button>
+                      </div>
                     </div>
+
+                    {/* Autonomous Pay Later Underfunded Protection Banner */}
+                    {hasShortfall && (
+                      <div className="p-4 rounded-2xl border-2 border-sky-400/60 bg-gradient-to-r from-sky-950/80 via-blue-950/60 to-black/80 space-y-2.5 font-mono">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">💳⚡</span>
+                            <div>
+                              <h4 className="text-xs sm:text-sm font-black text-white flex items-center gap-1.5">
+                                PayPal Pay Later Auto-Credit Activated
+                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/30">
+                                  6-Month Installments
+                                </span>
+                              </h4>
+                              <p className="text-[11px] text-amber-300 font-bold">
+                                Wallet Shortfall: R{(settledPrice - profile.walletBalance).toFixed(2)} (Available: R{profile.walletBalance.toFixed(2)})
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[9px] text-muted-foreground block">Platform Fee (0.5%)</span>
+                            <span className="text-xs font-bold text-sky-400">+R{payLaterPlan.platformFeeZAR.toFixed(2)}</span>
+                          </div>
+                        </div>
+
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          Your shopping agent automatically qualifies for 6-month micro-credit. Repay in <strong>6 monthly installments of R{payLaterPlan.monthlyInstallmentZAR.toFixed(2)}/mo</strong>. Merchant receives 100% immediate settlement via PayPal Sandbox.
+                        </p>
+
+                        <button
+                          onClick={handleExecutePayLaterClearance}
+                          disabled={isProcessingPayment}
+                          className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-sky-400 to-blue-500 hover:from-sky-300 text-slate-950 font-mono text-xs font-black shadow-lg transition-all active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                        >
+                          <Zap className={`w-4 h-4 ${isProcessingPayment ? "animate-spin" : ""}`} />
+                          <span>
+                            {isProcessingPayment
+                              ? "Securing Credit & Settling Rails..."
+                              : `⚡ Auto-Finance & Clear via PayPal Pay Later (6 Mos @ R${payLaterPlan.monthlyInstallmentZAR.toFixed(2)}/mo)`}
+                          </span>
+                        </button>
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Negotiation Failed Box */}
               {negotiationFailed && (
@@ -1136,6 +1280,15 @@ export function AgentCommerceModal({
                   </div>
                 </div>
               </div>
+
+              {/* PayPal Pay Later Autonomous 6-Month Agent Credit Facility */}
+              <AgentPayLaterLoanCard
+                ownerAddress={profile.id}
+                agentId={profile.allocatedBot.id}
+                agentName={profile.allocatedBot.name}
+                ownerName={profile.name}
+                showCreateSimulator={true}
+              />
             </div>
           )}
 

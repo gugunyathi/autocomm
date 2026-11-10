@@ -23,6 +23,10 @@ import {
   createRealPayPalProduct,
   listRealPayPalProducts,
   verifyPayPalCredentials,
+  calculatePayLaterPlan,
+  requestAgentPayLaterLoan,
+  repayAgentPayLaterInstallment,
+  getStoredPayLaterLoans,
 } from "./paypalService";
 import {
   PAYPAL_AGENT_TOOLS,
@@ -195,8 +199,9 @@ function jsonResponse(data: unknown, status = 200): Response {
 /**
  * Main HTTP Router for all /api/* requests
  */
-export async function handleApiRoute(request: Request, url: URL): Promise<Response | null> {
-  const pathname = url.pathname;
+export async function handleApiRoute(request: Request, url?: URL): Promise<Response | null> {
+  const reqUrl = url || new URL(request.url);
+  const pathname = reqUrl.pathname;
   const method = request.method;
 
   // Handle CORS preflight
@@ -707,6 +712,93 @@ export async function handleApiRoute(request: Request, url: URL): Promise<Respon
       orders: allOrders,
       source: dbOrders.length > 0 ? "MongoDB + In-Memory" : "In-Memory Buffer",
     });
+  }
+
+  // 7a-1. PayPal Pay Later Plan Calculation: GET /api/paypal/pay-later/plan?priceZAR=...
+  if (pathname === "/api/paypal/pay-later/plan" && method === "GET") {
+    const priceZAR = Number(
+      reqUrl.searchParams.get("priceZAR") ||
+        reqUrl.searchParams.get("amount") ||
+        reqUrl.searchParams.get("principalZAR") ||
+        1000,
+    );
+    const balanceParam =
+      reqUrl.searchParams.get("balance") || reqUrl.searchParams.get("agentWalletBalanceZAR");
+    const balance = balanceParam !== null ? Number(balanceParam) : undefined;
+    const plan = calculatePayLaterPlan(priceZAR, balance);
+    return jsonResponse({
+      success: true,
+      plan,
+      protocolFeeNotice: "A 0.5% platform origination fee is secured and spread across 6 months.",
+    });
+  }
+
+  // 7a-2. PayPal Pay Later Agent Application: POST /api/paypal/pay-later/apply
+  if (pathname === "/api/paypal/pay-later/apply" && method === "POST") {
+    try {
+      const body = await request.json();
+      const principalZAR = Number(body.principalZAR || body.amountZAR);
+      if (!principalZAR || principalZAR <= 0) {
+        return jsonResponse({ error: "Invalid principalZAR amount for Pay Later credit" }, 400);
+      }
+
+      const result = await requestAgentPayLaterLoan({
+        agentId: body.agentId || "agent_consumer_muse",
+        agentName: body.agentName || "Muse-ZA Autonomous Buyer",
+        ownerAddress: body.ownerAddress || "0x49B0E1F8C2224424B10a82B93E94d1F3238385a4",
+        ownerName: body.ownerName || "Gugu",
+        storeId: body.storeId || "woolworths-food",
+        storeName: body.storeName || "Woolworths Food",
+        itemTitle: body.itemTitle || "Autonomous Retail Item",
+        principalZAR,
+      });
+
+      return jsonResponse({
+        success: true,
+        loan: result.loan,
+        paypalOrderId: result.paypalOrderId,
+        paypalCaptureId: result.paypalCaptureId,
+        message: "PayPal Pay Later 6-Month Agent Credit successfully secured with 0.5% platform fee.",
+      }, 201);
+    } catch (err: any) {
+      return jsonResponse({ error: "Failed to apply for PayPal Pay Later loan", details: err?.message || String(err) }, 400);
+    }
+  }
+
+  // 7a-3. PayPal Pay Later Loans Query: GET /api/paypal/pay-later/loans?ownerAddress=...&agentId=...
+  if (pathname === "/api/paypal/pay-later/loans" && method === "GET") {
+    const owner =
+      reqUrl.searchParams.get("ownerAddress") ||
+      reqUrl.searchParams.get("agentId") ||
+      undefined;
+    const loans = getStoredPayLaterLoans(owner);
+    return jsonResponse({
+      count: loans.length,
+      loans,
+      tenureRule: "6-Month Fixed Maturity (Minimum and Maximum by Default)",
+      platformFeePercent: 0.5,
+    });
+  }
+
+  // 7a-4. PayPal Pay Later Repay Installment: POST /api/paypal/pay-later/repay
+  if (pathname === "/api/paypal/pay-later/repay" && method === "POST") {
+    try {
+      const body = await request.json();
+      const loanId = String(body.loanId || "");
+      const installmentNumber = Number(body.installmentNumber || 1);
+      if (!loanId) {
+        return jsonResponse({ error: "Missing loanId parameter" }, 400);
+      }
+      const result = await repayAgentPayLaterInstallment(loanId, installmentNumber);
+      return jsonResponse({
+        success: true,
+        loan: result.loan,
+        repaidInstallment: result.repaidInstallment,
+        message: `Installment #${installmentNumber} of 6 successfully repaid via PayPal Sandbox.`,
+      });
+    } catch (err: any) {
+      return jsonResponse({ error: "Failed to repay installment", details: err?.message || String(err) }, 400);
+    }
   }
 
   // 7b. Parked Offers: GET /api/offers/parked

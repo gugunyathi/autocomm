@@ -22,6 +22,10 @@ import {
   convertZarToUsd,
   ZAR_TO_USD_EXCHANGE_RATE,
   verifyPayPalCredentials,
+  calculatePayLaterPlan,
+  requestAgentPayLaterLoan,
+  repayAgentPayLaterInstallment,
+  getStoredPayLaterLoans,
 } from "./paypalService";
 
 export interface PayPalAgentTool {
@@ -220,6 +224,52 @@ export const PAYPAL_AGENT_TOOLS: PayPalAgentTool[] = [
       required: ["storeId", "priceZAR"],
     },
   },
+  {
+    name: "paypal_pay_later_apply",
+    description:
+      "Autonomously apply for a PayPal Pay Later 6-Month Micro-Credit loan when an agent's wallet balance is insufficient for checkout. Distributes repayment into 6 monthly installments with a 0.5% platform facilitation fee.",
+    parameters: {
+      type: "object",
+      properties: {
+        principalZAR: {
+          type: "number",
+          description: "Required credit advance amount in South African Rand (ZAR) to complete purchase.",
+        },
+        storeId: {
+          type: "string",
+          description: "Target retail store outlet ID (e.g., 'woolworths-food', 'zara-fashion').",
+        },
+        storeName: {
+          type: "string",
+          description: "Name of the merchant store.",
+        },
+        itemTitle: {
+          type: "string",
+          description: "Title of product being financed.",
+        },
+        agentId: {
+          type: "string",
+          description: "Identifier of the shopping agent securing the loan.",
+        },
+      },
+      required: ["principalZAR", "storeId", "itemTitle"],
+    },
+  },
+  {
+    name: "paypal_pay_later_calculate_plan",
+    description:
+      "Calculate 6-month repayment installment schedule, monthly payments, and 0.5% platform fee for a given purchase amount under PayPal Pay Later.",
+    parameters: {
+      type: "object",
+      properties: {
+        principalZAR: {
+          type: "number",
+          description: "Amount in South African Rand (ZAR) to calculate.",
+        },
+      },
+      required: ["principalZAR"],
+    },
+  },
 ];
 
 /**
@@ -367,6 +417,64 @@ export async function executePayPalAgentTool(
             approvalLink: order.links?.find((l: any) => l.rel === "approve")?.href,
           },
           agentRationale: `Autonomous zero-click settlement completed for ${storeId} (R${priceZAR} -> $${order.amountUSD} USD). Order: ${order.orderId}, Tx: ${capture.captureId || capture.transactionId}.`,
+        };
+      }
+
+      case "paypal_pay_later_apply": {
+        const principalZAR =
+          Number(
+            args["principalZAR"] ||
+              (args["checkoutAmountZAR"] && args["agentWalletBalanceZAR"] !== undefined
+                ? Number(args["checkoutAmountZAR"]) - Number(args["agentWalletBalanceZAR"])
+                : args["amountZAR"]),
+          ) || 250;
+        const storeId = args["storeId"] || "woolworths-food";
+        const itemTitle = args["itemTitle"] || args["itemName"] || "Retail Store Product";
+        const res = await requestAgentPayLaterLoan({
+          agentId: args["agentId"] || "agent_consumer_muse",
+          agentName: args["agentName"] || "Muse-ZA Autonomous Buyer",
+          ownerAddress: args["ownerAddress"] || "0x49B0E1F8C2224424B10a82B93E94d1F3238385a4",
+          ownerName: args["ownerName"] || "Gugu",
+          storeId,
+          storeName: args["storeName"] || storeId,
+          itemTitle,
+          principalZAR,
+        });
+        return {
+          success: true,
+          tool: toolName,
+          result: {
+            loan: res.loan,
+            loanId: res.loan.id,
+            principalZAR: res.loan.principalZAR,
+            platformFeeZAR: res.loan.platformFeeZAR,
+            totalSecuredZAR: res.loan.totalSecuredZAR,
+            tenureMonths: res.loan.tenureMonths,
+            monthlyInstallmentZAR: res.loan.monthlyInstallmentZAR,
+            installments: res.loan.installments,
+            paypalOrderId: res.paypalOrderId,
+            paypalCaptureId: res.paypalCaptureId,
+            status: res.loan.status,
+          },
+          agentRationale: `Secured PayPal Pay Later 6-Month Micro-Credit for R${principalZAR} with 0.5% platform fee (R${res.loan.platformFeeZAR}). Loan ID: ${res.loan.id}. 6 equal installments of R${res.loan.monthlyInstallmentZAR}/mo. Merchant settled immediately.`,
+        };
+      }
+
+      case "paypal_pay_later_calculate_plan": {
+        const principalZAR = Number(args["principalZAR"] || args["amountZAR"]) || 500;
+        const walletBalance =
+          args["agentWalletBalanceZAR"] !== undefined
+            ? Number(args["agentWalletBalanceZAR"])
+            : undefined;
+        const plan = calculatePayLaterPlan(principalZAR, walletBalance);
+        return {
+          success: true,
+          tool: toolName,
+          result: {
+            plan,
+            ...plan,
+          },
+          agentRationale: `Calculated PayPal Pay Later 6-month plan for R${plan.principalZAR}. Monthly installment: R${plan.monthlyInstallmentZAR}/mo. Platform fee: R${plan.platformFeeZAR} (0.5%).`,
         };
       }
 

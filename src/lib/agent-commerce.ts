@@ -4,6 +4,7 @@
 // ============================================================================
 
 import type { Store } from "./acn-data";
+import type { AgentPayLaterLoan } from "@/types/autocom";
 
 export interface AIBot {
   id: string;
@@ -11,6 +12,8 @@ export interface AIBot {
   type: "consumer" | "merchant";
   strategy: string;
   strategyType: "BATNA" | "Logrolling" | "MarginProtection" | "ElasticityCurve";
+  creditScore?: number; // FICO-equivalent agent credit score (e.g. 740)
+  creditLimitZAR?: number; // Pre-approved autonomous micro-credit limit (e.g. 5000 ZAR)
   parameters: {
     maxDiscountAllowed?: number; // For Merchant (e.g. 0.25 = 25% max floor)
     targetDiscount?: number; // For Consumer (e.g. 0.30 = wants 30% off)
@@ -29,6 +32,7 @@ export interface UserProfile {
   walletBalance: number; // Pre-funded balance in ZAR (Option A)
   paymentPreference: "A" | "B" | "C"; // 'A' = Wallet Ledger, 'B' = Direct PayShap/Stitch, 'C' = PayPal Autonomous Vault
   linkedBankId?: string;
+  payLaterLoans?: AgentPayLaterLoan[]; // Active and historical 6-month PayPal Pay Later loans
 }
 
 export interface ProductItem {
@@ -53,7 +57,7 @@ export interface NegotiationLog {
 
 export interface AgentTransaction {
   id: string;
-  type: "Wallet" | "Direct_Pay" | "PayPal";
+  type: "Wallet" | "Direct_Pay" | "PayPal" | "PayPal_PayLater";
   userId: string;
   merchantId: string;
   amountZAR: number;
@@ -62,6 +66,7 @@ export interface AgentTransaction {
   stitchId?: string;
   paypalOrderId?: string;
   paypalCaptureId?: string;
+  payLaterLoanId?: string;
   qrToken: string;
   timestamp: number;
   negotiatedDiscountPercent: number;
@@ -78,6 +83,8 @@ export const DEFAULT_CONSUMER_BOT: AIBot = {
   type: "consumer",
   strategy: "Hard Boundary Anchoring (BATNA Enforcements)",
   strategyType: "BATNA",
+  creditScore: 745,
+  creditLimitZAR: 5000,
   parameters: {
     targetDiscount: 0.25, // 25% target discount
     absoluteCeiling: 1500, // ZAR 1,500 ceiling
