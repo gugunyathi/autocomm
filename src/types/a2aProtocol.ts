@@ -408,6 +408,114 @@ export const A2A_OPENAPI_SPEC_JSON: string = JSON.stringify(
           },
         },
       },
+      "/api/paypal/pay-later/plan": {
+        get: {
+          summary: "Calculate 6-Month PayPal Pay Later Repayment Plan",
+          operationId: "calculatePayLaterPlan",
+          description: "Generates an exact 6-month repayment schedule for an autonomous agent with a 0.5% platform fee.",
+          parameters: [
+            {
+              name: "priceZAR",
+              in: "query",
+              required: true,
+              schema: { type: "number", example: 1200 },
+              description: "Negotiated checkout amount in South African Rand (ZAR).",
+            },
+            {
+              name: "balance",
+              in: "query",
+              required: false,
+              schema: { type: "number", example: 200 },
+              description: "Current shopping agent wallet balance to auto-calculate credit shortfall.",
+            },
+          ],
+          responses: {
+            "200": {
+              description: "6-month payment plan with 0.5% platform fee and monthly breakdown.",
+            },
+          },
+        },
+      },
+      "/api/paypal/pay-later/apply": {
+        post: {
+          summary: "Request PayPal Pay Later Autonomous Agent Credit",
+          operationId: "requestAgentPayLaterLoan",
+          description: "Auto-approves and clears purchases when agent wallet balance is insufficient, financing the shortfall over 6 months.",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["principalZAR"],
+                  properties: {
+                    agentId: { type: "string", example: "bot_buyer_muse_za" },
+                    agentName: { type: "string", example: "Muse-ZA (Autonomous Buyer)" },
+                    ownerAddress: { type: "string", example: "0x49B0E1F8C2224424B10a82B93E94d1F3238385a4" },
+                    ownerName: { type: "string", example: "Gugu" },
+                    storeId: { type: "string", example: "woolworths-food" },
+                    storeName: { type: "string", example: "Woolworths Food" },
+                    itemTitle: { type: "string", example: "Artisan Sourdough & Cheese Platter" },
+                    principalZAR: { type: "number", example: 1200 },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "201": { description: "Pay Later loan generated and immediate PayPal Sandbox settlement executed." },
+          },
+        },
+      },
+      "/api/paypal/pay-later/loans": {
+        get: {
+          summary: "Query Active and Settled Pay Later Loans",
+          operationId: "getAgentPayLaterLoans",
+          description: "Fetches stored Pay Later credit lines, 6-month repayment schedules, and remaining balances by owner or agent.",
+          parameters: [
+            {
+              name: "ownerAddress",
+              in: "query",
+              required: false,
+              schema: { type: "string" },
+            },
+            {
+              name: "agentId",
+              in: "query",
+              required: false,
+              schema: { type: "string" },
+            },
+          ],
+          responses: {
+            "200": { description: "Array of Pay Later loans with installment details." },
+          },
+        },
+      },
+      "/api/paypal/pay-later/repay": {
+        post: {
+          summary: "Repay Monthly Pay Later Installment",
+          operationId: "repayAgentPayLaterInstallment",
+          description: "Submits repayment for an individual installment on an active 6-month loan.",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["loanId", "installmentNumber"],
+                  properties: {
+                    loanId: { type: "string", example: "LOAN-PAYLATER-1794267964000-A1B2" },
+                    installmentNumber: { type: "integer", minimum: 1, maximum: 6, example: 1 },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "200": { description: "Updated loan with marked installment and decremented balance." },
+          },
+        },
+      },
     },
     components: {
       schemas: {

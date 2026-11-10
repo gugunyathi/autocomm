@@ -241,6 +241,22 @@ const INITIAL_LEDGER_DATA: A2ALedgerRow[] = [
     status: "BARGAINING",
     usdEquivalent: 27.54,
   },
+  {
+    id: "a2a-tx-009",
+    timestamp: "10:48:05 AM",
+    outletId: "nike-performance",
+    outletName: "Nike Performance",
+    category: "Athletics & Footwear",
+    itemName: "Air Zoom Pegasus 40",
+    originalPriceZAR: 2499,
+    negotiatedPriceZAR: 1850,
+    totalSavingsZAR: 649,
+    savingsPercent: 26.0,
+    status: "SETTLED_VIA_PAYPAL",
+    paypalOrderId: "ORD-PAYLATER-6MO-8819",
+    paypalTxId: "TX-PAYLATER-6MO-0.5FEE",
+    usdEquivalent: 99.9,
+  },
 ];
 
 /**
@@ -293,9 +309,16 @@ const PayPalRefCellRenderer: React.FC<ICellRendererParams<A2ALedgerRow, string>>
   if (!row) return null;
 
   if (row.paypalTxId) {
+    const isPayLater =
+      row.paypalOrderId?.includes("PAYLATER") || row.paypalTxId.includes("PAYLATER");
     return (
       <div className="flex items-center gap-1 font-mono text-[11px] text-emerald-300">
         <span className="truncate max-w-[120px]">{row.paypalTxId}</span>
+        {isPayLater && (
+          <span className="text-[8.5px] font-bold text-sky-300 px-1 py-0.5 bg-sky-500/20 rounded border border-sky-400/30 whitespace-nowrap">
+            6-Mo Pay Later (0.5%)
+          </span>
+        )}
         <span className="text-[9px] text-muted-foreground px-1 bg-white/5 rounded border border-white/10">
           ${row.usdEquivalent.toFixed(2)}
         </span>

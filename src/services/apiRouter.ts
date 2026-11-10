@@ -199,9 +199,9 @@ function jsonResponse(data: unknown, status = 200): Response {
 /**
  * Main HTTP Router for all /api/* requests
  */
-export async function handleApiRoute(request: Request, url?: URL): Promise<Response | null> {
-  const reqUrl = url || new URL(request.url);
-  const pathname = reqUrl.pathname;
+export async function handleApiRoute(request: Request, inputUrl?: URL): Promise<Response | null> {
+  const url = inputUrl || new URL(request.url);
+  const pathname = url.pathname;
   const method = request.method;
 
   // Handle CORS preflight
@@ -717,13 +717,13 @@ export async function handleApiRoute(request: Request, url?: URL): Promise<Respo
   // 7a-1. PayPal Pay Later Plan Calculation: GET /api/paypal/pay-later/plan?priceZAR=...
   if (pathname === "/api/paypal/pay-later/plan" && method === "GET") {
     const priceZAR = Number(
-      reqUrl.searchParams.get("priceZAR") ||
-        reqUrl.searchParams.get("amount") ||
-        reqUrl.searchParams.get("principalZAR") ||
+      url.searchParams.get("priceZAR") ||
+        url.searchParams.get("amount") ||
+        url.searchParams.get("principalZAR") ||
         1000,
     );
     const balanceParam =
-      reqUrl.searchParams.get("balance") || reqUrl.searchParams.get("agentWalletBalanceZAR");
+      url.searchParams.get("balance") || url.searchParams.get("agentWalletBalanceZAR");
     const balance = balanceParam !== null ? Number(balanceParam) : undefined;
     const plan = calculatePayLaterPlan(priceZAR, balance);
     return jsonResponse({
@@ -768,8 +768,8 @@ export async function handleApiRoute(request: Request, url?: URL): Promise<Respo
   // 7a-3. PayPal Pay Later Loans Query: GET /api/paypal/pay-later/loans?ownerAddress=...&agentId=...
   if (pathname === "/api/paypal/pay-later/loans" && method === "GET") {
     const owner =
-      reqUrl.searchParams.get("ownerAddress") ||
-      reqUrl.searchParams.get("agentId") ||
+      url.searchParams.get("ownerAddress") ||
+      url.searchParams.get("agentId") ||
       undefined;
     const loans = getStoredPayLaterLoans(owner);
     return jsonResponse({

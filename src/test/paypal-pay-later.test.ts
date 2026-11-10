@@ -104,7 +104,7 @@ describe("PayPal Pay Later 6-Month Autonomous Credit Service", () => {
     expect(repaidInstallment.status).toBe("PAID");
     expect(repaidInstallment.paidAt).toBeDefined();
     expect(updated.installments[0].status).toBe("PAID");
-    expect(updated.remainingBalanceZAR).toBeLessThan(loan.totalRepaymentZAR);
+    expect(updated.remainingBalanceZAR).toBeLessThan(loan.totalRepaymentZAR!);
     expect(updated.status).toBe("ACTIVE_REPAYMENT");
   });
 
@@ -113,8 +113,9 @@ describe("PayPal Pay Later 6-Month Autonomous Credit Service", () => {
     const planRes = await handleApiRoute(
       new Request("https://autocom.dev/api/paypal/pay-later/plan?amount=1200&balance=200"),
     );
-    expect(planRes.status).toBe(200);
-    const planData = await planRes.json();
+    expect(planRes).not.toBeNull();
+    expect(planRes!.status).toBe(200);
+    const planData = await planRes!.json();
     expect(planData.plan.principalZAR).toBe(1000);
     expect(planData.plan.platformFeeZAR).toBe(5);
     expect(planData.plan.tenureMonths).toBe(6);
@@ -123,8 +124,9 @@ describe("PayPal Pay Later 6-Month Autonomous Credit Service", () => {
     const loansRes = await handleApiRoute(
       new Request("https://autocom.dev/api/paypal/pay-later/loans?agentId=test_buyer_bot_77"),
     );
-    expect(loansRes.status).toBe(200);
-    const loansData = await loansRes.json();
+    expect(loansRes).not.toBeNull();
+    expect(loansRes!.status).toBe(200);
+    const loansData = await loansRes!.json();
     expect(Array.isArray(loansData.loans)).toBe(true);
   });
 
