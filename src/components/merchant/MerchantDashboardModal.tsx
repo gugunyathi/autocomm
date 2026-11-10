@@ -35,6 +35,7 @@ import {
   Activity,
   AlertCircle,
   Copy,
+  Check,
 } from "lucide-react";
 import {
   runStoreCrawlerCheck,
