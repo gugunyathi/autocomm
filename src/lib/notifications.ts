@@ -106,22 +106,32 @@ class NotificationManager {
   /**
    * Dispatch system browser push notification
    */
-  public sendPushNotification(title: string, body: string) {
+  public sendPushNotification = (title: string, body: string): void => {
     if (typeof window === "undefined" || !("Notification" in window)) return;
     try {
       if (Notification.permission === "granted") {
         new Notification(title, { body, icon: "/favicon.ico" });
       } else if (Notification.permission !== "denied") {
-        Notification.requestPermission().then((perm) => {
-          if (perm === "granted") {
-            new Notification(title, { body, icon: "/favicon.ico" });
-          }
-        }).catch(() => {});
+        Notification.requestPermission()
+          .then((perm) => {
+            if (perm === "granted") {
+              new Notification(title, { body, icon: "/favicon.ico" });
+            }
+          })
+          .catch(() => {});
       }
     } catch {
-      // Guarded
+      // Guarded against browser security restrictions
     }
-  }
+  };
 }
 
 export const notificationManager = new NotificationManager();
+
+export function sendPushNotification(title: string, body: string): void {
+  try {
+    notificationManager.sendPushNotification(title, body);
+  } catch {
+    // Guarded
+  }
+}

@@ -20,7 +20,7 @@ import type {
 import type { Store } from "../lib/acn-data";
 import { ALL_MALLS } from "../lib/malls";
 import { getStoredUserPersonalAgent } from "./userAgentService";
-import { notificationManager } from "../lib/notifications";
+import { notificationManager, sendPushNotification } from "../lib/notifications";
 
 export const STORAGE_CRAWLED_SPECIALS_KEY = "autocomm_crawled_store_specials_v2";
 export const STORAGE_DELIVERED_AGENT_CARDS_KEY = "autocomm_delivered_agent_cards_v2";
@@ -489,11 +489,22 @@ export function deliverSpecialToAgents(
   if (!isDuplicate) {
     saveDeliveredAgentCards([newCard, ...existingCards]);
 
-    // Send push notification
-    notificationManager.sendPushNotification(
-      `Special Delivered to ${agentHandle}`,
-      `${promo.title} (${promo.discountPercent}% OFF) from ${target.storeName} is ready in your Agent Radar.`,
-    );
+    // Send push notification safely
+    try {
+      if (typeof sendPushNotification === "function") {
+        sendPushNotification(
+          `Special Delivered to ${agentHandle}`,
+          `${promo.title} (${promo.discountPercent}% OFF) from ${target.storeName} is ready in your Agent Radar.`,
+        );
+      } else {
+        notificationManager?.sendPushNotification?.(
+          `Special Delivered to ${agentHandle}`,
+          `${promo.title} (${promo.discountPercent}% OFF) from ${target.storeName} is ready in your Agent Radar.`,
+        );
+      }
+    } catch {
+      // Guarded against browser environment limitations
+    }
   }
 
   return newCard;

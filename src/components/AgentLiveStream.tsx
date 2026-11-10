@@ -435,7 +435,8 @@ export function AgentLiveStream() {
                 </span>
               </div>
               <p className="text-[11px] text-slate-300 mt-0.5">
-                AI agents discover real retail inventory across South African mall outlets, negotiate deals, and execute zero-click PayPal machine checkout.
+                AI agents discover real retail inventory across South African mall outlets,
+                negotiate deals, and execute zero-click PayPal machine checkout.
               </p>
             </div>
           </div>
@@ -462,7 +463,14 @@ export function AgentLiveStream() {
           <span className="text-muted-foreground flex items-center gap-1">
             <Tag className="w-3 h-3" /> Quick Query:
           </span>
-          {["Artisan Cheese", "Wool Hoodie", "Air Zoom Pegasus", "MagSafe Wallet", "Dark Roast Coffee", "Clicks Bio-Oil"].map((tag) => (
+          {[
+            "Artisan Cheese",
+            "Wool Hoodie",
+            "Air Zoom Pegasus",
+            "MagSafe Wallet",
+            "Dark Roast Coffee",
+            "Clicks Bio-Oil",
+          ].map((tag) => (
             <button
               key={tag}
               onClick={() => {
@@ -493,8 +501,10 @@ export function AgentLiveStream() {
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
               <span>
-                <strong>{settledResult.productTitle}</strong> settled via PayPal Sandbox Vault! Order ID:{" "}
-                <code className="text-emerald-300 font-bold">{settledResult.orderId}</code> (Capture: {settledResult.txId})
+                <strong>{settledResult.productTitle}</strong> settled via PayPal Sandbox Vault!
+                Order ID:{" "}
+                <code className="text-emerald-300 font-bold">{settledResult.orderId}</code>{" "}
+                (Capture: {settledResult.txId})
               </span>
             </div>
             <div className="flex items-center gap-2 font-bold shrink-0">
@@ -542,9 +552,7 @@ export function AgentLiveStream() {
                   <div className="pt-2 border-t border-white/5 space-y-2">
                     <div className="flex items-center justify-between font-mono">
                       <div>
-                        <div className="text-sm font-extrabold text-white">
-                          R{product.priceZAR}
-                        </div>
+                        <div className="text-sm font-extrabold text-white">R{product.priceZAR}</div>
                         <div className="text-[10px] text-muted-foreground">
                           ${product.priceUSD} USD
                         </div>

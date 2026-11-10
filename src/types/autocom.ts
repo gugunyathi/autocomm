@@ -502,4 +502,3 @@ export interface AgentPayLaterLoan {
   paypalOrderId: string;
   paypalCaptureId: string;
 }
-

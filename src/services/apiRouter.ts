@@ -469,7 +469,10 @@ export async function handleApiRoute(request: Request, inputUrl?: URL): Promise<
       });
     } catch (err: any) {
       return jsonResponse(
-        { error: "Failed to execute vaulted settlement capture", details: err?.message || String(err) },
+        {
+          error: "Failed to execute vaulted settlement capture",
+          details: err?.message || String(err),
+        },
         400,
       );
     }
@@ -503,8 +506,7 @@ export async function handleApiRoute(request: Request, inputUrl?: URL): Promise<
     method === "GET"
   ) {
     try {
-      const orderId =
-        url.searchParams.get("id") || pathname.split("/").filter(Boolean).pop() || "";
+      const orderId = url.searchParams.get("id") || pathname.split("/").filter(Boolean).pop() || "";
       if (!orderId) {
         return jsonResponse({ error: "Missing order id" }, 400);
       }
@@ -701,7 +703,10 @@ export async function handleApiRoute(request: Request, inputUrl?: URL): Promise<
       orderMap.set(order.orderId, order);
     }
     for (const order of dbOrders) {
-      orderMap.set(String(order["orderId"] || ""), order as unknown as (typeof serverAuditStore)[0]);
+      orderMap.set(
+        String(order["orderId"] || ""),
+        order as unknown as (typeof serverAuditStore)[0],
+      );
     }
     const allOrders = Array.from(orderMap.values()).sort(
       (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime(),
@@ -753,24 +758,32 @@ export async function handleApiRoute(request: Request, inputUrl?: URL): Promise<
         principalZAR,
       });
 
-      return jsonResponse({
-        success: true,
-        loan: result.loan,
-        paypalOrderId: result.paypalOrderId,
-        paypalCaptureId: result.paypalCaptureId,
-        message: "PayPal Pay Later 6-Month Agent Credit successfully secured with 0.5% platform fee.",
-      }, 201);
+      return jsonResponse(
+        {
+          success: true,
+          loan: result.loan,
+          paypalOrderId: result.paypalOrderId,
+          paypalCaptureId: result.paypalCaptureId,
+          message:
+            "PayPal Pay Later 6-Month Agent Credit successfully secured with 0.5% platform fee.",
+        },
+        201,
+      );
     } catch (err: any) {
-      return jsonResponse({ error: "Failed to apply for PayPal Pay Later loan", details: err?.message || String(err) }, 400);
+      return jsonResponse(
+        {
+          error: "Failed to apply for PayPal Pay Later loan",
+          details: err?.message || String(err),
+        },
+        400,
+      );
     }
   }
 
   // 7a-3. PayPal Pay Later Loans Query: GET /api/paypal/pay-later/loans?ownerAddress=...&agentId=...
   if (pathname === "/api/paypal/pay-later/loans" && method === "GET") {
     const owner =
-      url.searchParams.get("ownerAddress") ||
-      url.searchParams.get("agentId") ||
-      undefined;
+      url.searchParams.get("ownerAddress") || url.searchParams.get("agentId") || undefined;
     const loans = getStoredPayLaterLoans(owner);
     return jsonResponse({
       count: loans.length,
@@ -797,7 +810,10 @@ export async function handleApiRoute(request: Request, inputUrl?: URL): Promise<
         message: `Installment #${installmentNumber} of 6 successfully repaid via PayPal Sandbox.`,
       });
     } catch (err: any) {
-      return jsonResponse({ error: "Failed to repay installment", details: err?.message || String(err) }, 400);
+      return jsonResponse(
+        { error: "Failed to repay installment", details: err?.message || String(err) },
+        400,
+      );
     }
   }
 

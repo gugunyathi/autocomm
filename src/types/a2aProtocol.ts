@@ -331,7 +331,8 @@ export const A2A_OPENAPI_SPEC_JSON: string = JSON.stringify(
         post: {
           summary: "Execute PayPal AI Agent Toolkit Tool",
           operationId: "executePayPalAgentTool",
-          description: "Invokes an individual PayPal Agent Toolkit tool by name with structured arguments.",
+          description:
+            "Invokes an individual PayPal Agent Toolkit tool by name with structured arguments.",
           requestBody: {
             required: true,
             content: {
@@ -357,7 +358,8 @@ export const A2A_OPENAPI_SPEC_JSON: string = JSON.stringify(
         post: {
           summary: "PayPal Model Context Protocol (MCP) JSON-RPC Endpoint",
           operationId: "handlePayPalMcpRpc",
-          description: "Handles Model Context Protocol JSON-RPC 2.0 requests (tools/list, tools/call) for LLM agents.",
+          description:
+            "Handles Model Context Protocol JSON-RPC 2.0 requests (tools/list, tools/call) for LLM agents.",
           responses: {
             "200": { description: "Standard MCP JSON-RPC 2.0 response." },
           },
@@ -392,7 +394,8 @@ export const A2A_OPENAPI_SPEC_JSON: string = JSON.stringify(
         post: {
           summary: "Channel3 Model Context Protocol (MCP) Server",
           operationId: "handleChannel3McpRpc",
-          description: "MCP JSON-RPC 2.0 endpoint exposing Channel3 product discovery tools to AI agents.",
+          description:
+            "MCP JSON-RPC 2.0 endpoint exposing Channel3 product discovery tools to AI agents.",
           responses: {
             "200": { description: "Standard MCP JSON-RPC 2.0 response." },
           },
@@ -402,7 +405,8 @@ export const A2A_OPENAPI_SPEC_JSON: string = JSON.stringify(
         get: {
           summary: "Retrieve Live A2A Audit Ledger Records",
           operationId: "getAuditLedgerRecords",
-          description: "Streams verified bilateral negotiation settlements and PayPal Sandbox transaction tokens.",
+          description:
+            "Streams verified bilateral negotiation settlements and PayPal Sandbox transaction tokens.",
           responses: {
             "200": { description: "List of settled and pending A2A transactions." },
           },
@@ -412,7 +416,8 @@ export const A2A_OPENAPI_SPEC_JSON: string = JSON.stringify(
         get: {
           summary: "Calculate 6-Month PayPal Pay Later Repayment Plan",
           operationId: "calculatePayLaterPlan",
-          description: "Generates an exact 6-month repayment schedule for an autonomous agent with a 0.5% platform fee.",
+          description:
+            "Generates an exact 6-month repayment schedule for an autonomous agent with a 0.5% platform fee.",
           parameters: [
             {
               name: "priceZAR",
@@ -426,7 +431,8 @@ export const A2A_OPENAPI_SPEC_JSON: string = JSON.stringify(
               in: "query",
               required: false,
               schema: { type: "number", example: 200 },
-              description: "Current shopping agent wallet balance to auto-calculate credit shortfall.",
+              description:
+                "Current shopping agent wallet balance to auto-calculate credit shortfall.",
             },
           ],
           responses: {
@@ -440,7 +446,8 @@ export const A2A_OPENAPI_SPEC_JSON: string = JSON.stringify(
         post: {
           summary: "Request PayPal Pay Later Autonomous Agent Credit",
           operationId: "requestAgentPayLaterLoan",
-          description: "Auto-approves and clears purchases when agent wallet balance is insufficient, financing the shortfall over 6 months.",
+          description:
+            "Auto-approves and clears purchases when agent wallet balance is insufficient, financing the shortfall over 6 months.",
           requestBody: {
             required: true,
             content: {
@@ -451,7 +458,10 @@ export const A2A_OPENAPI_SPEC_JSON: string = JSON.stringify(
                   properties: {
                     agentId: { type: "string", example: "bot_buyer_muse_za" },
                     agentName: { type: "string", example: "Muse-ZA (Autonomous Buyer)" },
-                    ownerAddress: { type: "string", example: "0x49B0E1F8C2224424B10a82B93E94d1F3238385a4" },
+                    ownerAddress: {
+                      type: "string",
+                      example: "0x49B0E1F8C2224424B10a82B93E94d1F3238385a4",
+                    },
                     ownerName: { type: "string", example: "Gugu" },
                     storeId: { type: "string", example: "woolworths-food" },
                     storeName: { type: "string", example: "Woolworths Food" },
@@ -463,7 +473,10 @@ export const A2A_OPENAPI_SPEC_JSON: string = JSON.stringify(
             },
           },
           responses: {
-            "201": { description: "Pay Later loan generated and immediate PayPal Sandbox settlement executed." },
+            "201": {
+              description:
+                "Pay Later loan generated and immediate PayPal Sandbox settlement executed.",
+            },
           },
         },
       },
@@ -471,7 +484,8 @@ export const A2A_OPENAPI_SPEC_JSON: string = JSON.stringify(
         get: {
           summary: "Query Active and Settled Pay Later Loans",
           operationId: "getAgentPayLaterLoans",
-          description: "Fetches stored Pay Later credit lines, 6-month repayment schedules, and remaining balances by owner or agent.",
+          description:
+            "Fetches stored Pay Later credit lines, 6-month repayment schedules, and remaining balances by owner or agent.",
           parameters: [
             {
               name: "ownerAddress",

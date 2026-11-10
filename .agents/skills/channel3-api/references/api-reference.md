@@ -125,23 +125,23 @@ Use the resulting `slug` values anywhere `SearchFilters.category_ids` / `exclude
 
 The single most-typo'd shape in the API. Used by `/v1/search`, `/v1/similar`, and `/v1/browse`.
 
-| Field | Type | Description |
-|---|---|---|
-| `price` | `{ min_price?: number, max_price?: number }` | Price range in the request currency |
-| `brand_ids` | `string[]` | Include only these brands (use `client.brands.search` to obtain IDs) |
-| `category_ids` | `string[]` | Include only these categories (descendants implicit). Use slugs; discover with `client.categories.search` |
-| `website_ids` | `string[]` | Include only these retailer websites. Accepts website IDs or domains (`"nike.com"`) |
-| `gender` | `"male" \| "female"` | |
-| `age` | `("newborn" \| "infant" \| "toddler" \| "kids" \| "adult")[]` | Age-agnostic products are treated as adult |
-| `conditions` | `("new" \| "used")[]` | OR. **Default `["new"]`** — also matches offers whose condition is unknown. Pass both values to disable. `"refurbished"` is rejected. |
-| `availability` | `("InStock" \| "OutOfStock")[]` | OR. **Default `["InStock"]`** — offers with no availability data count as InStock. Pass both values to disable. |
-| `sale` | `"on_sale"` | Only products with at least one on-sale offer (priced below compare-at) in the requested locale |
-| `dimensions` | `SearchFilterDimensions` | Physical size ranges (length/width/height/weight), matched against a single offer |
-| `attributes` | `Record<string, string[]>` | Non-color extracted attribute constraints (e.g. `material`, `frame-color`). Values OR within a key, AND across keys. Discover keys/values via `Category.attributes`. **Do not use for color** — use `colors` instead. |
-| `colors` | `SearchColorsFilter` | [Beta] Color filter: required sRGB palette in the product image (AND across entries). Map color names to `#rrggbb` hex. |
-| `exclude_brand_ids` | `string[]` | |
-| `exclude_website_ids` | `string[]` | Accepts website IDs or domains |
-| `exclude_category_ids` | `string[]` | Excludes the category and its descendants. Slugs. |
+| Field                  | Type                                                          | Description                                                                                                                                                                                                           |
+| ---------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `price`                | `{ min_price?: number, max_price?: number }`                  | Price range in the request currency                                                                                                                                                                                   |
+| `brand_ids`            | `string[]`                                                    | Include only these brands (use `client.brands.search` to obtain IDs)                                                                                                                                                  |
+| `category_ids`         | `string[]`                                                    | Include only these categories (descendants implicit). Use slugs; discover with `client.categories.search`                                                                                                             |
+| `website_ids`          | `string[]`                                                    | Include only these retailer websites. Accepts website IDs or domains (`"nike.com"`)                                                                                                                                   |
+| `gender`               | `"male" \| "female"`                                          |                                                                                                                                                                                                                       |
+| `age`                  | `("newborn" \| "infant" \| "toddler" \| "kids" \| "adult")[]` | Age-agnostic products are treated as adult                                                                                                                                                                            |
+| `conditions`           | `("new" \| "used")[]`                                         | OR. **Default `["new"]`** — also matches offers whose condition is unknown. Pass both values to disable. `"refurbished"` is rejected.                                                                                 |
+| `availability`         | `("InStock" \| "OutOfStock")[]`                               | OR. **Default `["InStock"]`** — offers with no availability data count as InStock. Pass both values to disable.                                                                                                       |
+| `sale`                 | `"on_sale"`                                                   | Only products with at least one on-sale offer (priced below compare-at) in the requested locale                                                                                                                       |
+| `dimensions`           | `SearchFilterDimensions`                                      | Physical size ranges (length/width/height/weight), matched against a single offer                                                                                                                                     |
+| `attributes`           | `Record<string, string[]>`                                    | Non-color extracted attribute constraints (e.g. `material`, `frame-color`). Values OR within a key, AND across keys. Discover keys/values via `Category.attributes`. **Do not use for color** — use `colors` instead. |
+| `colors`               | `SearchColorsFilter`                                          | [Beta] Color filter: required sRGB palette in the product image (AND across entries). Map color names to `#rrggbb` hex.                                                                                               |
+| `exclude_brand_ids`    | `string[]`                                                    |                                                                                                                                                                                                                       |
+| `exclude_website_ids`  | `string[]`                                                    | Accepts website IDs or domains                                                                                                                                                                                        |
+| `exclude_category_ids` | `string[]`                                                    | Excludes the category and its descendants. Slugs.                                                                                                                                                                     |
 
 ### `SearchFilterDimensions`
 
@@ -162,14 +162,14 @@ dimensions: {
 
 `SearchConfig` extends `LocaleConfig` with one extra field:
 
-| Field | Type | Description |
-|---|---|---|
-| `mode` | `"default" \| "keyword" \| "agentic"` | Search strategy. `default` (recommended) = lexical + semantic. `agentic` = LLM planner decomposes a rich natural-language brief into structured sub-searches — pass full context in `query`; multiple seconds of latency (powers Channel3's MCP). `keyword` = lexical only, low latency (ad targeting, real-time); incompatible with image input; niche. |
-| `language` | `LanguageCode \| null` | inherited from `LocaleConfig` |
-| `country` | `CountryCode \| null` | inherited from `LocaleConfig` |
-| `currency` | `CurrencyCode \| null` | inherited from `LocaleConfig` |
-| `length_unit` | `LengthUnit \| null` | inherited from `LocaleConfig` |
-| `weight_unit` | `WeightUnit \| null` | inherited from `LocaleConfig` |
+| Field         | Type                                  | Description                                                                                                                                                                                                                                                                                                                                              |
+| ------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mode`        | `"default" \| "keyword" \| "agentic"` | Search strategy. `default` (recommended) = lexical + semantic. `agentic` = LLM planner decomposes a rich natural-language brief into structured sub-searches — pass full context in `query`; multiple seconds of latency (powers Channel3's MCP). `keyword` = lexical only, low latency (ad targeting, real-time); incompatible with image input; niche. |
+| `language`    | `LanguageCode \| null`                | inherited from `LocaleConfig`                                                                                                                                                                                                                                                                                                                            |
+| `country`     | `CountryCode \| null`                 | inherited from `LocaleConfig`                                                                                                                                                                                                                                                                                                                            |
+| `currency`    | `CurrencyCode \| null`                | inherited from `LocaleConfig`                                                                                                                                                                                                                                                                                                                            |
+| `length_unit` | `LengthUnit \| null`                  | inherited from `LocaleConfig`                                                                                                                                                                                                                                                                                                                            |
+| `weight_unit` | `WeightUnit \| null`                  | inherited from `LocaleConfig`                                                                                                                                                                                                                                                                                                                            |
 
 ## `LocaleConfig`
 

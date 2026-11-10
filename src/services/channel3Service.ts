@@ -42,7 +42,8 @@ export const CURATED_CHANNEL3_PRODUCTS: Channel3Product[] = [
     id: "ch3_wool_001",
     sku: "WW-GOURMET-CHEESE-01",
     title: "Woolworths Artisan Sourdough & Gourmet Cheese Platter",
-    description: "Handcrafted Fairview goat's cheese, mature gouda, fig preserve and stoneground artisanal baguette.",
+    description:
+      "Handcrafted Fairview goat's cheese, mature gouda, fig preserve and stoneground artisanal baguette.",
     retailer: "Woolworths Food",
     storeId: "woolworths-food",
     brand: "Woolworths Artisanal",
@@ -52,7 +53,8 @@ export const CURATED_CHANNEL3_PRODUCTS: Channel3Product[] = [
     originalPriceZAR: 220,
     inStock: true,
     stockCount: 14,
-    imageUrl: "https://images.unsplash.com/photo-1631379578550-7038263db699?w=600&auto=format&fit=crop&q=80",
+    imageUrl:
+      "https://images.unsplash.com/photo-1631379578550-7038263db699?w=600&auto=format&fit=crop&q=80",
     rating: 4.9,
     reviewCount: 128,
     merchantBotAvailable: true,
@@ -62,7 +64,8 @@ export const CURATED_CHANNEL3_PRODUCTS: Channel3Product[] = [
     id: "ch3_zara_002",
     sku: "ZARA-HOODIE-WOOL-BLK",
     title: "Zara Oversized Premium Heavyweight Wool Hoodie",
-    description: "Relaxed drop-shoulder silhouette spun with 100% fine Italian merino wool blend with ribbed trim.",
+    description:
+      "Relaxed drop-shoulder silhouette spun with 100% fine Italian merino wool blend with ribbed trim.",
     retailer: "Zara Fashion",
     storeId: "zara-fashion",
     brand: "Zara Man",
@@ -72,7 +75,8 @@ export const CURATED_CHANNEL3_PRODUCTS: Channel3Product[] = [
     originalPriceZAR: 899,
     inStock: true,
     stockCount: 8,
-    imageUrl: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&auto=format&fit=crop&q=80",
+    imageUrl:
+      "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&auto=format&fit=crop&q=80",
     rating: 4.7,
     reviewCount: 310,
     merchantBotAvailable: true,
@@ -82,7 +86,8 @@ export const CURATED_CHANNEL3_PRODUCTS: Channel3Product[] = [
     id: "ch3_nike_003",
     sku: "NIKE-AIR-ZOOM-PEG-40",
     title: "Nike Air Zoom Pegasus 40 Road Running Shoes",
-    description: "Responsive road runner with dual Zoom Air units and engineered mesh upper for elite daily mileage.",
+    description:
+      "Responsive road runner with dual Zoom Air units and engineered mesh upper for elite daily mileage.",
     retailer: "Nike Performance",
     storeId: "nike-performance",
     brand: "Nike",
@@ -92,7 +97,8 @@ export const CURATED_CHANNEL3_PRODUCTS: Channel3Product[] = [
     originalPriceZAR: 2499,
     inStock: true,
     stockCount: 6,
-    imageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80",
+    imageUrl:
+      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80",
     rating: 4.8,
     reviewCount: 842,
     merchantBotAvailable: true,
@@ -102,7 +108,8 @@ export const CURATED_CHANNEL3_PRODUCTS: Channel3Product[] = [
     id: "ch3_apple_004",
     sku: "APPLE-MAGSAFE-WAL-BLK",
     title: "Apple iPhone FineWoven MagSafe Wallet - Midnight",
-    description: "Built-in strong magnets snap effortlessly into place on your iPhone with Find My support.",
+    description:
+      "Built-in strong magnets snap effortlessly into place on your iPhone with Find My support.",
     retailer: "iStore Apple",
     storeId: "istore-apple",
     brand: "Apple",
@@ -112,7 +119,8 @@ export const CURATED_CHANNEL3_PRODUCTS: Channel3Product[] = [
     originalPriceZAR: 1199,
     inStock: true,
     stockCount: 19,
-    imageUrl: "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=600&auto=format&fit=crop&q=80",
+    imageUrl:
+      "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=600&auto=format&fit=crop&q=80",
     rating: 4.6,
     reviewCount: 204,
     merchantBotAvailable: true,
@@ -122,7 +130,8 @@ export const CURATED_CHANNEL3_PRODUCTS: Channel3Product[] = [
     id: "ch3_hm_005",
     sku: "HM-LINEN-BLAZER-NAT",
     title: "H&M Tailored Pure Linen Relaxed Summer Blazer",
-    description: "Breathable European flax linen with unstructured shoulders and dual horn buttons.",
+    description:
+      "Breathable European flax linen with unstructured shoulders and dual horn buttons.",
     retailer: "H&M Boutique",
     storeId: "hm-boutique",
     brand: "H&M Premium Selection",
@@ -132,7 +141,8 @@ export const CURATED_CHANNEL3_PRODUCTS: Channel3Product[] = [
     originalPriceZAR: 650,
     inStock: true,
     stockCount: 11,
-    imageUrl: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&auto=format&fit=crop&q=80",
+    imageUrl:
+      "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&auto=format&fit=crop&q=80",
     rating: 4.5,
     reviewCount: 95,
     merchantBotAvailable: true,
@@ -142,7 +152,8 @@ export const CURATED_CHANNEL3_PRODUCTS: Channel3Product[] = [
     id: "ch3_excl_006",
     sku: "EXCL-HARDCOVER-FICT-01",
     title: "Exclusive Books Collector's Hardcover African Fiction",
-    description: "Award-winning literary triumph featuring gold foil embossing and illustrated endpapers.",
+    description:
+      "Award-winning literary triumph featuring gold foil embossing and illustrated endpapers.",
     retailer: "Exclusive Books",
     storeId: "exclusive-books",
     brand: "Exclusive Books Curated",
@@ -152,7 +163,8 @@ export const CURATED_CHANNEL3_PRODUCTS: Channel3Product[] = [
     originalPriceZAR: 345,
     inStock: true,
     stockCount: 22,
-    imageUrl: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop&q=80",
+    imageUrl:
+      "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop&q=80",
     rating: 4.9,
     reviewCount: 77,
     merchantBotAvailable: true,
@@ -162,7 +174,8 @@ export const CURATED_CHANNEL3_PRODUCTS: Channel3Product[] = [
     id: "ch3_mugg_007",
     sku: "MB-ROAST-COFFEE-BEANS",
     title: "Mugg & Bean Signature Roastery Dark Blend (1kg Whole Bean)",
-    description: "Rich dark chocolate notes and sweet hazelnut crema roasted daily in South Africa.",
+    description:
+      "Rich dark chocolate notes and sweet hazelnut crema roasted daily in South Africa.",
     retailer: "Mugg & Bean Kiosk",
     storeId: "mugg-bean",
     brand: "Mugg & Bean Roastery",
@@ -172,7 +185,8 @@ export const CURATED_CHANNEL3_PRODUCTS: Channel3Product[] = [
     originalPriceZAR: 295,
     inStock: true,
     stockCount: 30,
-    imageUrl: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=600&auto=format&fit=crop&q=80",
+    imageUrl:
+      "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=600&auto=format&fit=crop&q=80",
     rating: 4.8,
     reviewCount: 164,
     merchantBotAvailable: true,
@@ -182,7 +196,8 @@ export const CURATED_CHANNEL3_PRODUCTS: Channel3Product[] = [
     id: "ch3_clicks_008",
     sku: "CLICKS-BIO-OIL-SERUM",
     title: "Clicks Skincare Bio-Oil & Vitamin C Radiance Serum (125ml)",
-    description: "Dermatologist-recommended brightening formulation with PurCellin Oil and active botanicals.",
+    description:
+      "Dermatologist-recommended brightening formulation with PurCellin Oil and active botanicals.",
     retailer: "Clicks Pharmacy",
     storeId: "clicks-pharmacy",
     brand: "Clicks Expert Care",
@@ -192,7 +207,8 @@ export const CURATED_CHANNEL3_PRODUCTS: Channel3Product[] = [
     originalPriceZAR: 189,
     inStock: true,
     stockCount: 45,
-    imageUrl: "https://images.unsplash.com/photo-1608248597359-59892c551221?w=600&auto=format&fit=crop&q=80",
+    imageUrl:
+      "https://images.unsplash.com/photo-1608248597359-59892c551221?w=600&auto=format&fit=crop&q=80",
     rating: 4.7,
     reviewCount: 382,
     merchantBotAvailable: true,
@@ -268,7 +284,8 @@ export async function searchChannel3Products(
             const priceVal = firstOffer?.price?.price ?? 500;
             const currency = firstOffer?.price?.currency ?? "USD";
             const priceUSD = currency === "USD" ? priceVal : convertZarToUsd(priceVal);
-            const priceZAR = currency === "ZAR" ? priceVal : Math.round(priceVal / ZAR_TO_USD_EXCHANGE_RATE);
+            const priceZAR =
+              currency === "ZAR" ? priceVal : Math.round(priceVal / ZAR_TO_USD_EXCHANGE_RATE);
             const brandName = p.brands?.[0]?.name ?? "Retail Brand";
             const imgUrl =
               p.images?.[0]?.url ??
@@ -322,7 +339,8 @@ export async function searchChannel3Products(
     );
   });
 
-  const results = filtered.length > 0 ? filtered.slice(0, limit) : CURATED_CHANNEL3_PRODUCTS.slice(0, limit);
+  const results =
+    filtered.length > 0 ? filtered.slice(0, limit) : CURATED_CHANNEL3_PRODUCTS.slice(0, limit);
 
   return {
     results,
@@ -343,12 +361,15 @@ export async function getChannel3ProductById(id: string): Promise<Channel3Produc
 
   if (rawApiKey && rawApiKey !== "your_channel3_api_key_here") {
     try {
-      const response = await fetch(`https://api.trychannel3.com/v1/products/${encodeURIComponent(id)}`, {
-        headers: {
-          "x-api-key": rawApiKey,
-          Accept: "application/json",
+      const response = await fetch(
+        `https://api.trychannel3.com/v1/products/${encodeURIComponent(id)}`,
+        {
+          headers: {
+            "x-api-key": rawApiKey,
+            Accept: "application/json",
+          },
         },
-      });
+      );
       if (response.ok) {
         const p = (await response.json()) as {
           id?: string;
@@ -367,7 +388,8 @@ export async function getChannel3ProductById(id: string): Promise<Channel3Produc
         const priceVal = firstOffer?.price?.price ?? 500;
         const currency = firstOffer?.price?.currency ?? "USD";
         const priceUSD = currency === "USD" ? priceVal : convertZarToUsd(priceVal);
-        const priceZAR = currency === "ZAR" ? priceVal : Math.round(priceVal / ZAR_TO_USD_EXCHANGE_RATE);
+        const priceZAR =
+          currency === "ZAR" ? priceVal : Math.round(priceVal / ZAR_TO_USD_EXCHANGE_RATE);
 
         return {
           id: p.id ?? id,
@@ -383,7 +405,8 @@ export async function getChannel3ProductById(id: string): Promise<Channel3Produc
           originalPriceZAR: priceZAR,
           inStock: firstOffer?.availability !== "OutOfStock",
           stockCount: 10,
-          imageUrl: p.images?.[0]?.url ?? "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600",
+          imageUrl:
+            p.images?.[0]?.url ?? "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600",
           rating: 4.8,
           reviewCount: 94,
           merchantBotAvailable: true,
@@ -413,7 +436,8 @@ export const CHANNEL3_MCP_TOOLS = [
       properties: {
         query: {
           type: "string",
-          description: "Product search terms (e.g. 'Air Jordan 1', 'Woolworths Cheese', 'Linen Blazer').",
+          description:
+            "Product search terms (e.g. 'Air Jordan 1', 'Woolworths Cheese', 'Linen Blazer').",
         },
         limit: {
           type: "number",
@@ -429,7 +453,8 @@ export const CHANNEL3_MCP_TOOLS = [
   },
   {
     name: "channel3_get_product_details",
-    description: "Get detailed product specifications, stock status, and merchant bot margin parameters.",
+    description:
+      "Get detailed product specifications, stock status, and merchant bot margin parameters.",
     parameters: {
       type: "object",
       properties: {
@@ -443,7 +468,8 @@ export const CHANNEL3_MCP_TOOLS = [
   },
   {
     name: "channel3_find_deals",
-    description: "Query flash deals with active merchant bargaining bots ready to discount via PayPal.",
+    description:
+      "Query flash deals with active merchant bargaining bots ready to discount via PayPal.",
     parameters: {
       type: "object",
       properties: {
@@ -475,7 +501,11 @@ export async function executeChannel3McpTool(
         const productId = String(args["productId"] || "");
         const product = await getChannel3ProductById(productId);
         if (!product) {
-          return { success: false, result: null, error: `Product '${productId}' not found in Channel3.` };
+          return {
+            success: false,
+            result: null,
+            error: `Product '${productId}' not found in Channel3.`,
+          };
         }
         return { success: true, result: product };
       }
@@ -502,4 +532,3 @@ export async function executeChannel3McpTool(
     return { success: false, result: null, error: errorMsg };
   }
 }
-

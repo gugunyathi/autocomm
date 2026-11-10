@@ -12,22 +12,22 @@ pip install --upgrade channel3-sdk   # Python (package renamed from channel3_sdk
 
 ## TypeScript: client surface
 
-| 3.x | 4.0 |
-|---|---|
-| `import Channel3 from '@channel3/sdk'` (default import) | `import { Channel3 } from '@channel3/sdk'` — **named import only**, no default export |
-| `client.products.retrieve(productId, { country: 'GB' })` | `client.products.retrieve({ product_id: productId, country: 'GB' })` — **all methods take one request object**; IDs moved inside it |
-| `client.products.retrieve(id, { option_Color: 'Blue' })` | `client.products.retrieve({ product_id: id, selected_options: { Color: 'Blue' } })` — typed `selected_options` replaces ad-hoc `option_*` params |
-| `page.products` | `page.data` — paginated calls return `Page<T>` (`.data`, `hasNextPage()`, `getNextPage()`, async-iterable) |
-| `page.next_page_token` | `page.response.next_page_token` — raw response fields moved onto `.response` |
-| `for await (const p of client.products.search(...))` — 3.x's `PagePromise` was directly async-iterable | Await first, then iterate the page: `for await (const p of await client.products.search(...))` |
-| `ProductDetail`, `ProductDetailsSearchPage` | `Product`, `Page<Product, SearchResponse>` |
-| `client.enrich.enrichURL({ url })` | `client.products.lookup({ url })` |
-| `client.search.perform({...})` (legacy resource) | `client.products.search({...})` |
-| `client.brands.find({ query })` (deprecated) | `client.brands.search({ query })` — returns a list ordered by relevance |
-| `client.websites.find({ query })` (deprecated alias) | `client.websites.retrieve({ query })` |
-| `client.priceTracking.retrieveHistory(id, { days })` | `client.priceTracking.retrieveHistory({ canonical_product_id: id, days })` |
-| `client.brands.retrieve(brandId)` | `client.brands.retrieve({ brand_id })` |
-| `client.categories.retrieve(slug)` | `client.categories.retrieve({ slug })` |
+| 3.x                                                                                                    | 4.0                                                                                                                                              |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `import Channel3 from '@channel3/sdk'` (default import)                                                | `import { Channel3 } from '@channel3/sdk'` — **named import only**, no default export                                                            |
+| `client.products.retrieve(productId, { country: 'GB' })`                                               | `client.products.retrieve({ product_id: productId, country: 'GB' })` — **all methods take one request object**; IDs moved inside it              |
+| `client.products.retrieve(id, { option_Color: 'Blue' })`                                               | `client.products.retrieve({ product_id: id, selected_options: { Color: 'Blue' } })` — typed `selected_options` replaces ad-hoc `option_*` params |
+| `page.products`                                                                                        | `page.data` — paginated calls return `Page<T>` (`.data`, `hasNextPage()`, `getNextPage()`, async-iterable)                                       |
+| `page.next_page_token`                                                                                 | `page.response.next_page_token` — raw response fields moved onto `.response`                                                                     |
+| `for await (const p of client.products.search(...))` — 3.x's `PagePromise` was directly async-iterable | Await first, then iterate the page: `for await (const p of await client.products.search(...))`                                                   |
+| `ProductDetail`, `ProductDetailsSearchPage`                                                            | `Product`, `Page<Product, SearchResponse>`                                                                                                       |
+| `client.enrich.enrichURL({ url })`                                                                     | `client.products.lookup({ url })`                                                                                                                |
+| `client.search.perform({...})` (legacy resource)                                                       | `client.products.search({...})`                                                                                                                  |
+| `client.brands.find({ query })` (deprecated)                                                           | `client.brands.search({ query })` — returns a list ordered by relevance                                                                          |
+| `client.websites.find({ query })` (deprecated alias)                                                   | `client.websites.retrieve({ query })`                                                                                                            |
+| `client.priceTracking.retrieveHistory(id, { days })`                                                   | `client.priceTracking.retrieveHistory({ canonical_product_id: id, days })`                                                                       |
+| `client.brands.retrieve(brandId)`                                                                      | `client.brands.retrieve({ brand_id })`                                                                                                           |
+| `client.categories.retrieve(slug)`                                                                     | `client.categories.retrieve({ slug })`                                                                                                           |
 
 Request fields are **snake_case** in 4.0 TypeScript, matching the wire format exactly (`product_id`, `max_price`, `selected_options`, `page_token`). Client-constructor options stay camelCase (`apiKey`, `lengthUnit`, `weightUnit`).
 
@@ -35,12 +35,12 @@ Rename with word boundaries: a global `ProductDetail` → `Product` replace corr
 
 ## Python: client surface
 
-| 3.x | 4.0 |
-|---|---|
-| `pip install channel3_sdk` | `pip install channel3-sdk` — import is unchanged: `from channel3_sdk import Channel3` |
-| `response.products` | `page.items` — paginated calls return a pager (`.items`, `.has_next`, `.next_page()`, iterable) |
-| `client.products.retrieve(id, option_Color="Blue")` | `client.products.retrieve(id, selected_options={"Color": "Blue"})` |
-| `client.enrich.enrich_url(url=...)` | `client.products.lookup(url=...)` |
+| 3.x                                                 | 4.0                                                                                             |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `pip install channel3_sdk`                          | `pip install channel3-sdk` — import is unchanged: `from channel3_sdk import Channel3`           |
+| `response.products`                                 | `page.items` — paginated calls return a pager (`.items`, `.has_next`, `.next_page()`, iterable) |
+| `client.products.retrieve(id, option_Color="Blue")` | `client.products.retrieve(id, selected_options={"Color": "Blue"})`                              |
+| `client.enrich.enrich_url(url=...)`                 | `client.products.lookup(url=...)`                                                               |
 
 ## New in 4.0 (not just renames)
 
@@ -56,18 +56,18 @@ Rename with word boundaries: a global `ProductDetail` → `Product` replace corr
 
 These changed on the wire, so they apply to raw-HTTP integrations and both SDK languages:
 
-| Before | Now |
-|---|---|
-| `filters.condition: "new"` (singular string; `"refurbished"` allowed) | `filters.conditions: ["new", "used"]` (list; `"refurbished"` rejected). Default `["new"]` |
-| `filters.availability` accepted 8 values (`PreOrder`, `SoldOut`, `LimitedAvailability`, ...) | Only `"InStock"` / `"OutOfStock"`. Default `["InStock"]` |
-| `config.keyword_search_only: true` | `config.mode: "keyword"` (also `"default"` / `"agentic"`) |
-| — | New filters: `sale: "on_sale"`, `dimensions` (length/width/height/weight ranges with units) |
-| `website_ids` accepted website IDs only | Also accepts domains (`"nike.com"`) |
-| `Product.categories: string[]` (deprecated) | Removed — use `Product.category` (`CategorySummary`) |
-| `ProductImage.is_cleaned_image: boolean` | Removed — use `ProductImage.cleaned_url != null` |
-| `OptionValue.available` had 8 values | `"InStock"` / `"OutOfStock"` / `null` |
-| `ProductOffer` had no condition/dimensions | New `condition` (`"new"` / `"used"` / `null`) and `dimensions` fields |
-| `/v0/search`, `/v0/enrich`, `/v0/products/{id}`, `/v0/brands*` | Removed — use the `/v1` equivalents (`/v0/enrich` → `POST /v1/lookup`). `/v0/websites` and `/v0/price-tracking` remain, but prefer `/v1/websites*`, and price-tracking subscriptions are deprecated — use `/v1/product-subscriptions` for offer-change alerts (price history stays) |
+| Before                                                                                       | Now                                                                                                                                                                                                                                                                                 |
+| -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `filters.condition: "new"` (singular string; `"refurbished"` allowed)                        | `filters.conditions: ["new", "used"]` (list; `"refurbished"` rejected). Default `["new"]`                                                                                                                                                                                           |
+| `filters.availability` accepted 8 values (`PreOrder`, `SoldOut`, `LimitedAvailability`, ...) | Only `"InStock"` / `"OutOfStock"`. Default `["InStock"]`                                                                                                                                                                                                                            |
+| `config.keyword_search_only: true`                                                           | `config.mode: "keyword"` (also `"default"` / `"agentic"`)                                                                                                                                                                                                                           |
+| —                                                                                            | New filters: `sale: "on_sale"`, `dimensions` (length/width/height/weight ranges with units)                                                                                                                                                                                         |
+| `website_ids` accepted website IDs only                                                      | Also accepts domains (`"nike.com"`)                                                                                                                                                                                                                                                 |
+| `Product.categories: string[]` (deprecated)                                                  | Removed — use `Product.category` (`CategorySummary`)                                                                                                                                                                                                                                |
+| `ProductImage.is_cleaned_image: boolean`                                                     | Removed — use `ProductImage.cleaned_url != null`                                                                                                                                                                                                                                    |
+| `OptionValue.available` had 8 values                                                         | `"InStock"` / `"OutOfStock"` / `null`                                                                                                                                                                                                                                               |
+| `ProductOffer` had no condition/dimensions                                                   | New `condition` (`"new"` / `"used"` / `null`) and `dimensions` fields                                                                                                                                                                                                               |
+| `/v0/search`, `/v0/enrich`, `/v0/products/{id}`, `/v0/brands*`                               | Removed — use the `/v1` equivalents (`/v0/enrich` → `POST /v1/lookup`). `/v0/websites` and `/v0/price-tracking` remain, but prefer `/v1/websites*`, and price-tracking subscriptions are deprecated — use `/v1/product-subscriptions` for offer-change alerts (price history stays) |
 
 ## Upgrading channel3-ui components
 
@@ -96,7 +96,7 @@ Run it from the UI app root (where `components.json` lives), not a monorepo root
 
 **No shadcn at all / non-interactive environment** (components vendored manually, agent or CI runs where prompts can't be answered): install straight from the registry protocol. `all.json` is a meta-bundle — no `files` of its own, only `registryDependencies`; recurse into each item URL. Every item carries inline `files[].content` plus npm `dependencies` — write the files under your components dir (keeping the `@/` alias convention they import with) and install the npm deps.
 
-Either way: re-installing pulls the *current* registry, which may have gained items and peer dependencies since the last install (e.g. `product-details` now depends on `price-history-chart`, which needs `recharts` and shadcn's `chart` primitive). Typecheck afterward and install anything listed in the items' `dependencies` fields.
+Either way: re-installing pulls the _current_ registry, which may have gained items and peer dependencies since the last install (e.g. `product-details` now depends on `price-history-chart`, which needs `recharts` and shadcn's `chart` primitive). Typecheck afterward and install anything listed in the items' `dependencies` fields.
 
 ### Preserving local changes
 

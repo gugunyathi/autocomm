@@ -11,10 +11,7 @@ import {
   repayAgentPayLaterInstallment,
   getStoredPayLaterLoans,
 } from "../services/paypalService";
-import {
-  PAYPAL_AGENT_TOOLS,
-  executePayPalAgentTool,
-} from "../services/paypalAgentToolkit";
+import { PAYPAL_AGENT_TOOLS, executePayPalAgentTool } from "../services/paypalAgentToolkit";
 import { handleApiRoute } from "../services/apiRouter";
 
 describe("PayPal Pay Later 6-Month Autonomous Credit Service", () => {
@@ -33,10 +30,7 @@ describe("PayPal Pay Later 6-Month Autonomous Credit Service", () => {
     expect(plan.installments).toHaveLength(6);
 
     // Sum of all 6 installments must equal totalRepaymentZAR
-    const sumInstallments = plan.installments.reduce(
-      (acc, curr) => acc + curr.amountZAR,
-      0,
-    );
+    const sumInstallments = plan.installments.reduce((acc, curr) => acc + curr.amountZAR, 0);
     expect(Math.round(sumInstallments * 100) / 100).toBe(1005);
 
     // All installments should be pending initially
@@ -99,7 +93,11 @@ describe("PayPal Pay Later 6-Month Autonomous Credit Service", () => {
     });
 
     // Repay installment 1
-    const { loan: updated, repaidInstallment, success } = await repayAgentPayLaterInstallment(loan.id, 1);
+    const {
+      loan: updated,
+      repaidInstallment,
+      success,
+    } = await repayAgentPayLaterInstallment(loan.id, 1);
     expect(success).toBe(true);
     expect(repaidInstallment.status).toBe("PAID");
     expect(repaidInstallment.paidAt).toBeDefined();
@@ -136,10 +134,10 @@ describe("PayPal Pay Later 6-Month Autonomous Credit Service", () => {
     expect(toolNames).toContain("paypal_pay_later_apply");
 
     // Execute paypal_pay_later_calculate_plan
-    const calcResult = await executePayPalAgentTool(
-      "paypal_pay_later_calculate_plan",
-      { amountZAR: 1000, agentWalletBalanceZAR: 200 },
-    );
+    const calcResult = await executePayPalAgentTool("paypal_pay_later_calculate_plan", {
+      amountZAR: 1000,
+      agentWalletBalanceZAR: 200,
+    });
     expect(calcResult.success).toBe(true);
     expect(calcResult.result.plan.tenureMonths).toBe(6);
     expect(calcResult.result.plan.platformFeePercent).toBe(0.5);

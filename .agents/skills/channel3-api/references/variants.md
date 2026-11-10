@@ -38,15 +38,15 @@ The variant model follows the [UCP catalog lookup specification](https://ucp.dev
       {
         "name": "Size",
         "values": [
-          { "label": "S",  "exists": true,  "available": "InStock" },
-          { "label": "M",  "exists": true,  "available": "InStock" },
+          { "label": "S", "exists": true, "available": "InStock" },
+          { "label": "M", "exists": true, "available": "InStock" },
           { "label": "XL", "exists": false, "available": null }
         ]
       }
     ],
     "selected": [
       { "name": "Color", "label": "Midnight Blue" },
-      { "name": "Size",  "label": "M" }
+      { "name": "Size", "label": "M" }
     ]
   }
 }
@@ -73,7 +73,7 @@ These fields map directly onto a product page — each `VariantOption` renders a
 | Field           | Type                                                  | Relevance                                                                                                                                                                                                                                               |
 | --------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `label`         | `string`                                              | The display value (`"Blue"`, `"XL"`). This is also the value you send back when selecting (see [Selecting a variant](#selecting-a-variant)).                                                                                                            |
-| `exists`        | `boolean`                                             | Whether this value forms a real variant **given the other selected options**. `false` means the combination isn't offered (e.g. the shirt exists in XL, but not in *this color* + XL). Always present. See [available vs exists](#available-vs-exists). |
+| `exists`        | `boolean`                                             | Whether this value forms a real variant **given the other selected options**. `false` means the combination isn't offered (e.g. the shirt exists in XL, but not in _this color_ + XL). Always present. See [available vs exists](#available-vs-exists). |
 | `available`     | [`AvailabilityStatus`](#availabilitystatus) \| `null` | Stock status of this value. **Not hydrated on [`/v1/search`](#search-vs-product-detail)** — it is always `null` on search results.                                                                                                                      |
 | `thumbnail_url` | `string \| null`                                      | A swatch image for this value (e.g. a color chip). When set, render the value as an image swatch rather than a text pill.                                                                                                                               |
 | `product_id`    | `string \| null`                                      | When set, this value resolves to a **different product**. Selecting it should navigate to that product ID rather than re-fetching the current one. Pairs with `thumbnail_url` for swatch-style selectors.                                               |
@@ -100,13 +100,13 @@ A value with no stock signal reports `available: null` on product detail (treat 
 
 The same `variants` shape is returned by both endpoints, but **`available` is only populated on product detail**. This is the single most important difference to design around.
 
-|                                    | `POST /v1/search` | `GET /v1/products/{id}` |
-| ---------------------------------- | ----------------- | ----------------------- |
-| `options`, `values`, `labels`      | ✅ Full set        | ✅ Full set              |
-| `exists`                           | ✅ Populated       | ✅ Populated             |
-| `thumbnail_url`, `product_id`      | ✅ Populated       | ✅ Populated             |
-| `available`                        | ❌ Always `null`   | ✅ Hydrated per value    |
-| Honors `selected_options` / `option_*` selection params | ❌                 | ✅                       |
+|                                                         | `POST /v1/search` | `GET /v1/products/{id}` |
+| ------------------------------------------------------- | ----------------- | ----------------------- |
+| `options`, `values`, `labels`                           | ✅ Full set       | ✅ Full set             |
+| `exists`                                                | ✅ Populated      | ✅ Populated            |
+| `thumbnail_url`, `product_id`                           | ✅ Populated      | ✅ Populated            |
+| `available`                                             | ❌ Always `null`  | ✅ Hydrated per value   |
+| Honors `selected_options` / `option_*` selection params | ❌                | ✅                      |
 
 Search is optimized for breadth — it returns the full option matrix so you can render selectors immediately, but it does **not** compute per-value stock. When you display a product for purchase, refetch it with `GET /v1/products/{id}` to get live `available` values (this call is **free**). `POST /v1/lookup` returns the same hydrated `variants`.
 
@@ -162,8 +162,8 @@ curl "https://api.trychannel3.com/v1/products/x8k2mq4?option_Color=Forest%20Gree
 
 The response reflects your selection in two places:
 
-* **`product` fields** (title, price, image, offers) update to the matching variant.
-* **`variants.selected`** echoes the **effective** selection.
+- **`product` fields** (title, price, image, offers) update to the matching variant.
+- **`variants.selected`** echoes the **effective** selection.
 
 ### Always read `selected` after relaxation
 
@@ -206,16 +206,16 @@ function handleSelect(option: VariantOption, value: OptionValue) {
 
 1. **Purchasable** (`exists: true`, `available` is `InStock` or `null`) — full emphasis. Solid border; the selected value gets a colored border and tint.
 2. **Out of stock** (`exists: true`, `available: "OutOfStock"`) — **dimmed**. It's a real, offered variant you simply can't buy right now, so a muted/strike-through treatment is the right signal. (`available` is only meaningful on product detail; it's `null` from search.)
-3. **Not offered with current selection** (`exists: false`) — **faintest of all**. This does *not* mean the value is unavailable; it means this exact *combination* isn't offered (e.g. you've selected `Color: Forest Green` and the green shirt was never made in `XL`). Make it the lightest element on screen — greyed text, muted fill, dashed border — so it clearly reads as "not a real option for what you've picked." Crucially, **keep it selectable**: clicking it [relaxes](#always-read-selected-after-relaxation) your *other* selections to land on a real variant.
+3. **Not offered with current selection** (`exists: false`) — **faintest of all**. This does _not_ mean the value is unavailable; it means this exact _combination_ isn't offered (e.g. you've selected `Color: Forest Green` and the green shirt was never made in `XL`). Make it the lightest element on screen — greyed text, muted fill, dashed border — so it clearly reads as "not a real option for what you've picked." Crucially, **keep it selectable**: clicking it [relaxes](#always-read-selected-after-relaxation) your _other_ selections to land on a real variant.
 
 The hierarchy matters: a non-existent value should look **even lighter than an out-of-stock one**, because it's the weakest signal of the three — not "you can't have this," just "picking this will rearrange your other choices." This mirrors hardware configurators like Apple's, where incompatible options are greyed out with a `—` placeholder yet remain clickable.
 
-| State                              | `exists` | `available`              | Recommended styling                                                                                                                                                   |
-| ---------------------------------- | -------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Purchasable                        | `true`   | `InStock`                | Full emphasis. Selected → colored border + light tint.                                                                                                                |
-| Out of stock                       | `true`   | `OutOfStock`             | Dimmed (`opacity-60 line-through`). Keep it clickable to view; optionally add a "Sold out" tag.                                                                       |
-| Not offered with current selection | `false`  | (`null`)                 | **Lightest of all** — `border-dashed`, muted fill (`bg-muted/30`), faded text (`text-muted-foreground/40`), with a `—` in place of any detail. Still fully clickable. |
-| Stock unknown                      | `true`   | `null` (search results)  | Full emphasis; fetch product detail for live stock before checkout.                                                                                                   |
+| State                              | `exists` | `available`             | Recommended styling                                                                                                                                                   |
+| ---------------------------------- | -------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Purchasable                        | `true`   | `InStock`               | Full emphasis. Selected → colored border + light tint.                                                                                                                |
+| Out of stock                       | `true`   | `OutOfStock`            | Dimmed (`opacity-60 line-through`). Keep it clickable to view; optionally add a "Sold out" tag.                                                                       |
+| Not offered with current selection | `false`  | (`null`)                | **Lightest of all** — `border-dashed`, muted fill (`bg-muted/30`), faded text (`text-muted-foreground/40`), with a `—` in place of any detail. Still fully clickable. |
+| Stock unknown                      | `true`   | `null` (search results) | Full emphasis; fetch product detail for live stock before checkout.                                                                                                   |
 
 Map each value to one of the tiers, then style from a lookup — no value is ever `disabled`. (This `valueState` is exactly what the Channel3 UI `variants` lib ships, and `variant-selector` is this component — reach for them before copying this in.)
 
@@ -234,20 +234,24 @@ function valueState(value: OptionValue, isSelected: boolean) {
 }
 
 const PILL: Record<string, string> = {
-  selected:   "border-2 border-green-600 bg-green-50 text-foreground",
-  available:  "border border-border bg-background text-foreground hover:border-foreground/40",
+  selected: "border-2 border-green-600 bg-green-50 text-foreground",
+  available: "border border-border bg-background text-foreground hover:border-foreground/40",
   outOfStock: "border border-border bg-background text-muted-foreground opacity-60 line-through",
   notOffered: "border border-dashed border-border/50 bg-muted/30 text-muted-foreground/40",
 };
 
 const SWATCH: Record<string, string> = {
-  selected:   "border-2 border-green-600 ring-2 ring-green-600/20",
-  available:  "border border-border hover:border-foreground/40",
+  selected: "border-2 border-green-600 ring-2 ring-green-600/20",
+  available: "border border-border hover:border-foreground/40",
   outOfStock: "border border-border opacity-60 grayscale",
   notOffered: "border border-dashed border-border/50 opacity-30",
 };
 
-function VariantSelector({ variants, selected, onSelect }: {
+function VariantSelector({
+  variants,
+  selected,
+  onSelect,
+}: {
   variants: Variants;
   selected: Record<string, string>;
   onSelect: (option: VariantOption, value: OptionValue) => void;
@@ -309,15 +313,15 @@ function VariantSelector({ variants, selected, onSelect }: {
 
 Key conventions in this example:
 
-* **Three tiers, never disabled** — `valueState` collapses `exists` + `available` into one of four labels, and the `PILL` / `SWATCH` lookups give each tier its own weight. Every value stays clickable so server-side relaxation can do its job.
-* **Faintest = not offered** — `border-dashed` + `bg-muted/30` + `text-muted-foreground/40` (and a `—` placeholder) make non-existent values the lightest thing on screen, clearly weaker than the dimmed out-of-stock tier.
-* **Swatches vs. pills** — values with a `thumbnail_url` render as image swatches; everything else is a text pill. Driven entirely by `thumbnail_url`, so you never need to know the underlying option type.
+- **Three tiers, never disabled** — `valueState` collapses `exists` + `available` into one of four labels, and the `PILL` / `SWATCH` lookups give each tier its own weight. Every value stays clickable so server-side relaxation can do its job.
+- **Faintest = not offered** — `border-dashed` + `bg-muted/30` + `text-muted-foreground/40` (and a `—` placeholder) make non-existent values the lightest thing on screen, clearly weaker than the dimmed out-of-stock tier.
+- **Swatches vs. pills** — values with a `thumbnail_url` render as image swatches; everything else is a text pill. Driven entirely by `thumbnail_url`, so you never need to know the underlying option type.
 
 ## Summary
 
-* `Product.variants` carries `options` (dimensions → values) and `selected` (the effective configuration).
-* Each `OptionValue` exposes `exists` (is this combination offered?) and `available` (`InStock` / `OutOfStock` / `null`) — design your UI around both.
-* `available` is **only hydrated on `GET /v1/products/{id}`** (and `POST /v1/lookup`); it's `null` on `POST /v1/search`.
-* Select a configuration with `selected_options` (SDK) or `option_<Name>=<Label>` query params (HTTP) on product detail; the server relaxes invalid combinations, so always trust `variants.selected`.
-* A value with `product_id` set points to a different product — navigate to it instead of re-resolving in place.
-* Render `thumbnail_url` values as swatches, others as pills; dim non-existent (`exists: false`) and out-of-stock values while keeping them clickable.
+- `Product.variants` carries `options` (dimensions → values) and `selected` (the effective configuration).
+- Each `OptionValue` exposes `exists` (is this combination offered?) and `available` (`InStock` / `OutOfStock` / `null`) — design your UI around both.
+- `available` is **only hydrated on `GET /v1/products/{id}`** (and `POST /v1/lookup`); it's `null` on `POST /v1/search`.
+- Select a configuration with `selected_options` (SDK) or `option_<Name>=<Label>` query params (HTTP) on product detail; the server relaxes invalid combinations, so always trust `variants.selected`.
+- A value with `product_id` set points to a different product — navigate to it instead of re-resolving in place.
+- Render `thumbnail_url` values as swatches, others as pills; dim non-existent (`exists: false`) and out-of-stock values while keeping them clickable.

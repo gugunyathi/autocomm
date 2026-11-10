@@ -559,8 +559,9 @@ export function PayPalHackathonModal({
                       PayPal Agent Toolkit & LLM Commerce Bridge
                     </h3>
                     <p className="text-xs text-slate-300 mt-0.5">
-                      Empower AI agents and LLMs to autonomously create orders, issue invoices, query
-                      catalogs, and execute settlements via Model Context Protocol (MCP) and function calling.
+                      Empower AI agents and LLMs to autonomously create orders, issue invoices,
+                      query catalogs, and execute settlements via Model Context Protocol (MCP) and
+                      function calling.
                     </p>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
@@ -597,7 +598,9 @@ export function PayPalHackathonModal({
                     </span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-black/50 border border-white/10">
-                    <span className="text-[10px] text-muted-foreground uppercase block">App ID</span>
+                    <span className="text-[10px] text-muted-foreground uppercase block">
+                      App ID
+                    </span>
                     <span className="text-white font-bold truncate block mt-0.5">
                       {paypalStatus?.appId || "APP-6YX62499CL803513D"}
                     </span>

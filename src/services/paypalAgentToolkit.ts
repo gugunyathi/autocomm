@@ -83,7 +83,8 @@ export const PAYPAL_AGENT_TOOLS: PayPalAgentTool[] = [
       properties: {
         orderId: {
           type: "string",
-          description: "The PayPal Order ID returned by paypal_create_order (e.g., '237030418K829894R').",
+          description:
+            "The PayPal Order ID returned by paypal_create_order (e.g., '237030418K829894R').",
         },
       },
       required: ["orderId"],
@@ -91,7 +92,8 @@ export const PAYPAL_AGENT_TOOLS: PayPalAgentTool[] = [
   },
   {
     name: "paypal_get_order_details",
-    description: "Retrieve real-time details, lifecycle status, and purchase units of a PayPal order.",
+    description:
+      "Retrieve real-time details, lifecycle status, and purchase units of a PayPal order.",
     parameters: {
       type: "object",
       properties: {
@@ -233,7 +235,8 @@ export const PAYPAL_AGENT_TOOLS: PayPalAgentTool[] = [
       properties: {
         principalZAR: {
           type: "number",
-          description: "Required credit advance amount in South African Rand (ZAR) to complete purchase.",
+          description:
+            "Required credit advance amount in South African Rand (ZAR) to complete purchase.",
         },
         storeId: {
           type: "string",

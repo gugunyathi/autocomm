@@ -8,23 +8,23 @@ description: |
 
 Channel3 is a universal product catalog API. Pick the endpoint(s) that match the developer's input.
 
-| Developer has... | Use |
-|---|---|
-| Free-text query, image URL, or both | `POST /v1/search` |
-| A rich natural-language brief (end-user message, agent context) | `POST /v1/search` with `config.mode: "agentic"` — see [Choosing a search mode](#choosing-a-search-mode) |
-| A React storefront UI to build (grid, filters, PDP, variants) | [Channel3 UI](#ui-components-react) shadcn registry — typed components, don't hand-roll |
-| Channel3 `product_id` and wants similar items | `POST /v1/similar` |
-| Channel3 `product_id` and wants full details | `GET /v1/products/{id}` |
-| A `product_id` and a variant choice (color/size/...) and wants the matching offers | `GET /v1/products/{id}` with `selected_options` (SDK) / `option_<name>=<label>` query params (HTTP) |
-| A merchant URL and wants the canonical product | `POST /v1/lookup` |
-| Filters but no query (all products from a brand/category/website) | `POST /v1/browse` |
-| A chat interface for shopping (streaming agent) | `POST /v1/conversations` — see [`references/conversations.md`](references/conversations.md) |
-| Click/transaction attribution data | `GET /v1/reporting/clicks` / `GET /v1/reporting/transactions` |
-| A `product_id` and wants price/availability/offer-change alerts | `POST /v1/product-subscriptions` (webhooks) — see [Product Subscriptions](#product-subscriptions--v1product-subscriptions) |
-| A `product_id` and wants historical prices | `GET /v0/price-tracking/history/{id}` |
-| A free-text term and wants matching category slugs | `GET /v1/categories/search` |
-| A color constraint (blue, navy, red, ...) | `filters.colors` on `POST /v1/search` or `POST /v1/similar` — map color names to sRGB hex; **never** `filters.attributes.color` |
-| Non-color structured attributes (material, frame-color, ...) | `filters.attributes` on `POST /v1/search` or `POST /v1/similar` — discover handles/values via `Category.attributes` (skip the `color` handle) |
+| Developer has...                                                                   | Use                                                                                                                                           |
+| ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Free-text query, image URL, or both                                                | `POST /v1/search`                                                                                                                             |
+| A rich natural-language brief (end-user message, agent context)                    | `POST /v1/search` with `config.mode: "agentic"` — see [Choosing a search mode](#choosing-a-search-mode)                                       |
+| A React storefront UI to build (grid, filters, PDP, variants)                      | [Channel3 UI](#ui-components-react) shadcn registry — typed components, don't hand-roll                                                       |
+| Channel3 `product_id` and wants similar items                                      | `POST /v1/similar`                                                                                                                            |
+| Channel3 `product_id` and wants full details                                       | `GET /v1/products/{id}`                                                                                                                       |
+| A `product_id` and a variant choice (color/size/...) and wants the matching offers | `GET /v1/products/{id}` with `selected_options` (SDK) / `option_<name>=<label>` query params (HTTP)                                           |
+| A merchant URL and wants the canonical product                                     | `POST /v1/lookup`                                                                                                                             |
+| Filters but no query (all products from a brand/category/website)                  | `POST /v1/browse`                                                                                                                             |
+| A chat interface for shopping (streaming agent)                                    | `POST /v1/conversations` — see [`references/conversations.md`](references/conversations.md)                                                   |
+| Click/transaction attribution data                                                 | `GET /v1/reporting/clicks` / `GET /v1/reporting/transactions`                                                                                 |
+| A `product_id` and wants price/availability/offer-change alerts                    | `POST /v1/product-subscriptions` (webhooks) — see [Product Subscriptions](#product-subscriptions--v1product-subscriptions)                    |
+| A `product_id` and wants historical prices                                         | `GET /v0/price-tracking/history/{id}`                                                                                                         |
+| A free-text term and wants matching category slugs                                 | `GET /v1/categories/search`                                                                                                                   |
+| A color constraint (blue, navy, red, ...)                                          | `filters.colors` on `POST /v1/search` or `POST /v1/similar` — map color names to sRGB hex; **never** `filters.attributes.color`               |
+| Non-color structured attributes (material, frame-color, ...)                       | `filters.attributes` on `POST /v1/search` or `POST /v1/similar` — discover handles/values via `Category.attributes` (skip the `color` handle) |
 
 **Base URL:** `https://api.trychannel3.com`  
 **Auth:** `x-api-key` header (server-side). Browser clients use short-lived client tokens — see [`references/conversations.md`](references/conversations.md).  
@@ -50,11 +50,11 @@ A Go SDK is also available — see [docs.trychannel3.com/sdk](https://docs.trych
 Set `CHANNEL3_API_KEY` in the environment (free key at [trychannel3.com](https://trychannel3.com)). Then the minimum end-to-end call:
 
 ```typescript
-import { Channel3 } from '@channel3/sdk';
+import { Channel3 } from "@channel3/sdk";
 
 const client = new Channel3({ apiKey: process.env.CHANNEL3_API_KEY });
-const page = await client.products.search({ query: 'running shoes', limit: 5 });
-const products = page.data;  // Product[]
+const page = await client.products.search({ query: "running shoes", limit: 5 });
+const products = page.data; // Product[]
 ```
 
 ```python
@@ -111,8 +111,8 @@ Text, image, or text+image search. Returns a paginated `Page` of `Product`.
 
 ```typescript
 const page = await client.products.search({
-  query: 'running shoes under $100',
-  filters: { price: { max_price: 100 }, gender: 'male' },
+  query: "running shoes under $100",
+  filters: { price: { max_price: 100 }, gender: "male" },
   limit: 10,
 });
 const products = page.data;
@@ -143,14 +143,14 @@ Set via `config.mode`:
 
 ```typescript
 const page = await client.products.search({
-  query: 'leather sofa',
+  query: "leather sofa",
   filters: {
-    category_ids: ['sofas'],
-    attributes: { material: ['Leather'] },
+    category_ids: ["sofas"],
+    attributes: { material: ["Leather"] },
     colors: {
       palette: [
-        { hex: '#001f3f' }, // navy — use colors for any color intent
-        { hex: '#ffffff', percentage: 0.3 },
+        { hex: "#001f3f" }, // navy — use colors for any color intent
+        { hex: "#ffffff", percentage: 0.3 },
       ],
     },
   },
@@ -177,12 +177,12 @@ curl -X POST https://api.trychannel3.com/v1/search \
 **"More like this" from a Channel3 `product_id` you already have.** Almost always seeded from a previous `/v1/search` response. Returns the same paginated shape; the source product is excluded.
 
 ```typescript
-const search = await client.products.search({ query: 'red leather jacket', limit: 5 });
+const search = await client.products.search({ query: "red leather jacket", limit: 5 });
 const seedId = search.data[0].id;
 
 const similar = await client.products.findSimilar({
   product_id: seedId,
-  filters: { gender: 'female', price: { max_price: 200 } },
+  filters: { gender: "female", price: { max_price: 200 } },
   limit: 10,
 });
 ```
@@ -206,7 +206,7 @@ Resolve a merchant URL to the canonical Channel3 `Product`. Use this only when t
 
 ```typescript
 const { product } = await client.products.lookup({
-  url: 'https://merchant.com/products/red-jacket',
+  url: "https://merchant.com/products/red-jacket",
 });
 ```
 
@@ -223,9 +223,9 @@ Full `Product` for a known `product_id`. Same response shape as search results, 
 
 ```typescript
 const product = await client.products.retrieve({
-  product_id: 'prod_abc123',
-  country: 'GB',
-  currency: 'GBP',
+  product_id: "prod_abc123",
+  country: "GB",
+  currency: "GBP",
 });
 ```
 
@@ -247,8 +247,8 @@ To re-fetch the product under a different variant configuration, pass `selected_
 
 ```typescript
 const product = await client.products.retrieve({
-  product_id: 'prod_abc123',
-  selected_options: { Color: 'Blue', Size: 'XL' },
+  product_id: "prod_abc123",
+  selected_options: { Color: "Blue", Size: "XL" },
 });
 ```
 
@@ -268,7 +268,7 @@ Filter-only product listing — no query or image. Use it to render a brand page
 
 ```typescript
 const page = await client.products.browse({
-  filters: { brand_ids: ['MpZS'], sale: 'on_sale' },
+  filters: { brand_ids: ["MpZS"], sale: "on_sale" },
   limit: 20,
 });
 ```
@@ -295,11 +295,11 @@ const browserClient = new Channel3({
   auth: () => Promise.resolve({ headers: { Authorization: `Bearer ${token}` } }),
 });
 const stream = await browserClient.conversations.createTurnStream({
-  message: { parts: [{ type: 'text', text: 'running shoes under $100' }] },
+  message: { parts: [{ type: "text", text: "running shoes under $100" }] },
   conversation_id, // omit to start a new thread
 });
 for await (const event of stream) {
-  if (event.type === 'part.delta') process.stdout.write(event.delta);
+  if (event.type === "part.delta") process.stdout.write(event.delta);
 }
 ```
 
@@ -314,9 +314,9 @@ Click and transaction attribution for your API key, filterable by the `user_id` 
 
 ```typescript
 const clicks = await client.reporting.listClicks({
-  start_date: new Date('2026-08-01T00:00:00Z'), // Date objects, not ISO strings
-  end_date: new Date('2026-08-17T00:00:00Z'),
-  user_id: 'user_123', // optional
+  start_date: new Date("2026-08-01T00:00:00Z"), // Date objects, not ISO strings
+  end_date: new Date("2026-08-17T00:00:00Z"),
+  user_id: "user_123", // optional
 });
 clicks.data; // Click[]
 clicks.response.summary; // aggregates, e.g. { total_clicks }
@@ -358,7 +358,7 @@ Price-tracking subscriptions are **deprecated for new integrations** — use [Pr
 
 ```typescript
 const history = await client.priceTracking.retrieveHistory({
-  canonical_product_id: 'prod_abc123',
+  canonical_product_id: "prod_abc123",
   days: 90,
 });
 console.log(history.statistics?.current_price, history.statistics?.current_status);
@@ -376,8 +376,8 @@ Lookup helpers, mostly used to obtain IDs for search filters.
 
 ```typescript
 // Find a brand ID for filtering
-const { brands } = await client.brands.search({ query: 'Nike', limit: 5 });
-const brandId = brands[0]?.id;  // top match — inspect `brands` to disambiguate when multiple match
+const { brands } = await client.brands.search({ query: "Nike", limit: 5 });
+const brandId = brands[0]?.id; // top match — inspect `brands` to disambiguate when multiple match
 ```
 
 ### Categories — `/v1/categories*`
@@ -389,11 +389,11 @@ Discover the category slugs you can pass to `SearchFilters.category_ids` / `excl
 - `client.categories.retrieve({ slug })` — full `Category` with description, attributes, direct children, and root-to-self `path`
 
 ```typescript
-const { categories } = await client.categories.search({ query: 'running shoes', limit: 5 });
+const { categories } = await client.categories.search({ query: "running shoes", limit: 5 });
 const slug = categories[0].slug;
 
 const page = await client.products.search({
-  query: 'lightweight trainers',
+  query: "lightweight trainers",
   filters: { category_ids: [slug] },
 });
 ```
@@ -413,16 +413,16 @@ page = client.products.search(
 `Category.attributes` lists indexed attribute handles for `SearchFilters.attributes`. Use non-color slugs (e.g. `material`, `frame-color`). The `color` entry is informational on products — **filter color with `filters.colors`**, not `attributes.color`.
 
 ```typescript
-const category = await client.categories.retrieve({ slug: 'sofas' });
-const materialAttr = category.attributes.find(a => a.slug === 'material');
+const category = await client.categories.retrieve({ slug: "sofas" });
+const materialAttr = category.attributes.find((a) => a.slug === "material");
 //   materialAttr?.values → ["Leather", "Velvet", "Linen", ...]
 
 const page = await client.products.search({
-  query: 'leather sectional',
+  query: "leather sectional",
   filters: {
-    category_ids: ['sofas'],
-    attributes: { material: ['Leather'] },
-    colors: { palette: [{ hex: '#001f3f' }] }, // navy via colors filter
+    category_ids: ["sofas"],
+    attributes: { material: ["Leather"] },
+    colors: { palette: [{ hex: "#001f3f" }] }, // navy via colors filter
   },
 });
 ```
@@ -432,10 +432,7 @@ const page = await client.products.search({
 Pass your end-user's ID on any request to attribute their clicks and sales in reporting. Raw HTTP takes the `x-user-id` header; the Python SDK takes a `user_id` kwarg (mapped to the header); in TypeScript, pass the header via request options. Channel3 appends it to buy URLs in the response. Max 128 chars; letters, numbers, and `. _ @ -` only.
 
 ```typescript
-await client.products.search(
-  { query: 'desk lamp' },
-  { headers: { 'x-user-id': 'user_123' } },
-);
+await client.products.search({ query: "desk lamp" }, { headers: { "x-user-id": "user_123" } });
 ```
 
 ```python

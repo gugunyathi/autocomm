@@ -7,6 +7,8 @@ export interface MatchedDeal {
   counter: number;
   expires: number;
   total: number;
+  isFreeGiveaway?: boolean;
+  isHighValue?: boolean;
 }
 
 interface InteractiveDealCardProps {
@@ -227,9 +229,9 @@ export const InteractiveDealCard = React.memo(function InteractiveDealCard({
   const walkingSeconds = Math.max(12, Math.round(deal.store.dist * 3.2));
   const rssiValue = -(42 + (deal.store.dist % 24));
   const discountAmount = deal.store.open - deal.price;
-  const isFree = deal.price === 0 || Boolean((deal as any).isFreeGiveaway);
+  const isFree = deal.price === 0 || Boolean(deal.isFreeGiveaway);
   const discountPercent = isFree ? 100 : Math.round((1 - deal.price / deal.store.open) * 100);
-  const isSuperDeal = discountPercent >= 40 || isFree || Boolean((deal as any).isHighValue);
+  const isSuperDeal = discountPercent >= 40 || isFree || Boolean(deal.isHighValue);
 
   // Dynamic transform
   const totalX = pos.x + dragOffset.x;

@@ -465,7 +465,7 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
   // Dynamic store directory: loads physical retail outlets of the mall, decorated with live website specials!
   const stores = useMemo(() => {
     const rawStores = isAtBelAir ? currentMall.stores : outdoor ? OUTDOOR : INDOOR;
-    return decorateStoresWithCrawledSpecials(rawStores);
+    return decorateStoresWithCrawledSpecials(rawStores, crawledVersion);
   }, [isAtBelAir, currentMall, outdoor, crawledVersion]);
 
   // Effective speed & dynamic mobility state inference
@@ -576,10 +576,14 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
       const wishItem = convertAgentIntentToWishlistItem(agent);
       handleAddWishlistItem(wishItem);
 
-      notificationManager.sendPushNotification(
-        `Agent @${agent.fullName} Live`,
-        `Autonomous shopping active 24/7 for ${agent.intent.whatToBuy} under R${agent.intent.ceilingPriceZar}`,
-      );
+      try {
+        notificationManager?.sendPushNotification?.(
+          `Agent @${agent.fullName} Live`,
+          `Autonomous shopping active 24/7 for ${agent.intent.whatToBuy} under R${agent.intent.ceilingPriceZar}`,
+        );
+      } catch {
+        // Guarded
+      }
     },
     [currentUser, handleAddWishlistItem],
   );

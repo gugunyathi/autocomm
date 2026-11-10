@@ -6,12 +6,12 @@ The Conversations API is a turn-based shopping agent: you send the shopper's mes
 
 **The API key never ships to the browser.** Server code uses the API key; browser code uses a short-lived **client token** (`c3_ct_…`) minted by your server.
 
-| Endpoint | Auth | Purpose |
-|---|---|---|
-| `POST /v1/conversations` | API key **or** client token | Create a turn (streams SSE by default) |
-| `POST /v1/conversations/client_tokens` | API key only | Mint a browser-safe client token |
-| `POST /v1/conversations/client_tokens/revoke` | API key only | Revoke a token immediately |
-| `GET /v1/conversations/{conversation_id}` | API key **or** bound client token | Read thread history (paginated) |
+| Endpoint                                      | Auth                              | Purpose                                |
+| --------------------------------------------- | --------------------------------- | -------------------------------------- |
+| `POST /v1/conversations`                      | API key **or** client token       | Create a turn (streams SSE by default) |
+| `POST /v1/conversations/client_tokens`        | API key only                      | Mint a browser-safe client token       |
+| `POST /v1/conversations/client_tokens/revoke` | API key only                      | Revoke a token immediately             |
+| `GET /v1/conversations/{conversation_id}`     | API key **or** bound client token | Read thread history (paginated)        |
 
 ## Auth model
 
@@ -25,12 +25,12 @@ The Conversations API is a turn-based shopping agent: you send the shopper's mes
 // Server — mint
 const created = await server.conversations.clientTokens.create({
   conversation_id: conversationId, // optional; omit for a new thread
-  ttl_seconds: 600,                // optional; 60–7200, default 1800
+  ttl_seconds: 600, // optional; 60–7200, default 1800
 });
 // created.token (c3_ct_…), created.token_id, created.expires_at
 
 // Server — revoke
-await server.conversations.clientTokens.revoke({ token: 'c3_ct_...' });
+await server.conversations.clientTokens.revoke({ token: "c3_ct_..." });
 ```
 
 ```python
@@ -54,20 +54,20 @@ curl -X POST https://api.trychannel3.com/v1/conversations/client_tokens \
 
 Request body (`CreateTurnRequest`):
 
-| Field | Type | Notes |
-|---|---|---|
-| `message` | `{ role: "user", parts: UserPart[] }` | `UserPart` is `{ type: "text", text }` or `{ type: "image", ... }` |
-| `conversation_id` | `string?` | Omit to create a thread; the id comes back on `turn.started` |
-| `filters` | `SearchFilters?` | Pinned catalog filters applied to every product search in the turn |
-| `context` | `ConversationContext?` | Extra context for the agent |
-| `stream` | `boolean?` | Default `true` (SSE). `false` → buffered `TurnResult` |
+| Field             | Type                                  | Notes                                                              |
+| ----------------- | ------------------------------------- | ------------------------------------------------------------------ |
+| `message`         | `{ role: "user", parts: UserPart[] }` | `UserPart` is `{ type: "text", text }` or `{ type: "image", ... }` |
+| `conversation_id` | `string?`                             | Omit to create a thread; the id comes back on `turn.started`       |
+| `filters`         | `SearchFilters?`                      | Pinned catalog filters applied to every product search in the turn |
+| `context`         | `ConversationContext?`                | Extra context for the agent                                        |
+| `stream`          | `boolean?`                            | Default `true` (SSE). `false` → buffered `TurnResult`              |
 
 The `x-user-id` header works here too — the id is appended to buy URLs in the reply for attribution.
 
 ### Streaming (TS, browser)
 
 ```typescript
-import { Channel3 } from '@channel3/sdk';
+import { Channel3 } from "@channel3/sdk";
 
 // Browser client — auth is a function returning the Bearer header.
 // Fetch a fresh token from your server; never embed the API key.
@@ -79,28 +79,29 @@ let conversationId: string | undefined;
 
 const stream = await client.conversations.createTurnStream({
   message: {
-    role: 'user',
-    parts: [{ type: 'text', text: 'I need waterproof hiking boots under $200' }],
+    role: "user",
+    parts: [{ type: "text", text: "I need waterproof hiking boots under $200" }],
   },
   conversation_id: conversationId, // omit on the first turn
 });
 
 for await (const event of stream) {
   switch (event.type) {
-    case 'turn.started':
+    case "turn.started":
       conversationId = event.conversation_id; // conv_… — save it
       break;
-    case 'part.delta':
+    case "part.delta":
       text += event.delta; // append to the text block at event.part_index
       break;
-    case 'part.completed':
+    case "part.completed":
       parts[event.part_index] = event.part; // text or tool part (product cards)
       break;
-    case 'turn.completed':
+    case "turn.completed":
       done(event.message); // full AssistantMessage + event.usage
       break;
-    case 'error':
-      if (event.retryable) retry(); else showError(event.message);
+    case "error":
+      if (event.retryable) retry();
+      else showError(event.message);
   }
 }
 ```
@@ -146,7 +147,7 @@ Pass `stream: false` (HTTP body) or call `createTurn` / `create_turn` (SDK) to g
 
 ```typescript
 const result = await client.conversations.createTurn({
-  message: { role: 'user', parts: [{ type: 'text', text: '...' }] },
+  message: { role: "user", parts: [{ type: "text", text: "..." }] },
   conversation_id: conversationId,
 });
 // result: { conversation_id, turn_id, usage, message: AssistantMessage }
@@ -156,14 +157,14 @@ const result = await client.conversations.createTurn({
 
 A streamed turn is `text/event-stream`; the stream ends after a terminal event and `[DONE]`. The stream sends a heartbeat about every 15 seconds — silence between tokens is not a dead connection.
 
-| Event | When | Payload | What to do |
-|---|---|---|---|
-| `turn.started` | First, once | `conversation_id`, `turn_id`, `message_id` | Save `conversation_id` for follow-up turns |
-| `part.started` | A text or tool block begins | `part_index`, `part` | Add a block at `part_index` |
-| `part.delta` | Text is generating | `part_index`, `delta` | Append `delta` to the text at `part_index` |
-| `part.completed` | A block is done | `part_index`, `part` | Replace the block at `part_index` with the final part |
-| `turn.completed` | Success, once | `message`, `usage` (`credits_charged`, `searches_run`) | Render the finished message |
-| `error` | The turn failed | `code`, `message`, `retryable` | Retry if `retryable`, else surface |
+| Event            | When                        | Payload                                                | What to do                                            |
+| ---------------- | --------------------------- | ------------------------------------------------------ | ----------------------------------------------------- |
+| `turn.started`   | First, once                 | `conversation_id`, `turn_id`, `message_id`             | Save `conversation_id` for follow-up turns            |
+| `part.started`   | A text or tool block begins | `part_index`, `part`                                   | Add a block at `part_index`                           |
+| `part.delta`     | Text is generating          | `part_index`, `delta`                                  | Append `delta` to the text at `part_index`            |
+| `part.completed` | A block is done             | `part_index`, `part`                                   | Replace the block at `part_index` with the final part |
+| `turn.completed` | Success, once               | `message`, `usage` (`credits_charged`, `searches_run`) | Render the finished message                           |
+| `error`          | The turn failed             | `code`, `message`, `retryable`                         | Retry if `retryable`, else surface                    |
 
 `part_index` is the block's position in the final message; order within one reply is stable. Tool parts (`{ type: "tool", tool_name: "search_products", ... }`) carry the product cards — render those as results UI, not as raw text. A turn that fails **before** it starts returns a normal HTTP error, not an `error` event.
 
@@ -190,7 +191,7 @@ The assistant's reply (`AssistantMessage`) has `parts` and `suggestions`:
 ## Thread history
 
 ```typescript
-const page = await client.conversations.retrieve({ conversation_id: 'conv_123' });
+const page = await client.conversations.retrieve({ conversation_id: "conv_123" });
 // paginated message items — .data (TS) / .items (Python)
 ```
 

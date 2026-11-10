@@ -85,7 +85,9 @@ export function AgentPayLaterLoanCard({
       if (onLoanCreated) {
         onLoanCreated(res.loan);
       }
-      setRepaySuccessMsg(`🎉 Secured R${simAmountZAR.toFixed(2)} Credit via PayPal Pay Later (6-Month Plan). Merchant settled immediately.`);
+      setRepaySuccessMsg(
+        `🎉 Secured R${simAmountZAR.toFixed(2)} Credit via PayPal Pay Later (6-Month Plan). Merchant settled immediately.`,
+      );
       setTimeout(() => setRepaySuccessMsg(null), 5000);
     } catch (err: any) {
       console.error("[PayLater Apply]", err);
@@ -100,7 +102,9 @@ export function AgentPayLaterLoanCard({
     try {
       const res = await repayAgentPayLaterInstallment(loanId, installmentNumber);
       loadLoans();
-      setRepaySuccessMsg(`✅ Month ${installmentNumber} of 6 installment (R${res.repaidInstallment.amountZAR.toFixed(2)}) settled via PayPal Sandbox.`);
+      setRepaySuccessMsg(
+        `✅ Month ${installmentNumber} of 6 installment (R${res.repaidInstallment.amountZAR.toFixed(2)}) settled via PayPal Sandbox.`,
+      );
       setTimeout(() => setRepaySuccessMsg(null), 4000);
     } catch (err: any) {
       console.error("[PayLater Repay]", err);
@@ -134,7 +138,8 @@ export function AgentPayLaterLoanCard({
                 </span>
               </div>
               <p className="text-[11px] text-muted-foreground font-mono mt-0.5">
-                Autonomous micro-credit facility for shopping agents with 0.5% platform protocol fee.
+                Autonomous micro-credit facility for shopping agents with 0.5% platform protocol
+                fee.
               </p>
             </div>
           </div>
@@ -202,12 +207,15 @@ export function AgentPayLaterLoanCard({
           </div>
 
           <p className="text-[11px] text-muted-foreground">
-            When an agent has insufficient wallet funds at checkout, this service automatically advances the required credit over 6 monthly installments.
+            When an agent has insufficient wallet funds at checkout, this service automatically
+            advances the required credit over 6 monthly installments.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
             <div className="space-y-1">
-              <label className="text-[10px] uppercase text-muted-foreground">Credit Amount (ZAR)</label>
+              <label className="text-[10px] uppercase text-muted-foreground">
+                Credit Amount (ZAR)
+              </label>
               <input
                 type="number"
                 value={simAmountZAR}
@@ -233,7 +241,9 @@ export function AgentPayLaterLoanCard({
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] uppercase text-muted-foreground">Plan Preview (6 Mos)</label>
+              <label className="text-[10px] uppercase text-muted-foreground">
+                Plan Preview (6 Mos)
+              </label>
               <div className="p-2 bg-black/60 border border-white/20 rounded-xl text-xs text-emerald-400 font-bold flex items-center justify-between">
                 <span>R{calculatedPlan.monthlyInstallmentZAR.toFixed(2)}/mo</span>
                 <span className="text-[10px] text-muted-foreground font-normal">
@@ -245,7 +255,9 @@ export function AgentPayLaterLoanCard({
 
           <div className="flex items-center justify-between pt-1">
             <div className="text-[11px] text-muted-foreground">
-              Total to Repay: <strong className="text-white">R{calculatedPlan.totalSecuredZAR.toFixed(2)}</strong> across 6 monthly maturities.
+              Total to Repay:{" "}
+              <strong className="text-white">R{calculatedPlan.totalSecuredZAR.toFixed(2)}</strong>{" "}
+              across 6 monthly maturities.
             </div>
             <button
               onClick={handleApplyPayLaterCredit}
@@ -265,7 +277,8 @@ export function AgentPayLaterLoanCard({
           <Clock className="w-8 h-8 mx-auto text-muted-foreground/40" />
           <h4 className="text-sm font-bold text-white">No Active Pay Later Credit Agreements</h4>
           <p className="text-xs text-muted-foreground max-w-md mx-auto">
-            When your agent purchases items exceeding wallet reserves, PayPal Pay Later will automatically generate a 6-month repayment schedule here.
+            When your agent purchases items exceeding wallet reserves, PayPal Pay Later will
+            automatically generate a 6-month repayment schedule here.
           </p>
         </div>
       ) : (
@@ -303,7 +316,9 @@ export function AgentPayLaterLoanCard({
                           : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
                       }`}
                     >
-                      {activeLoan.status === "SETTLED" ? "COMPLETED / PAID OFF" : "ACTIVE 6-MO REPAYMENT"}
+                      {activeLoan.status === "SETTLED"
+                        ? "COMPLETED / PAID OFF"
+                        : "ACTIVE 6-MO REPAYMENT"}
                     </span>
                   </div>
                   <span className="text-[10px] text-muted-foreground">
@@ -312,7 +327,9 @@ export function AgentPayLaterLoanCard({
                 </div>
 
                 <div className="text-left sm:text-right">
-                  <span className="text-[10px] text-muted-foreground block">Remaining Principal</span>
+                  <span className="text-[10px] text-muted-foreground block">
+                    Remaining Principal
+                  </span>
                   <span className="text-base font-black text-amber-400">
                     R{activeLoan.remainingBalanceZAR.toFixed(2)}{" "}
                     <span className="text-[10px] text-muted-foreground font-normal">
@@ -325,11 +342,17 @@ export function AgentPayLaterLoanCard({
               {/* Protocol Fee Breakdown */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs p-3 rounded-xl bg-white/5 border border-white/10">
                 <div>
-                  <span className="text-[10px] text-muted-foreground block">Principal Financed:</span>
-                  <span className="font-bold text-white">R{activeLoan.principalZAR.toFixed(2)}</span>
+                  <span className="text-[10px] text-muted-foreground block">
+                    Principal Financed:
+                  </span>
+                  <span className="font-bold text-white">
+                    R{activeLoan.principalZAR.toFixed(2)}
+                  </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-muted-foreground block">Platform Fee (0.5%):</span>
+                  <span className="text-[10px] text-muted-foreground block">
+                    Platform Fee (0.5%):
+                  </span>
                   <span className="font-bold text-sky-400">
                     +R{activeLoan.platformFeeZAR.toFixed(2)}{" "}
                     <span className="text-[9px] text-muted-foreground font-normal">(Secured)</span>
@@ -349,15 +372,14 @@ export function AgentPayLaterLoanCard({
                   <span className="font-bold uppercase tracking-wider text-[10px]">
                     6-Month Installment Repayment Schedule (Default)
                   </span>
-                  <span>
-                    {activeLoan.paidInstallmentsCount} of 6 Paid
-                  </span>
+                  <span>{activeLoan.paidInstallmentsCount} of 6 Paid</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                   {activeLoan.installments.map((inst) => {
                     const isPaid = inst.status === "PAID";
-                    const isProcessingThis = isRepaying === `${activeLoan.id}-${inst.installmentNumber}`;
+                    const isProcessingThis =
+                      isRepaying === `${activeLoan.id}-${inst.installmentNumber}`;
                     const formattedDate = new Date(inst.dueDate).toLocaleDateString(undefined, {
                       month: "short",
                       day: "numeric",
@@ -384,7 +406,9 @@ export function AgentPayLaterLoanCard({
                           </span>
                           <span
                             className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                              isPaid ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-500/20 text-amber-300"
+                              isPaid
+                                ? "bg-emerald-500/20 text-emerald-300"
+                                : "bg-amber-500/20 text-amber-300"
                             }`}
                           >
                             {isPaid ? "PAID" : "DUE"}
@@ -392,9 +416,7 @@ export function AgentPayLaterLoanCard({
                         </div>
 
                         <div>
-                          <div className="text-base font-black">
-                            R{inst.amountZAR.toFixed(2)}
-                          </div>
+                          <div className="text-base font-black">R{inst.amountZAR.toFixed(2)}</div>
                           <div className="text-[10px] text-muted-foreground">
                             ${inst.amountUSD.toFixed(2)} USD · Due: {formattedDate}
                           </div>
@@ -407,11 +429,15 @@ export function AgentPayLaterLoanCard({
                             </span>
                           ) : (
                             <button
-                              onClick={() => handleRepayInstallment(activeLoan.id, inst.installmentNumber)}
+                              onClick={() =>
+                                handleRepayInstallment(activeLoan.id, inst.installmentNumber)
+                              }
                               disabled={Boolean(isRepaying)}
                               className="w-full py-1.5 px-2.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/40 text-sky-300 font-bold text-[10px] transition-all active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1"
                             >
-                              <RefreshCw className={`w-3 h-3 ${isProcessingThis ? "animate-spin" : ""}`} />
+                              <RefreshCw
+                                className={`w-3 h-3 ${isProcessingThis ? "animate-spin" : ""}`}
+                              />
                               <span>{isProcessingThis ? "Settling..." : "Repay Installment"}</span>
                             </button>
                           )}
@@ -428,4 +454,3 @@ export function AgentPayLaterLoanCard({
     </div>
   );
 }
-

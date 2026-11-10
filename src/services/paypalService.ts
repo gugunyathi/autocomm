@@ -45,13 +45,11 @@ export function getPayPalConfig() {
   const clientSecret =
     (isServer
       ? process.env["PAYPAL_SANDBOX_CLIENT_SECRET"] || process.env["PAYPAL_CLIENT_SECRET"]
-      : null) ||
-    "EGN69NKKxr_870Fg6SJMGXBiA64jiiaKLQ937iWIdC4CP6iDdfagWS_Egc9WgLE23XCB5VICpmw0-uPh";
+      : null) || "EGN69NKKxr_870Fg6SJMGXBiA64jiiaKLQ937iWIdC4CP6iDdfagWS_Egc9WgLE23XCB5VICpmw0-uPh";
 
   const environment =
-    (isServer
-      ? process.env["PAYPAL_ENVIRONMENT"] || process.env["PAYPAL_MODE"]
-      : null) || "sandbox";
+    (isServer ? process.env["PAYPAL_ENVIRONMENT"] || process.env["PAYPAL_MODE"] : null) ||
+    "sandbox";
 
   const baseUrl =
     environment === "production" || environment === "live"
@@ -69,8 +67,7 @@ export function getPayPalConfig() {
       (isServer ? process.env["PAYPAL_MERCHANT_RECEIVER"] : null) ||
       "merchant-belair-clearinghouse@autocom.dev",
     vaultTokenPrefix:
-      (isServer ? process.env["PAYPAL_VAULT_PREFIX"] : null) ||
-      "VAULT_AUTONOMOUS_DELEGATE_",
+      (isServer ? process.env["PAYPAL_VAULT_PREFIX"] : null) || "VAULT_AUTONOMOUS_DELEGATE_",
   };
 }
 
@@ -918,7 +915,10 @@ export async function requestAgentPayLaterLoan(params: {
     const captureRes = await executeVaultedAgentPayment(paypalOrderId);
     paypalCaptureId = captureRes.transactionId;
   } catch (err) {
-    console.warn("[PayPal PayLater] Live order creation warning, using simulated Sandbox response:", err);
+    console.warn(
+      "[PayPal PayLater] Live order creation warning, using simulated Sandbox response:",
+      err,
+    );
   }
 
   // 2. Build immutable loan object
@@ -997,9 +997,7 @@ export async function repayAgentPayLaterInstallment(
     throw new Error(`Pay Later loan ${loanId} not found`);
   }
 
-  const instIndex = target.installments.findIndex(
-    (i) => i.installmentNumber === installmentNumber,
-  );
+  const instIndex = target.installments.findIndex((i) => i.installmentNumber === installmentNumber);
   if (instIndex < 0) {
     throw new Error(`Installment #${installmentNumber} not found on loan ${loanId}`);
   }
@@ -1040,4 +1038,3 @@ export async function repayAgentPayLaterInstallment(
     success: true,
   };
 }
-
