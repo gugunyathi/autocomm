@@ -4,6 +4,8 @@
 //     nitro (build-only using cloudflare as a default target), VITE_* env injection, @ path alias,
 //     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
+import fs from "node:fs";
+import path from "node:path";
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
@@ -15,14 +17,28 @@ export default defineConfig({
       {
         name: "fix-rolldown-preload-hash",
         apply: "build",
-        generateBundle(_options: any, bundle: any) {
-          for (const fileName in bundle) {
-            const chunk = bundle[fileName];
-            if (chunk?.type === "chunk" && typeof chunk.code === "string" && chunk.code.includes("__vite__mapDeps")) {
-              chunk.code = chunk.code.replace(
-                /(__vite__mapDeps\(\[[^\]]*\]\))[0-9a-f]{16,64}/g,
-                "$1",
-              );
+        closeBundle() {
+          const publicDirs = [
+            path.resolve(process.cwd(), ".output/public/assets"),
+            path.resolve(process.cwd(), ".vercel/output/static/assets"),
+          ];
+          for (const assetsDir of publicDirs) {
+            if (fs.existsSync(assetsDir)) {
+              const files = fs.readdirSync(assetsDir).filter((f) => f.endsWith(".js"));
+              for (const file of files) {
+                const filePath = path.join(assetsDir, file);
+                const code = fs.readFileSync(filePath, "utf-8");
+                if (code.includes("__vite__mapDeps")) {
+                  const sanitized = code.replace(
+                    /(__vite__mapDeps\(\[[^\]]*\]\))[0-9a-f]{16,64}/g,
+                    "$1",
+                  );
+                  if (sanitized !== code) {
+                    fs.writeFileSync(filePath, sanitized, "utf-8");
+                    console.log(`🩹 [vite:closeBundle] Fixed mapDeps in ${file}`);
+                  }
+                }
+              }
             }
           }
         },

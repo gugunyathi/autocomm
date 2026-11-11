@@ -37,60 +37,7 @@ async function getFetchHandler() {
   throw new Error("Could not find server entry in .output/server or .vercel/output/functions");
 }
 
-async function generate() {
-  console.log("⚡ Generating static HTML files for SPA and CDN fallbacks...");
-  const fetchHandler = await getFetchHandler();
-
-  const publicDirs = [
-    path.resolve(rootDir, ".output/public"),
-    path.resolve(rootDir, ".vercel/output/static"),
-  ].filter((d) => fs.existsSync(d));
-
-  if (publicDirs.length === 0) {
-    console.warn("⚠️ No public output directory found (.output/public or .vercel/output/static).");
-    return;
-  }
-
-  for (const route of ROUTES) {
-    try {
-      const response = await fetchHandler(new Request(`http://localhost${route}`));
-      if (!response.ok) {
-        console.error(`❌ Route ${route} returned status ${response.status}`);
-        continue;
-      }
-      const html = await response.text();
-
-      for (const pubDir of publicDirs) {
-        let targetFilePath;
-        if (route === "/") {
-          targetFilePath = path.join(pubDir, "index.html");
-        } else {
-          const subDir = path.join(pubDir, route.replace(/^\//, ""));
-          fs.mkdirSync(subDir, { recursive: true });
-          targetFilePath = path.join(subDir, "index.html");
-        }
-
-        fs.writeFileSync(targetFilePath, html, "utf-8");
-        console.log(
-          `✅ Prerendered ${route} -> ${path.relative(rootDir, targetFilePath)} (${html.length} bytes)`,
-        );
-      }
-    } catch (err) {
-      console.error(`❌ Error rendering ${route}:`, err.message);
-    }
-  }
-
-  // Ensure .htaccess exists in .output/public for Apache / cPanel rewrites
-  const htaccessSource = path.resolve(rootDir, "public/.htaccess");
-  if (fs.existsSync(htaccessSource)) {
-    for (const pubDir of publicDirs) {
-      const dest = path.join(pubDir, ".htaccess");
-      fs.copyFileSync(htaccessSource, dest);
-      console.log(`📋 Copied .htaccess -> ${path.relative(rootDir, dest)}`);
-    }
-  }
-
-  // Sanitize any Rolldown/Vite chunk hash artifacts on __vite__mapDeps to prevent SyntaxError
+function sanitizeAssets(publicDirs) {
   for (const pubDir of publicDirs) {
     const assetsDir = path.join(pubDir, "assets");
     if (fs.existsSync(assetsDir)) {
@@ -108,6 +55,71 @@ async function generate() {
       }
     }
   }
+}
+
+async function generate() {
+  console.log("⚡ Generating static HTML files for SPA and CDN fallbacks...");
+
+  const publicDirs = [
+    path.resolve(rootDir, ".output/public"),
+    path.resolve(rootDir, ".vercel/output/static"),
+  ].filter((d) => fs.existsSync(d));
+
+  if (publicDirs.length === 0) {
+    console.warn("⚠️ No public output directory found (.output/public or .vercel/output/static).");
+    return;
+  }
+
+  // Sanitize assets immediately before attempting prerender
+  sanitizeAssets(publicDirs);
+
+  // Ensure .htaccess exists in .output/public for Apache / cPanel rewrites
+  const htaccessSource = path.resolve(rootDir, "public/.htaccess");
+  if (fs.existsSync(htaccessSource)) {
+    for (const pubDir of publicDirs) {
+      const dest = path.join(pubDir, ".htaccess");
+      fs.copyFileSync(htaccessSource, dest);
+      console.log(`📋 Copied .htaccess -> ${path.relative(rootDir, dest)}`);
+    }
+  }
+
+  try {
+    const fetchHandler = await getFetchHandler();
+
+    for (const route of ROUTES) {
+      try {
+        const response = await fetchHandler(new Request(`http://localhost${route}`));
+        if (!response.ok) {
+          console.error(`❌ Route ${route} returned status ${response.status}`);
+          continue;
+        }
+        const html = await response.text();
+
+        for (const pubDir of publicDirs) {
+          let targetFilePath;
+          if (route === "/") {
+            targetFilePath = path.join(pubDir, "index.html");
+          } else {
+            const subDir = path.join(pubDir, route.replace(/^\//, ""));
+            fs.mkdirSync(subDir, { recursive: true });
+            targetFilePath = path.join(subDir, "index.html");
+          }
+
+          fs.writeFileSync(targetFilePath, html, "utf-8");
+          console.log(
+            `✅ Prerendered ${route} -> ${path.relative(rootDir, targetFilePath)} (${html.length} bytes)`,
+          );
+        }
+      } catch (err) {
+        console.error(`❌ Error rendering ${route}:`, err.message);
+      }
+    }
+  } catch (err) {
+    console.warn("⚠️ Prerender fetch handler skipped:", err.message);
+  }
+
+  // Run final sanitization pass
+  sanitizeAssets(publicDirs);
 
   console.log("🎉 Static HTML generation complete!");
 }
