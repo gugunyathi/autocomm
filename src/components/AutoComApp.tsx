@@ -26,6 +26,7 @@ import {
   BEL_AIR_USER_COORDS,
   checkIsAtBelAir,
   isFacingTarget,
+  formatCardinal,
   type SpatialCoordinates,
 } from "@/lib/spatial-sensors";
 import { type PasskeyUser, getCurrentUser, signOutPasskey } from "@/lib/passkey-auth";
@@ -36,13 +37,13 @@ import { CreateAgentModal } from "@/components/agent/CreateAgentModal";
 import { hasUserCreatedAgent, convertAgentIntentToWishlistItem } from "@/services/userAgentService";
 import type { UserPersonalAgent } from "@/types/userAgent";
 import { WebsiteSpecialsScannerModal } from "@/components/merchant/WebsiteSpecialsScannerModal";
-import { AgentPayLaterLoanCard } from "@/components/paypal/AgentPayLaterLoanCard";
 import {
   startPeriodicStoreCrawler,
   decorateStoresWithCrawledSpecials,
   getDeliveredAgentCards,
   type DeliveredSpecialCard,
 } from "@/services/storeCrawlerService";
+import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 
 // Lazy-load heavy sub-applications and dialogs so initial mesh loading is instantaneous
 const PitchDeckModal = lazy(() =>
@@ -121,22 +122,15 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
     return "landing";
   });
 
-  const handleNavigateView = useCallback(
-    (newView: "landing" | "mesh") => {
-      if (typeof window !== "undefined") {
-        const targetPath = newView === "mesh" ? "/mesh" : "/";
-        if (window.location.pathname !== targetPath) {
-          // Use full navigation to load the correct SSR route.
-          // pushState alone does not trigger TanStack Router to swap route components,
-          // so navigating from landing→mesh (or mesh→landing) must be a real navigation.
-          window.location.href = targetPath;
-          return; // page is navigating; don't update local state
-        }
+  const handleNavigateView = useCallback((newView: "landing" | "mesh") => {
+    setView(newView);
+    if (typeof window !== "undefined") {
+      const targetPath = newView === "mesh" ? "/mesh" : "/";
+      if (window.location.pathname !== targetPath) {
+        window.history.pushState(null, "", targetPath);
       }
-      setView(newView);
-    },
-    [],
-  );
+    }
+  }, []);
 
   // Listen to browser Back/Forward navigation
   useEffect(() => {
@@ -390,6 +384,38 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
   const [selectedStoreForProducts, setSelectedStoreForProducts] = useState<Store | null>(null);
   const [isProductsModalOpen, setIsProductsModalOpen] = useState(false);
 
+  // Compass & Mall HUD expansion states (expand on new login or app refresh, then auto-hide after 5s)
+  const [compassHudExpanded, setCompassHudExpanded] = useState<boolean>(true);
+  const [mallHudExpanded, setMallHudExpanded] = useState<boolean>(true);
+
+  // Auto-hide after 5 seconds on initial mount (app refresh)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCompassHudExpanded(false);
+      setMallHudExpanded(false);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // When user logs in (new login), expand for 5s then auto-hide
+  const prevUserRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (currentUser?.id && currentUser.id !== prevUserRef.current) {
+      prevUserRef.current = currentUser.id;
+      setCompassHudExpanded(true);
+      setMallHudExpanded(true);
+      const timer = setTimeout(() => {
+        setCompassHudExpanded(false);
+        setMallHudExpanded(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+    if (!currentUser) {
+      prevUserRef.current = null;
+    }
+    return undefined;
+  }, [currentUser]);
+
   // Switch active mall
   const handleSelectMall = useCallback((mallId: string) => {
     setActiveMallId(mallId);
@@ -604,6 +630,41 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
   const [expandedCardId, setExpandedCardId] = useState<string | null>("deal");
   // Deck alignment mode ('none' | 'right' | 'left')
   const [deckMode, setDeckMode] = useState<"none" | "right" | "left">("none");
+
+  // Top header floating buttons scroll state & refs (mobile scrollable with subtle arrows)
+  const topNavScrollRef = useRef<HTMLDivElement>(null);
+  const [canTopScrollLeft, setCanTopScrollLeft] = useState(false);
+  const [canTopScrollRight, setCanTopScrollRight] = useState(false);
+
+  const updateTopNavScrollIndicators = useCallback(() => {
+    const el = topNavScrollRef.current;
+    if (el) {
+      const { scrollLeft, scrollWidth, clientWidth } = el;
+      setCanTopScrollLeft(scrollLeft > 6);
+      setCanTopScrollRight(scrollLeft < scrollWidth - clientWidth - 6);
+    }
+  }, []);
+
+  const scrollTopNav = useCallback((direction: "left" | "right") => {
+    const el = topNavScrollRef.current;
+    if (el) {
+      const scrollAmount = direction === "left" ? -140 : 140;
+      el.scrollBy({ left: scrollAmount, behavior: "smooth" });
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate?.(10);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(updateTopNavScrollIndicators, 100);
+    const handleResize = () => updateTopNavScrollIndicators();
+    window.addEventListener("resize", handleResize);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [updateTopNavScrollIndicators]);
 
   // Bottom action buttons rotating carousel state, drag physics & momentum refs
   const bottomCarouselRef = useRef<HTMLDivElement>(null);
@@ -1608,16 +1669,16 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
     <main className="relative min-h-[100dvh] w-full overflow-hidden bg-background bg-aurora select-none flex flex-col justify-between">
       {/* Dynamic Header */}
       <header className="relative z-30 w-full px-3 pt-2.5 sm:px-6 sm:pt-4 md:px-10">
-        <div className="flex items-center justify-between gap-2 min-w-0 w-full">
-          {/* App Logo & Name (Clickable to return to Landing Overview) */}
+        <div className="flex items-center justify-between gap-1.5 sm:gap-3 min-w-0 w-full">
+          {/* App Logo & Name (Protected from being squashed, Clickable to return to Landing Overview) */}
           <button
             onClick={() => handleNavigateView("landing")}
-            className="flex items-center gap-2 min-w-0 text-left hover:opacity-80 transition-opacity cursor-pointer group"
+            className="flex items-center gap-1.5 sm:gap-2 shrink-0 text-left hover:opacity-80 transition-opacity cursor-pointer group z-20"
             title="Return to Home / Overview Landing Page"
             aria-label="Return to Home Overview"
           >
             <AutoComLogo size="sm" />
-            <div className="min-w-0">
+            <div className="hidden xs:block min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="relative flex h-1.5 w-1.5 shrink-0">
                   <span className="absolute inset-0 animate-ping rounded-full bg-primary opacity-75" />
@@ -1627,262 +1688,436 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
                   LIVE MESH
                 </p>
               </div>
-              <h1 className="text-sm sm:text-base md:text-lg font-bold tracking-tight text-foreground truncate leading-tight">
+              <h1 className="text-xs sm:text-base md:text-lg font-bold tracking-tight text-foreground truncate leading-tight">
                 Autocomm
               </h1>
             </div>
           </button>
 
-          {/* Quick Actions (User, Perimeter & Scan) */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* PayPal AI Hackathon Hub Badge */}
-            <button
-              onClick={() => {
-                setPaypalHackathonTab("ag-grid");
-                setPaypalHackathonOpen(true);
-              }}
-              className="glass flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 text-[9.5px] sm:text-[10.5px] font-mono text-amber-300 border-amber-500/40 bg-amber-500/10 hover:border-amber-400 hover:bg-amber-500/20 transition-all cursor-pointer shadow-[0_0_8px_rgba(245,158,11,0.25)]"
-              title="Open PayPal AI Hackathon Hub (AG Grid, Channel3, PayPal Sandbox, APIMatic)"
-            >
-              <span>🏆</span>
-              <span className="font-bold hidden xs:inline">PayPal Hub</span>
-              <span className="font-bold xs:hidden">Hub</span>
-            </button>
-
-            {/* Agent Name Sales (.agent) & x402 Marketplace */}
-            <button
-              onClick={() => setAgentNamesModalOpen(true)}
-              className="glass flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 text-[9.5px] sm:text-[10.5px] font-mono text-cyan-300 border-cyan-500/40 bg-cyan-500/10 hover:border-cyan-400 hover:bg-cyan-500/20 transition-all cursor-pointer shadow-[0_0_8px_rgba(6,182,212,0.25)]"
-              title="Agent Name Sales (.agent handles) & x402 Secondary Marketplace"
-            >
-              <span>🏷️</span>
-              <span className="font-bold hidden xs:inline">.agent Names</span>
-              <span className="font-bold xs:hidden">Names</span>
-            </button>
-
-            {/* BitChat Mesh Badge */}
-            <button
-              onClick={() => setBitchatOpen(true)}
-              className="glass flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 text-[9.5px] sm:text-[10.5px] font-mono text-teal-300 border-teal-500/40 bg-teal-500/10 hover:border-teal-400 hover:bg-teal-500/20 transition-all cursor-pointer shadow-[0_0_8px_rgba(20,184,166,0.25)]"
-              title="Open BitChat BLE Mesh & Nostr A2A Terminal"
-            >
-              <span className="relative flex h-1.5 w-1.5 shrink-0">
-                <span className="absolute inset-0 animate-ping rounded-full bg-teal-400 opacity-75" />
-                <span className="relative h-1.5 w-1.5 rounded-full bg-teal-400" />
-              </span>
-              <span>📶</span>
-              <span className="font-bold hidden xs:inline">BitChat</span>
-            </button>
-
-            {/* MongoDB Atlas Status Badge */}
-            <button
-              onClick={() => setDbStatusModalOpen(true)}
-              className="glass flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 text-[9.5px] sm:text-[10.5px] font-mono text-emerald-300 border-emerald-500/40 bg-emerald-500/10 hover:border-emerald-400 hover:bg-emerald-500/20 transition-all cursor-pointer shadow-[0_0_8px_rgba(16,185,129,0.25)]"
-              title="MongoDB Atlas Sovereign Database & Spatial Catalog Cluster"
-            >
-              <span className="relative flex h-1.5 w-1.5 shrink-0">
-                <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              </span>
-              <span>🍃</span>
-              <span className="font-bold hidden xs:inline">MongoDB</span>
-            </button>
-
-            {/* Quick Perimeter Badge */}
-            <button
-              onClick={() => setEnvModalOpen(true)}
-              className="glass flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 text-[9.5px] sm:text-[10.5px] font-mono text-white hover:border-primary transition-all cursor-pointer"
-              title="Configure Proximity Perimeter & Sensors"
-            >
-              <span>{outdoor ? "🌳" : "🏢"}</span>
-              <span className="text-primary font-bold">{activeProximityRadius.toFixed(0)}m</span>
-            </button>
-
-            {/* Passkey / User Badge */}
-            {currentUser ? (
-              <div className="flex items-center gap-1">
+          {/* Quick Actions (User, Perimeter & Scan) - Horizontal Scrollable on Mobile with Subtle Arrows (No Scrollbars) */}
+          <div className="relative flex-1 min-w-0 flex items-center overflow-hidden ml-1 sm:ml-2">
+            {/* Subtle Left Scroll Arrow with Fade Gradient */}
+            {canTopScrollLeft && (
+              <div className="absolute left-0 inset-y-0 z-20 flex items-center pr-1.5 bg-gradient-to-r from-background via-background/90 to-transparent pointer-events-auto">
                 <button
-                  onClick={() => openPasskeyModal("signin")}
-                  className="glass rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-mono text-primary flex items-center gap-1 hover:border-primary/60 transition-all cursor-pointer"
-                  title={`Passkey verified: ${currentUser.name}`}
+                  type="button"
+                  onClick={() => scrollTopNav("left")}
+                  className="h-6 w-6 rounded-full bg-slate-900/95 hover:bg-slate-800 text-slate-300 hover:text-white border border-primary/40 shadow-md flex items-center justify-center transition-all cursor-pointer active:scale-95 animate-in fade-in duration-150"
+                  title="Scroll buttons left"
+                  aria-label="Scroll buttons left"
                 >
-                  <span>🔑</span>
-                  <span className="truncate max-w-[50px] sm:max-w-[90px] font-semibold">
-                    {currentUser.name}
-                  </span>
-                </button>
-                <button
-                  onClick={() => {
-                    signOutPasskey();
-                    setCurrentUser(null);
-                  }}
-                  className="glass text-[10px] text-muted-foreground hover:text-foreground h-6 w-6 sm:h-7 sm:w-7 rounded-full flex items-center justify-center cursor-pointer"
-                  title="Sign out"
-                >
-                  ✕
+                  <ChevronLeft className="w-3.5 h-3.5 text-primary" />
                 </button>
               </div>
-            ) : (
-              <button
-                onClick={() => openPasskeyModal("signin")}
-                className="glass rounded-full px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-mono text-primary hover:border-primary transition-all cursor-pointer flex items-center gap-1"
-              >
-                <span>🔑</span>
-                <span className="hidden xs:inline">Sign In</span>
-              </button>
             )}
 
-            {/* Discover Scan Button */}
-            <button
-              onClick={() => trigger()}
-              className="glass flex items-center gap-1 rounded-full px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[10.5px] sm:text-xs font-mono text-accent border-accent/40 bg-accent/10 hover:border-accent shadow-amber transition-all active:scale-95 shrink-0 cursor-pointer font-bold"
-              aria-label="Scan & Discover Deal"
-              title="Discover & Scan Live Deals"
+            {/* Scrollable Floating Buttons Strip */}
+            <div
+              ref={topNavScrollRef}
+              onScroll={updateTopNavScrollIndicators}
+              className="flex-1 flex items-center justify-start sm:justify-end gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scrollbar-none py-1 px-1 touch-pan-x scroll-smooth overscroll-contain"
+              style={{
+                WebkitOverflowScrolling: "touch",
+                scrollbarWidth: "none",
+                msOverflowStyle: "none",
+              }}
             >
-              <span>⚡</span>
-              <span>Scan</span>
-            </button>
+              {/* PayPal AI Hackathon Hub Badge */}
+              <button
+                onClick={() => {
+                  setPaypalHackathonTab("ag-grid");
+                  setPaypalHackathonOpen(true);
+                }}
+                className="glass flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 text-[9.5px] sm:text-[10.5px] font-mono text-amber-300 border-amber-500/40 bg-amber-500/10 hover:border-amber-400 hover:bg-amber-500/20 transition-all cursor-pointer shadow-[0_0_8px_rgba(245,158,11,0.25)] shrink-0 whitespace-nowrap"
+                title="Open PayPal AI Hackathon Hub (AG Grid, Channel3, PayPal Sandbox, APIMatic)"
+              >
+                <span>🏆</span>
+                <span className="font-bold hidden xs:inline">PayPal Hub</span>
+                <span className="font-bold xs:hidden">Hub</span>
+              </button>
+
+              {/* Agent Name Sales (.agent) & x402 Marketplace */}
+              <button
+                onClick={() => setAgentNamesModalOpen(true)}
+                className="glass flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 text-[9.5px] sm:text-[10.5px] font-mono text-cyan-300 border-cyan-500/40 bg-cyan-500/10 hover:border-cyan-400 hover:bg-cyan-500/20 transition-all cursor-pointer shadow-[0_0_8px_rgba(6,182,212,0.25)] shrink-0 whitespace-nowrap"
+                title="Agent Name Sales (.agent handles) & x402 Secondary Marketplace"
+              >
+                <span>🏷️</span>
+                <span className="font-bold hidden xs:inline">.agent Names</span>
+                <span className="font-bold xs:hidden">Names</span>
+              </button>
+
+              {/* BitChat Mesh Badge */}
+              <button
+                onClick={() => setBitchatOpen(true)}
+                className="glass flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 text-[9.5px] sm:text-[10.5px] font-mono text-teal-300 border-teal-500/40 bg-teal-500/10 hover:border-teal-400 hover:bg-teal-500/20 transition-all cursor-pointer shadow-[0_0_8px_rgba(20,184,166,0.25)] shrink-0 whitespace-nowrap"
+                title="Open BitChat BLE Mesh & Nostr A2A Terminal"
+              >
+                <span className="relative flex h-1.5 w-1.5 shrink-0">
+                  <span className="absolute inset-0 animate-ping rounded-full bg-teal-400 opacity-75" />
+                  <span className="relative h-1.5 w-1.5 rounded-full bg-teal-400" />
+                </span>
+                <span>📶</span>
+                <span className="font-bold hidden xs:inline">BitChat</span>
+              </button>
+
+              {/* MongoDB Atlas Status Badge */}
+              <button
+                onClick={() => setDbStatusModalOpen(true)}
+                className="glass flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 text-[9.5px] sm:text-[10.5px] font-mono text-emerald-300 border-emerald-500/40 bg-emerald-500/10 hover:border-emerald-400 hover:bg-emerald-500/20 transition-all cursor-pointer shadow-[0_0_8px_rgba(16,185,129,0.25)] shrink-0 whitespace-nowrap"
+                title="MongoDB Atlas Sovereign Database & Spatial Catalog Cluster"
+              >
+                <span className="relative flex h-1.5 w-1.5 shrink-0">
+                  <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                </span>
+                <span>🍃</span>
+                <span className="font-bold hidden xs:inline">MongoDB</span>
+              </button>
+
+              {/* Quick Perimeter Badge */}
+              <button
+                onClick={() => setEnvModalOpen(true)}
+                className="glass flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 text-[9.5px] sm:text-[10.5px] font-mono text-white hover:border-primary transition-all cursor-pointer shrink-0 whitespace-nowrap"
+                title="Configure Proximity Perimeter & Sensors"
+              >
+                <span>{outdoor ? "🌳" : "🏢"}</span>
+                <span className="text-primary font-bold">{activeProximityRadius.toFixed(0)}m</span>
+              </button>
+
+              {/* Passkey / User Badge */}
+              {currentUser ? (
+                <div className="flex items-center gap-1 shrink-0 whitespace-nowrap">
+                  <button
+                    onClick={() => openPasskeyModal("signin")}
+                    className="glass rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-mono text-primary flex items-center gap-1 hover:border-primary/60 transition-all cursor-pointer shrink-0"
+                    title={`Passkey verified: ${currentUser.name}`}
+                  >
+                    <span>🔑</span>
+                    <span className="truncate max-w-[50px] sm:max-w-[90px] font-semibold">
+                      {currentUser.name}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      signOutPasskey();
+                      setCurrentUser(null);
+                    }}
+                    className="glass text-[10px] text-muted-foreground hover:text-foreground h-6 w-6 sm:h-7 sm:w-7 rounded-full flex items-center justify-center cursor-pointer shrink-0"
+                    title="Sign out"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => openPasskeyModal("signin")}
+                  className="glass rounded-full px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-mono text-primary hover:border-primary transition-all cursor-pointer flex items-center gap-1 shrink-0 whitespace-nowrap"
+                >
+                  <span>🔑</span>
+                  <span className="hidden xs:inline">Sign In</span>
+                </button>
+              )}
+
+              {/* Discover Scan Button */}
+              <button
+                onClick={() => trigger()}
+                className="glass flex items-center gap-1 rounded-full px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[10.5px] sm:text-xs font-mono text-accent border-accent/40 bg-accent/10 hover:border-accent shadow-amber transition-all active:scale-95 shrink-0 cursor-pointer font-bold whitespace-nowrap"
+                aria-label="Scan & Discover Deal"
+                title="Discover & Scan Live Deals"
+              >
+                <span>⚡</span>
+                <span>Scan</span>
+              </button>
+            </div>
+
+            {/* Subtle Right Scroll Arrow with Fade Gradient */}
+            {canTopScrollRight && (
+              <div className="absolute right-0 inset-y-0 z-20 flex items-center pl-1.5 bg-gradient-to-l from-background via-background/90 to-transparent pointer-events-auto">
+                <button
+                  type="button"
+                  onClick={() => scrollTopNav("right")}
+                  className="h-6 w-6 rounded-full bg-slate-900/95 hover:bg-slate-800 text-slate-300 hover:text-white border border-primary/40 shadow-md flex items-center justify-center transition-all cursor-pointer active:scale-95 animate-in fade-in duration-150"
+                  title="Scroll buttons right"
+                  aria-label="Scroll buttons right"
+                >
+                  <ChevronRight className="w-3.5 h-3.5 text-primary" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Top-Center Spatial Compass & Direction Indicator HUD */}
-      <div className="relative z-30 w-full max-w-lg sm:max-w-xl mx-auto px-3 sm:px-4 mt-1.5 pointer-events-auto">
-        <SpatialCompassHUD
-          heading={heading}
-          facingStore={facingStore}
-          outdoor={outdoor}
-          isLiveSensor={isLiveSensor}
-          userCoords={userCoords}
-          onTurnLeft={() => turnHeadingBy(-30)}
-          onTurnRight={() => turnHeadingBy(30)}
-          onSetHeading={setManualHeading}
-          onRequestPermission={requestPermission}
-          permissionStatus={permissionStatus}
-        />
-      </div>
-
-      {/* 5-Mall Shopping Centre Location & Active Geofence HUD Strip */}
-      <div className="relative z-30 w-full max-w-lg sm:max-w-xl mx-auto px-3 sm:px-4 mt-1.5 pointer-events-auto">
-        <div className="glass rounded-2xl px-3 py-2 border border-primary/50 bg-[#090d19]/95 shadow-xl backdrop-blur-2xl flex flex-col gap-2 text-xs">
-          {/* Main Mall Header Row */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="relative flex h-2.5 w-2.5 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-              </span>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5 font-bold text-white text-xs leading-tight truncate">
-                  <span className="text-base">{currentMall.icon}</span>
-                  <span className="truncate">{currentMall.name}</span>
-                  <span className="rounded-full bg-emerald-500/20 text-emerald-400 font-mono text-[8.5px] px-1.5 py-0.2 border border-emerald-500/40 shrink-0 font-extrabold">
-                    {isAtBelAir ? "IN MALL GEOFENCE" : "NEARBY"}
+      {/* HUD Region: Compass & Mall Location Panels (Collapsible / Expandable with Side-by-Side Horizontal Alignment when Hidden) */}
+      {!compassHudExpanded && !mallHudExpanded ? (
+        /* BOTH HIDDEN: Side-by-Side Horizontal Alignment Pills */
+        <div className="relative z-30 w-full max-w-lg sm:max-w-xl mx-auto px-2 sm:px-4 mt-1.5 pointer-events-auto animate-in fade-in duration-200">
+          <div className="flex items-center justify-center gap-1.5 xs:gap-2">
+            {/* Left Pill: Compass */}
+            <button
+              onClick={() => setCompassHudExpanded(true)}
+              className="glass flex-1 flex items-center justify-between gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full border border-primary/40 bg-[#090d19]/90 hover:bg-[#090d19] hover:border-primary text-xs text-white shadow-lg transition-all cursor-pointer active:scale-95 group min-w-0"
+              title="Click arrow to expand Compass & Sensor HUD"
+              aria-label="Expand Compass HUD"
+            >
+              <div className="flex items-center gap-1.5 text-[11px] font-mono min-w-0 truncate">
+                <span className="text-xs shrink-0">🧭</span>
+                <span className="font-extrabold text-primary shrink-0">
+                  {formatCardinal(heading)}
+                </span>
+                <span className="font-semibold text-white/90 shrink-0">{heading}°</span>
+                {facingStore && (
+                  <span className="text-accent font-bold truncate text-[10px] hidden xs:inline">
+                    · {facingStore.name}
                   </span>
-                </div>
-                <div className="font-mono text-[9px] text-slate-300 flex items-center gap-1.5 mt-0.5 truncate">
-                  <span>
-                    {currentMall.latitude.toFixed(4)}, {currentMall.longitude.toFixed(4)}
-                  </span>
-                  <span>·</span>
-                  <a
-                    href={currentMall.googleMapsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline font-semibold flex items-center gap-0.5"
-                    title={`Open ${currentMall.name} in Google Maps`}
-                  >
-                    <span>Google Maps</span>
-                    <span className="text-[8px]">↗</span>
-                  </a>
-                  <span>·</span>
-                  <span className="text-accent font-bold">8 Stores · 64 Products</span>
-                </div>
+                )}
               </div>
-            </div>
-
-            <div className="flex items-center gap-1.5 shrink-0">
-              <button
-                onClick={() => {
-                  const randStore =
-                    currentMall.stores[Math.floor(Math.random() * currentMall.stores.length)];
-                  if (randStore) trigger(randStore);
-                }}
-                className="rounded-xl bg-accent text-accent-foreground px-2.5 py-1 text-[10px] font-mono font-extrabold shadow-amber hover:bg-accent/90 active:scale-95 transition-all cursor-pointer flex items-center gap-1"
-                title={`Pop up live sale offer cards from ${currentMall.name} to Buy or Park`}
-              >
-                <span>⚡ Pop-Up Match</span>
-              </button>
-              <button
-                onClick={() => {
-                  const next = !isAtBelAir;
-                  setIsAtBelAir(next);
-                  if (next)
-                    setUserCoords({
-                      latitude: currentMall.latitude,
-                      longitude: currentMall.longitude,
-                      accuracy: 3.5,
-                    });
-                }}
-                className={`rounded-xl px-2 py-1 text-[10px] font-mono font-bold transition-all cursor-pointer border ${
-                  isAtBelAir
-                    ? "bg-primary/20 text-primary border-primary/40 shadow-teal"
-                    : "bg-white/10 text-white/80 border-white/15 hover:bg-white/20"
-                }`}
-                title="Toggle Shopping Centre geofence mode"
-              >
-                {isAtBelAir ? "✓ Mall Active" : "GPS"}
-              </button>
-            </div>
-          </div>
-
-          {/* Quick Mall Switcher Selector Pills */}
-          <div className="flex items-center gap-1 overflow-x-auto pt-1 border-t border-white/10 scrollbar-none">
-            <span className="text-[9px] font-mono text-slate-400 shrink-0 uppercase tracking-wider mr-1">
-              Malls:
-            </span>
-            {ALL_MALLS.map((m) => {
-              const isActive = m.id === activeMallId;
-              return (
-                <button
-                  key={m.id}
-                  onClick={() => handleSelectMall(m.id)}
-                  className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9.5px] font-mono whitespace-nowrap transition-all cursor-pointer border shrink-0 ${
-                    isActive
-                      ? "bg-primary/25 border-primary text-white font-extrabold shadow-teal scale-[1.02]"
-                      : "bg-white/5 border-white/10 text-slate-300 hover:bg-white/15 hover:text-white"
-                  }`}
-                  title={`Switch to ${m.name} (${m.subtitle})`}
-                >
-                  <span>{m.icon}</span>
-                  <span>{m.shortName}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Live Store Website & Billboard Specials Crawler Banner */}
-          <div className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-white/10 text-[9.5px] font-mono">
-            <button
-              onClick={() => setCrawlerModalOpen(true)}
-              className="flex items-center gap-1.5 text-cyan-300 hover:text-white transition-colors cursor-pointer truncate text-left"
-              title="Open Store Website & Billboard Specials Crawler"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shrink-0" />
-              <span className="font-bold text-white">🌐 Store Specials:</span>
-              <span className="truncate text-red-300 font-semibold">
-                Mr Price 50% Black Friday (Men, Women &amp; Kids)
-              </span>
+              <div className="flex items-center gap-0.5 text-[10px] font-mono text-primary group-hover:text-white font-bold ml-1 pl-1.5 border-l border-white/10 shrink-0">
+                <span className="hidden xxs:inline">Show</span>
+                <ChevronDown className="w-3.5 h-3.5 group-hover:translate-y-0.5 transition-transform" />
+              </div>
             </button>
+
+            {/* Right Pill: Mall & Specials Radar */}
             <button
-              onClick={() => setCrawlerModalOpen(true)}
-              className="px-2 py-0.5 rounded-md bg-red-600/30 hover:bg-red-600/50 text-red-200 border border-red-500/40 text-[9px] font-bold shrink-0 transition-all cursor-pointer"
+              onClick={() => setMallHudExpanded(true)}
+              className="glass flex-1 flex items-center justify-between gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full border border-primary/40 bg-[#090d19]/90 hover:bg-[#090d19] hover:border-primary text-xs text-white shadow-lg transition-all cursor-pointer active:scale-95 group min-w-0"
+              title="Click arrow to expand Mall & Specials Radar HUD"
+              aria-label="Expand Mall & Specials Radar HUD"
             >
-              Specials Radar ↗
+              <div className="flex items-center gap-1.5 text-[11px] font-mono min-w-0 truncate">
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+                <span className="font-bold text-emerald-300 truncate">
+                  {currentMall.icon} {currentMall.shortName}
+                </span>
+              </div>
+              <div className="flex items-center gap-0.5 text-[10px] font-mono text-primary group-hover:text-white font-bold ml-1 pl-1.5 border-l border-white/10 shrink-0">
+                <span className="hidden xxs:inline">Show</span>
+                <ChevronDown className="w-3.5 h-3.5 group-hover:translate-y-0.5 transition-transform" />
+              </div>
             </button>
           </div>
         </div>
-      </div>
+      ) : (
+        /* ONE OR BOTH EXPANDED */
+        <div className="relative z-30 w-full max-w-lg sm:max-w-xl mx-auto px-3 sm:px-4 mt-1.5 pointer-events-auto space-y-1.5 transition-all duration-300">
+          {/* Compass HUD: Full when expanded, Pill when collapsed */}
+          {compassHudExpanded ? (
+            <div className="animate-in slide-in-from-top-2 fade-in duration-250">
+              <SpatialCompassHUD
+                heading={heading}
+                facingStore={facingStore}
+                outdoor={outdoor}
+                isLiveSensor={isLiveSensor}
+                userCoords={userCoords}
+                onTurnLeft={() => turnHeadingBy(-30)}
+                onTurnRight={() => turnHeadingBy(30)}
+                onSetHeading={setManualHeading}
+                onRequestPermission={requestPermission}
+                permissionStatus={permissionStatus}
+                onCollapse={() => setCompassHudExpanded(false)}
+              />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center animate-in fade-in duration-200">
+              <button
+                onClick={() => setCompassHudExpanded(true)}
+                className="glass flex items-center justify-between gap-2 px-3 py-1.5 rounded-full border border-primary/40 bg-[#090d19]/90 hover:bg-[#090d19] hover:border-primary text-xs text-white shadow-lg transition-all cursor-pointer active:scale-95 group"
+                title="Click arrow to expand Compass HUD"
+                aria-label="Expand Compass HUD"
+              >
+                <div className="flex items-center gap-1.5 text-[11px] font-mono">
+                  <span className="text-xs">🧭</span>
+                  <span className="font-extrabold text-primary">{formatCardinal(heading)}</span>
+                  <span className="font-semibold text-white/90">{heading}°</span>
+                  {facingStore && (
+                    <span className="text-accent font-bold truncate text-[10px]">
+                      · 🎯 {facingStore.name}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 text-[10px] font-mono text-primary group-hover:text-white font-bold ml-1 pl-1.5 border-l border-white/10">
+                  <span>Show</span>
+                  <ChevronDown className="w-3.5 h-3.5 group-hover:translate-y-0.5 transition-transform" />
+                </div>
+              </button>
+            </div>
+          )}
+
+          {/* Mall & Specials Radar HUD: Full when expanded, Pill when collapsed */}
+          {mallHudExpanded ? (
+            <div className="glass rounded-2xl px-3 py-2 border border-primary/50 bg-[#090d19]/95 shadow-xl backdrop-blur-2xl flex flex-col gap-2 text-xs animate-in slide-in-from-top-2 fade-in duration-300">
+              {/* Main Mall Header Row */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="relative flex h-2.5 w-2.5 shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 font-bold text-white text-xs leading-tight truncate">
+                      <span className="text-base">{currentMall.icon}</span>
+                      <span className="truncate">{currentMall.name}</span>
+                      <span className="rounded-full bg-emerald-500/20 text-emerald-400 font-mono text-[8.5px] px-1.5 py-0.2 border border-emerald-500/40 shrink-0 font-extrabold">
+                        {isAtBelAir ? "IN MALL GEOFENCE" : "NEARBY"}
+                      </span>
+                    </div>
+                    <div className="font-mono text-[9px] text-slate-300 flex items-center gap-1.5 mt-0.5 truncate">
+                      <span>
+                        {currentMall.latitude.toFixed(4)}, {currentMall.longitude.toFixed(4)}
+                      </span>
+                      <span>·</span>
+                      <a
+                        href={currentMall.googleMapsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline font-semibold flex items-center gap-0.5"
+                        title={`Open ${currentMall.name} in Google Maps`}
+                      >
+                        <span>Google Maps</span>
+                        <span className="text-[8px]">↗</span>
+                      </a>
+                      <span>·</span>
+                      <span className="text-accent font-bold">8 Stores · 64 Products</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    onClick={() => {
+                      const randStore =
+                        currentMall.stores[Math.floor(Math.random() * currentMall.stores.length)];
+                      if (randStore) trigger(randStore);
+                    }}
+                    className="rounded-xl bg-accent text-accent-foreground px-2.5 py-1 text-[10px] font-mono font-extrabold shadow-amber hover:bg-accent/90 active:scale-95 transition-all cursor-pointer flex items-center gap-1"
+                    title={`Pop up live sale offer cards from ${currentMall.name} to Buy or Park`}
+                  >
+                    <span>⚡ Pop-Up Match</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const next = !isAtBelAir;
+                      setIsAtBelAir(next);
+                      if (next)
+                        setUserCoords({
+                          latitude: currentMall.latitude,
+                          longitude: currentMall.longitude,
+                          accuracy: 3.5,
+                        });
+                    }}
+                    className={`rounded-xl px-2 py-1 text-[10px] font-mono font-bold transition-all cursor-pointer border ${
+                      isAtBelAir
+                        ? "bg-primary/20 text-primary border-primary/40 shadow-teal"
+                        : "bg-white/10 text-white/80 border-white/15 hover:bg-white/20"
+                    }`}
+                    title="Toggle Shopping Centre geofence mode"
+                  >
+                    {isAtBelAir ? "✓ Mall Active" : "GPS"}
+                  </button>
+                  {/* Arrow to click and collapse upwards */}
+                  <button
+                    onClick={() => setMallHudExpanded(false)}
+                    className="h-7 w-7 rounded-xl bg-white/10 hover:bg-primary/30 text-slate-300 hover:text-white border border-white/15 hover:border-primary/50 flex items-center justify-center transition-all cursor-pointer active:scale-95 shrink-0"
+                    title="Collapse Mall HUD upwards"
+                    aria-label="Collapse Mall HUD upwards"
+                  >
+                    <ChevronUp className="w-4 h-4 text-primary" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Mall Switcher Selector Pills */}
+              <div className="flex items-center gap-1 overflow-x-auto pt-1 border-t border-white/10 scrollbar-none">
+                <span className="text-[9px] font-mono text-slate-400 shrink-0 uppercase tracking-wider mr-1">
+                  Malls:
+                </span>
+                {ALL_MALLS.map((m) => {
+                  const isActive = m.id === activeMallId;
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => handleSelectMall(m.id)}
+                      className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9.5px] font-mono whitespace-nowrap transition-all cursor-pointer border shrink-0 ${
+                        isActive
+                          ? "bg-primary/25 border-primary text-white font-extrabold shadow-teal scale-[1.02]"
+                          : "bg-white/5 border-white/10 text-slate-300 hover:bg-white/15 hover:text-white"
+                      }`}
+                      title={`Switch to ${m.name} (${m.subtitle})`}
+                    >
+                      <span>{m.icon}</span>
+                      <span>{m.shortName}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Live Store Website & Billboard Specials Crawler Banner */}
+              <div className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-white/10 text-[9.5px] font-mono">
+                <button
+                  onClick={() => setCrawlerModalOpen(true)}
+                  className="flex items-center gap-1.5 text-cyan-300 hover:text-white transition-colors cursor-pointer truncate text-left"
+                  title="Open Store Website & Billboard Specials Crawler"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shrink-0" />
+                  <span className="font-bold text-white">🌐 Store Specials:</span>
+                  <span className="truncate text-red-300 font-semibold">
+                    Mr Price 50% Black Friday (Men, Women &amp; Kids)
+                  </span>
+                </button>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    onClick={() => setCrawlerModalOpen(true)}
+                    className="px-2 py-0.5 rounded-md bg-red-600/30 hover:bg-red-600/50 text-red-200 border border-red-500/40 text-[9px] font-bold shrink-0 transition-all cursor-pointer"
+                  >
+                    Specials Radar ↗
+                  </button>
+                  {/* Secondary bottom collapse arrow */}
+                  <button
+                    onClick={() => setMallHudExpanded(false)}
+                    className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                    title="Collapse Mall HUD upwards"
+                    aria-label="Collapse Mall HUD upwards"
+                  >
+                    <ChevronUp className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center animate-in fade-in duration-200">
+              <button
+                onClick={() => setMallHudExpanded(true)}
+                className="glass flex items-center justify-between gap-2 px-3 py-1.5 rounded-full border border-primary/40 bg-[#090d19]/90 hover:bg-[#090d19] hover:border-primary text-xs text-white shadow-lg transition-all cursor-pointer active:scale-95 group"
+                title="Click arrow to expand Mall & Specials Radar HUD"
+                aria-label="Expand Mall & Specials Radar HUD"
+              >
+                <div className="flex items-center gap-1.5 text-[11px] font-mono">
+                  <span className="relative flex h-2 w-2 shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                  </span>
+                  <span className="font-bold text-emerald-300">
+                    {currentMall.icon} {currentMall.shortName}
+                  </span>
+                  <span className="text-slate-500 text-[10px]">·</span>
+                  <span className="text-red-300 font-semibold text-[10px] font-mono hidden xs:inline truncate max-w-[150px]">
+                    🌐 Mr Price 50%
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 text-[10px] font-mono text-primary group-hover:text-white font-bold ml-1 pl-1.5 border-l border-white/10">
+                  <span>Show</span>
+                  <ChevronDown className="w-3.5 h-3.5 group-hover:translate-y-0.5 transition-transform" />
+                </div>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Floating Agent Delivered Special Card Toast Alert */}
       {activeSpecialCardAlert && (
@@ -3160,17 +3395,6 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
                       <span className="font-mono text-[9px]">{vibrateEnabled ? "ON" : "OFF"}</span>
                     </button>
                   </div>
-                </div>
-
-                {/* PayPal Pay Later Credit Line (6-Month Autonomous Micro-Credit Plan) */}
-                <div className="mt-4">
-                  <AgentPayLaterLoanCard
-                    ownerAddress={currentUser?.id || "0x49B0E1F8C2224424B10a82B93E94d1F3238385a4"}
-                    agentId="bot_buyer_muse_za"
-                    agentName="Muse-ZA (Autonomous Buyer)"
-                    ownerName={currentUser?.displayName || currentUser?.name || "Gugu"}
-                    showCreateSimulator={true}
-                  />
                 </div>
               </div>
 

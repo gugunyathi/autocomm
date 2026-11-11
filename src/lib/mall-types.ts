@@ -1,5 +1,3 @@
-import type { Store } from "./acn-data";
-
 export interface DepartmentLinks {
   mens?: string;
   womens?: string;

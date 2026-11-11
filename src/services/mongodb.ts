@@ -41,10 +41,9 @@ export async function getMongoClient(): Promise<MongoClient | null> {
     dbInstance = null;
     isInitialized = false;
 
-    const isTest = typeof process !== "undefined" && Boolean(process.env.VITEST || process.env.NODE_ENV === "test");
     client = new MongoClient(currentUri, {
       maxPoolSize: 10,
-      serverSelectionTimeoutMS: isTest ? 500 : 5000,
+      serverSelectionTimeoutMS: 5000,
     });
 
     clientPromise = client
@@ -495,134 +494,5 @@ export async function getMongoHealth(): Promise<{
       database: process.env.MONGODB_DB_NAME || "autocom_db",
       uriConfigured: true,
     };
-  }
-}
-
-/**
- * Persists crawled store website specials to MongoDB
- */
-export async function persistCrawledSpecialsToDb(
-  specials: Record<string, unknown>,
-): Promise<boolean> {
-  const db = await getDb();
-  if (!db) return false;
-  try {
-    const col = db.collection("crawled_specials");
-    const ops = Object.entries(specials).map(([storeId, promo]) => ({
-      updateOne: {
-        filter: { storeId },
-        update: { $set: { storeId, promo, updatedAt: Date.now() } },
-        upsert: true,
-      },
-    }));
-    if (ops.length > 0) {
-      await col.bulkWrite(ops);
-    }
-    return true;
-  } catch (err) {
-    console.error("[MongoDB] Failed to persist crawled specials:", err);
-    return false;
-  }
-}
-
-/**
- * Retrieves crawled store website specials from MongoDB
- */
-export async function getCrawledSpecialsFromDb(): Promise<Record<string, unknown>> {
-  const db = await getDb();
-  if (!db) return {};
-  try {
-    const docs = await db.collection("crawled_specials").find({}).toArray();
-    const result: Record<string, unknown> = {};
-    for (const doc of docs) {
-      if (doc["storeId"] && doc["promo"]) {
-        result[String(doc["storeId"])] = doc["promo"];
-      }
-    }
-    return result;
-  } catch (err) {
-    console.error("[MongoDB] Failed to fetch crawled specials:", err);
-    return {};
-  }
-}
-
-/**
- * Persists delivered promo card for shopping agent to MongoDB
- */
-export async function persistDeliveredCardToDb(card: Record<string, unknown>): Promise<boolean> {
-  const db = await getDb();
-  if (!db) return false;
-  try {
-    await db
-      .collection("delivered_agent_cards")
-      .updateOne({ id: card["id"] }, { $set: card }, { upsert: true });
-    return true;
-  } catch (err) {
-    console.error("[MongoDB] Failed to persist delivered card:", err);
-    return false;
-  }
-}
-
-/**
- * Retrieves delivered promo cards from MongoDB
- */
-export async function getDeliveredCardsFromDb(agentId?: string): Promise<Record<string, unknown>[]> {
-  const db = await getDb();
-  if (!db) return [];
-  try {
-    const query = agentId ? { deliveredToAgent: agentId } : {};
-    return await db
-      .collection("delivered_agent_cards")
-      .find(query)
-      .sort({ deliveredAt: -1 })
-      .limit(100)
-      .toArray();
-  } catch (err) {
-    console.error("[MongoDB] Failed to fetch delivered cards:", err);
-    return [];
-  }
-}
-
-/**
- * Persists a PayPal Pay Later loan to MongoDB
- */
-export async function persistPayLaterLoanToDb(loan: Record<string, unknown>): Promise<boolean> {
-  const db = await getDb();
-  if (!db) return false;
-  try {
-    await db
-      .collection("pay_later_loans")
-      .updateOne({ id: loan["id"] }, { $set: loan }, { upsert: true });
-    return true;
-  } catch (err) {
-    console.error("[MongoDB] Failed to persist pay later loan:", err);
-    return false;
-  }
-}
-
-/**
- * Retrieves Pay Later loans from MongoDB
- */
-export async function getPayLaterLoansFromDb(ownerAddress?: string): Promise<Record<string, unknown>[]> {
-  const db = await getDb();
-  if (!db) return [];
-  try {
-    const query: Record<string, unknown> = {};
-    if (ownerAddress) {
-      query["$or"] = [
-        { ownerAddress: { $regex: new RegExp(ownerAddress, "i") } },
-        { agentId: { $regex: new RegExp(ownerAddress, "i") } },
-        { ownerName: { $regex: new RegExp(ownerAddress, "i") } },
-      ];
-    }
-    return await db
-      .collection("pay_later_loans")
-      .find(query)
-      .sort({ createdAt: -1 })
-      .limit(100)
-      .toArray();
-  } catch (err) {
-    console.error("[MongoDB] Failed to fetch pay later loans:", err);
-    return [];
   }
 }

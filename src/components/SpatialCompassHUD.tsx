@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { formatCardinal, type SpatialCoordinates } from "@/lib/spatial-sensors";
 import type { Store } from "@/lib/acn-data";
+import { ChevronUp } from "lucide-react";
 
 interface SpatialCompassHUDProps {
   heading: number;
@@ -13,6 +14,7 @@ interface SpatialCompassHUDProps {
   onSetHeading: (deg: number) => void;
   onRequestPermission: () => Promise<boolean>;
   permissionStatus: string;
+  onCollapse?: () => void;
 }
 
 export const SpatialCompassHUD = React.memo(function SpatialCompassHUD({
@@ -26,6 +28,7 @@ export const SpatialCompassHUD = React.memo(function SpatialCompassHUD({
   onSetHeading,
   onRequestPermission,
   permissionStatus,
+  onCollapse,
 }: SpatialCompassHUDProps) {
   const [showControls, setShowControls] = useState<boolean>(false);
 
@@ -116,6 +119,16 @@ export const SpatialCompassHUD = React.memo(function SpatialCompassHUD({
               >
                 ⚙
               </button>
+              {onCollapse && (
+                <button
+                  onClick={onCollapse}
+                  className="h-6 sm:h-7 w-6 sm:w-7 rounded-lg sm:rounded-xl bg-white/10 hover:bg-primary/30 text-slate-300 hover:text-white border border-white/15 hover:border-primary/50 flex items-center justify-center transition-all cursor-pointer active:scale-95 shrink-0"
+                  title="Collapse Compass HUD upwards"
+                  aria-label="Collapse Compass HUD upwards"
+                >
+                  <ChevronUp className="w-4 h-4 text-primary" />
+                </button>
+              )}
             </div>
           </div>
         </div>

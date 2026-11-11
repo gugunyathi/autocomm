@@ -758,9 +758,6 @@ export async function handleApiRoute(request: Request, inputUrl?: URL): Promise<
         principalZAR,
       });
 
-      const { persistPayLaterLoanToDb } = await import("./mongodb");
-      persistPayLaterLoanToDb(result.loan as unknown as Record<string, unknown>).catch(() => false);
-
       return jsonResponse(
         {
           success: true,
@@ -788,25 +785,9 @@ export async function handleApiRoute(request: Request, inputUrl?: URL): Promise<
     const owner =
       url.searchParams.get("ownerAddress") || url.searchParams.get("agentId") || undefined;
     const loans = getStoredPayLaterLoans(owner);
-    let dbLoans: Record<string, unknown>[] = [];
-    try {
-      const { getPayLaterLoansFromDb } = await import("./mongodb");
-      dbLoans = await Promise.race([
-        getPayLaterLoansFromDb(owner),
-        new Promise<Record<string, unknown>[]>((res) => setTimeout(() => res([]), 600)),
-      ]);
-    } catch {
-      dbLoans = [];
-    }
-    const loanMap = new Map();
-    for (const l of [...loans, ...dbLoans]) {
-      if (l && l["id"]) loanMap.set(l["id"], l);
-    }
-    const allLoans = Array.from(loanMap.values());
-
     return jsonResponse({
-      count: allLoans.length,
-      loans: allLoans,
+      count: loans.length,
+      loans,
       tenureRule: "6-Month Fixed Maturity (Minimum and Maximum by Default)",
       platformFeePercent: 0.5,
     });
@@ -852,87 +833,6 @@ export async function handleApiRoute(request: Request, inputUrl?: URL): Promise<
       return jsonResponse({ success, id: offer.id, timestamp: new Date().toISOString() }, 201);
     } catch {
       return jsonResponse({ error: "Failed to park offer in MongoDB" }, 400);
-    }
-  }
-
-  // 7d-1. Store Website Specials: GET /api/crawler/specials
-  if (pathname === "/api/crawler/specials" && method === "GET") {
-    const { getStoredCrawledSpecials } = await import("./storeCrawlerService");
-    const { getCrawledSpecialsFromDb } = await import("./mongodb");
-    const localSpecials = getStoredCrawledSpecials();
-    const dbSpecials = await getCrawledSpecialsFromDb().catch(() => ({}));
-    const merged = { ...localSpecials, ...dbSpecials };
-    return jsonResponse({
-      count: Object.keys(merged).length,
-      specials: merged,
-      timestamp: Date.now(),
-    });
-  }
-
-  // 7d-2. Delivered Agent Cards: GET /api/crawler/delivered-cards?agentId=...
-  if (pathname === "/api/crawler/delivered-cards" && method === "GET") {
-    const agentId = url.searchParams.get("agentId") || undefined;
-    const { getDeliveredAgentCards } = await import("./storeCrawlerService");
-    const { getDeliveredCardsFromDb } = await import("./mongodb");
-    const localCards = getDeliveredAgentCards();
-    const dbCards = await getDeliveredCardsFromDb(agentId).catch(() => []);
-    const cardMap = new Map();
-    for (const c of [...localCards, ...dbCards]) {
-      if (c && c["id"]) cardMap.set(c["id"], c);
-    }
-    const cards = Array.from(cardMap.values());
-    return jsonResponse({
-      count: cards.length,
-      cards,
-      timestamp: Date.now(),
-    });
-  }
-
-  // 7d-3. Trigger Store & Billboard Web Crawl: POST /api/crawler/trigger
-  if (pathname === "/api/crawler/trigger" && method === "POST") {
-    const { runStoreCrawlerCheck, getStoredCrawledSpecials } = await import(
-      "./storeCrawlerService"
-    );
-    const { persistCrawledSpecialsToDb } = await import("./mongodb");
-    const report = await runStoreCrawlerCheck();
-    const specials = getStoredCrawledSpecials();
-    await persistCrawledSpecialsToDb(specials as unknown as Record<string, unknown>).catch(
-      () => false,
-    );
-    return jsonResponse({
-      success: true,
-      report,
-      message: `Scanned ${report.storesCheckedCount} mall store sites & ${report.billboardsCheckedCount} billboard nodes. Updated ${report.specialsUpdatedCount} live promos.`,
-    });
-  }
-
-  // 7d-4. Ingest Store Discount URL with Department Links: POST /api/crawler/ingest
-  if (pathname === "/api/crawler/ingest" && method === "POST") {
-    try {
-      const payload = await request.json();
-      const { ingestStoreDiscountUrl } = await import("./storeCrawlerService");
-      const { persistDeliveredCardToDb } = await import("./mongodb");
-      const result = await ingestStoreDiscountUrl(payload);
-      if (result.card) {
-        await persistDeliveredCardToDb(result.card as unknown as Record<string, unknown>).catch(
-          () => false,
-        );
-      }
-      return jsonResponse(
-        {
-          success: true,
-          card: result.card,
-          message:
-            result.message ||
-            `Updated inventory for ${payload.storeId} and delivered promo card to agents.`,
-        },
-        201,
-      );
-    } catch (err: any) {
-      return jsonResponse(
-        { error: "Failed to ingest store discount URL", details: err?.message || String(err) },
-        400,
-      );
     }
   }
 

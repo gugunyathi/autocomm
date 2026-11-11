@@ -10,12 +10,10 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
-# Vinxi / Nitro / Vercel
 .output
 .vinxi
 .tanstack/**
 .nitro
-.vercel
 *.local
 
 # Environment variables & secrets
