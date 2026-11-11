@@ -530,6 +530,80 @@ export const A2A_OPENAPI_SPEC_JSON: string = JSON.stringify(
           },
         },
       },
+      "/api/crawler/specials": {
+        get: {
+          summary: "Retrieve Live Crawled Store & Billboard Specials",
+          operationId: "getCrawledStoreSpecials",
+          description: "Streams verified website discounts, promotional campaigns, and roadside billboard specials across mall stores.",
+          responses: {
+            "200": { description: "Dictionary of store specials indexed by storeId." },
+          },
+        },
+      },
+      "/api/crawler/delivered-cards": {
+        get: {
+          summary: "List Delivered Promotional Cards for Sovereign Shopping Agents",
+          operationId: "getDeliveredAgentCards",
+          description: "Returns autonomous promotional cards matched and delivered directly into consumer agents.",
+          parameters: [
+            {
+              name: "agentId",
+              in: "query",
+              required: false,
+              schema: { type: "string" },
+            },
+          ],
+          responses: {
+            "200": { description: "List of delivered special cards." },
+          },
+        },
+      },
+      "/api/crawler/trigger": {
+        post: {
+          summary: "Trigger Store & Billboard Web Crawl Radar",
+          operationId: "triggerStoreCrawlerCheck",
+          description: "Periodically checks store websites across listed malls and roadside billboards for Black Friday and seasonal promos.",
+          responses: {
+            "200": { description: "Crawl report with scanned targets and matched specials." },
+          },
+        },
+      },
+      "/api/crawler/ingest": {
+        post: {
+          summary: "Ingest Store Discount URL with Department Links",
+          operationId: "ingestStoreDiscountUrl",
+          description: "Allows retail merchants to input promotional URLs and department links (Mens, Womens, Kids) to auto-update inventory and deliver cards to agents.",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["storeId", "url"],
+                  properties: {
+                    storeId: { type: "string", example: "mrprice-blueberry" },
+                    url: { type: "string", example: "https://www.mrp.com/en_za/black-friday/denim-shorts" },
+                    discountPercent: { type: "number", example: 50 },
+                    title: { type: "string" },
+                    promoRule: { type: "string" },
+                    departmentLinks: {
+                      type: "object",
+                      properties: {
+                        mens: { type: "string" },
+                        womens: { type: "string" },
+                        kids: { type: "string" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "201": { description: "Special ingested and delivered to matched shopping agents." },
+          },
+        },
+      },
     },
     components: {
       schemas: {

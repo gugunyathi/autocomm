@@ -128,14 +128,13 @@ export const WebsiteSpecialsScannerModal: React.FC<WebsiteSpecialsScannerModalPr
   };
 
   useEffect(() => {
-    if (isOpen) {
-      refreshData();
-      const timer = setTimeout(() => {
-        updateTabsScrollIndicators();
-        updateBodyScrollIndicators();
-      }, 150);
-      return () => clearTimeout(timer);
-    }
+    if (!isOpen) return;
+    refreshData();
+    const timer = setTimeout(() => {
+      updateTabsScrollIndicators();
+      updateBodyScrollIndicators();
+    }, 150);
+    return () => clearTimeout(timer);
   }, [isOpen, refreshData, updateTabsScrollIndicators, updateBodyScrollIndicators]);
 
   // Recalculate scroll indicators on window resize and tab switch

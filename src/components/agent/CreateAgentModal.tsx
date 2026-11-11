@@ -580,13 +580,12 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
 
   // Prevent background body scroll when modal is open
   useEffect(() => {
-    if (isOpen) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
-    }
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
   }, [isOpen]);
 
   // Recalculate scroll indicator states whenever tab, device mode, or content changes

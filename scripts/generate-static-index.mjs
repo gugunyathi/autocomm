@@ -90,6 +90,25 @@ async function generate() {
     }
   }
 
+  // Sanitize any Rolldown/Vite chunk hash artifacts on __vite__mapDeps to prevent SyntaxError
+  for (const pubDir of publicDirs) {
+    const assetsDir = path.join(pubDir, "assets");
+    if (fs.existsSync(assetsDir)) {
+      const jsFiles = fs.readdirSync(assetsDir).filter((f) => f.endsWith(".js"));
+      for (const file of jsFiles) {
+        const filePath = path.join(assetsDir, file);
+        const code = fs.readFileSync(filePath, "utf-8");
+        if (code.includes("__vite__mapDeps")) {
+          const sanitized = code.replace(/(__vite__mapDeps\(\[[^\]]*\]\))[0-9a-f]{16,64}/g, "$1");
+          if (sanitized !== code) {
+            fs.writeFileSync(filePath, sanitized, "utf-8");
+            console.log(`🩹 Fixed Rolldown mapDeps hash in ${path.relative(rootDir, filePath)}`);
+          }
+        }
+      }
+    }
+  }
+
   console.log("🎉 Static HTML generation complete!");
 }
 

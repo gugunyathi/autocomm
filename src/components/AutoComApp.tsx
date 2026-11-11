@@ -37,6 +37,7 @@ import { CreateAgentModal } from "@/components/agent/CreateAgentModal";
 import { hasUserCreatedAgent, convertAgentIntentToWishlistItem } from "@/services/userAgentService";
 import type { UserPersonalAgent } from "@/types/userAgent";
 import { WebsiteSpecialsScannerModal } from "@/components/merchant/WebsiteSpecialsScannerModal";
+import { AgentPayLaterLoanCard } from "@/components/paypal/AgentPayLaterLoanCard";
 import {
   startPeriodicStoreCrawler,
   decorateStoresWithCrawledSpecials,
@@ -3395,6 +3396,17 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
                       <span className="font-mono text-[9px]">{vibrateEnabled ? "ON" : "OFF"}</span>
                     </button>
                   </div>
+                </div>
+
+                {/* PayPal Pay Later Credit Line (6-Month Autonomous Micro-Credit Plan) */}
+                <div className="mt-4">
+                  <AgentPayLaterLoanCard
+                    ownerAddress={currentUser?.id || "0x49B0E1F8C2224424B10a82B93E94d1F3238385a4"}
+                    agentId="bot_buyer_muse_za"
+                    agentName="Muse-ZA (Autonomous Buyer)"
+                    ownerName={currentUser?.displayName || currentUser?.name || "Gugu"}
+                    showCreateSimulator={true}
+                  />
                 </div>
               </div>
 

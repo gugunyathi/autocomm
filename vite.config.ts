@@ -11,6 +11,23 @@ export default defineConfig({
     resolve: {
       alias: [{ find: /^punycode\/?$/, replacement: "punycode" }],
     },
+    plugins: [
+      {
+        name: "fix-rolldown-preload-hash",
+        apply: "build",
+        generateBundle(_options: any, bundle: any) {
+          for (const fileName in bundle) {
+            const chunk = bundle[fileName];
+            if (chunk?.type === "chunk" && typeof chunk.code === "string" && chunk.code.includes("__vite__mapDeps")) {
+              chunk.code = chunk.code.replace(
+                /(__vite__mapDeps\(\[[^\]]*\]\))[0-9a-f]{16,64}/g,
+                "$1",
+              );
+            }
+          }
+        },
+      },
+    ],
     build: {
       rollupOptions: {
         onwarn(warning: any, defaultHandler: any) {
@@ -32,7 +49,7 @@ export default defineConfig({
     },
   },
   nitro: {
-    preset: "node-server",
+    preset: process.env.NITRO_PRESET || (process.env.VERCEL ? "vercel" : "node-server"),
     alias: {
       "punycode/": "punycode",
     },

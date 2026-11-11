@@ -16,6 +16,7 @@ import {
   Plus,
   RefreshCw,
   CheckCircle2,
+  Check,
   Sliders,
   DollarSign,
   TrendingUp,
