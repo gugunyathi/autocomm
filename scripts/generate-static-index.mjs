@@ -71,7 +71,9 @@ async function generate() {
         }
 
         fs.writeFileSync(targetFilePath, html, "utf-8");
-        console.log(`✅ Prerendered ${route} -> ${path.relative(rootDir, targetFilePath)} (${html.length} bytes)`);
+        console.log(
+          `✅ Prerendered ${route} -> ${path.relative(rootDir, targetFilePath)} (${html.length} bytes)`,
+        );
       }
     } catch (err) {
       console.error(`❌ Error rendering ${route}:`, err.message);
@@ -97,4 +99,3 @@ generate()
     console.error("Fatal generation error:", err);
     process.exit(1);
   });
-
