@@ -121,15 +121,22 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
     return "landing";
   });
 
-  const handleNavigateView = useCallback((newView: "landing" | "mesh") => {
-    setView(newView);
-    if (typeof window !== "undefined") {
-      const targetPath = newView === "mesh" ? "/mesh" : "/";
-      if (window.location.pathname !== targetPath) {
-        window.history.pushState(null, "", targetPath);
+  const handleNavigateView = useCallback(
+    (newView: "landing" | "mesh") => {
+      if (typeof window !== "undefined") {
+        const targetPath = newView === "mesh" ? "/mesh" : "/";
+        if (window.location.pathname !== targetPath) {
+          // Use full navigation to load the correct SSR route.
+          // pushState alone does not trigger TanStack Router to swap route components,
+          // so navigating from landing→mesh (or mesh→landing) must be a real navigation.
+          window.location.href = targetPath;
+          return; // page is navigating; don't update local state
+        }
       }
-    }
-  }, []);
+      setView(newView);
+    },
+    [],
+  );
 
   // Listen to browser Back/Forward navigation
   useEffect(() => {
