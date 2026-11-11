@@ -1,3 +1,5 @@
+import { safeGetItem, safeRemoveItem, safeSetItem } from "./safe-storage";
+
 export interface PasskeyUser {
   id: string;
   name: string;
@@ -14,9 +16,8 @@ const STORAGE_USERS_KEY = "acn_passkey_users_v1";
 const STORAGE_CURRENT_USER_KEY = "acn_current_user_v1";
 
 export function getStoredUsers(): PasskeyUser[] {
-  if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(STORAGE_USERS_KEY);
+    const raw = safeGetItem(STORAGE_USERS_KEY);
     return raw ? (JSON.parse(raw) as PasskeyUser[]) : [];
   } catch {
     return [];
@@ -24,9 +25,8 @@ export function getStoredUsers(): PasskeyUser[] {
 }
 
 export function getCurrentUser(): PasskeyUser | null {
-  if (typeof window === "undefined") return null;
   try {
-    const raw = localStorage.getItem(STORAGE_CURRENT_USER_KEY);
+    const raw = safeGetItem(STORAGE_CURRENT_USER_KEY);
     return raw ? (JSON.parse(raw) as PasskeyUser) : null;
   } catch {
     return null;
@@ -34,11 +34,10 @@ export function getCurrentUser(): PasskeyUser | null {
 }
 
 export function setCurrentUser(user: PasskeyUser | null): void {
-  if (typeof window === "undefined") return;
   if (user) {
-    localStorage.setItem(STORAGE_CURRENT_USER_KEY, JSON.stringify(user));
+    safeSetItem(STORAGE_CURRENT_USER_KEY, JSON.stringify(user));
   } else {
-    localStorage.removeItem(STORAGE_CURRENT_USER_KEY);
+    safeRemoveItem(STORAGE_CURRENT_USER_KEY);
   }
 }
 
@@ -147,9 +146,7 @@ export async function createPasskeyRegistration(
     newUser,
     ...existing.filter((u) => u.name.toLowerCase() !== newUser.name.toLowerCase()),
   ];
-  if (typeof window !== "undefined") {
-    localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(updated));
-  }
+  safeSetItem(STORAGE_USERS_KEY, JSON.stringify(updated));
   setCurrentUser(newUser);
 
   return newUser;
@@ -194,9 +191,7 @@ export async function authenticateWithPasskey(specificUserId?: string): Promise<
 
   selectedUser.lastLoginAt = Date.now();
   const updated = users.map((u) => (u.id === selectedUser?.id ? selectedUser : u));
-  if (typeof window !== "undefined") {
-    localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(updated));
-  }
+  safeSetItem(STORAGE_USERS_KEY, JSON.stringify(updated));
   setCurrentUser(selectedUser);
 
   return selectedUser;

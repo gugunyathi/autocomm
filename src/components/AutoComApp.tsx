@@ -17,6 +17,7 @@ import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { registerServiceWorker, useOnlineStatus } from "@/lib/pwa-service";
 import { saveSpecialOffersCache, loadSpecialOffersCache } from "@/lib/offers-cache";
+import { safeSetItem } from "@/lib/safe-storage";
 import { notificationManager } from "@/lib/notifications";
 import { useDeviceHeading } from "@/hooks/useDeviceHeading";
 import { useAutoComPayments } from "@/hooks/useAutoComPayments";
@@ -838,7 +839,7 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
   const saveParked = useCallback((updated: ParkedOffer[]) => {
     setParkedOffers(updated);
     if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_PARKED_KEY, JSON.stringify(updated));
+      safeSetItem(STORAGE_PARKED_KEY, JSON.stringify(updated));
     }
   }, []);
 
@@ -846,7 +847,7 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
     setBoughtItems(updated);
     setClaimed(updated.map((b) => b.store.id));
     if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_BOUGHT_KEY, JSON.stringify(updated));
+      safeSetItem(STORAGE_BOUGHT_KEY, JSON.stringify(updated));
     }
   }, []);
 

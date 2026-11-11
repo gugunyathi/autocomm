@@ -3,6 +3,8 @@
  * Reads user's localized domain to dynamically calculate exchange rates and fiat parameters.
  */
 
+import { safeGetItem, safeSetItem } from "@/lib/safe-storage";
+
 export interface CurrencyProfile {
   code: string; // e.g., "ZAR", "EUR", "NGN", "USD", "GBP", "KES"
   symbol: string; // e.g., "R", "€", "₦", "$", "£", "KSh"
@@ -44,7 +46,7 @@ export async function detectLocalCurrencyProfile(): Promise<CurrencyProfile> {
 
   // Check stored preference first
   if (typeof window !== "undefined") {
-    const storedCode = localStorage.getItem("autocom_selected_currency");
+    const storedCode = safeGetItem("autocom_selected_currency");
     if (storedCode) {
       const match = SUPPORTED_CURRENCIES.find((c) => c.code === storedCode);
       if (match) {
@@ -103,7 +105,7 @@ export function setSelectedCurrency(currencyCode: string): CurrencyProfile {
     SUPPORTED_CURRENCIES.find((c) => c.code === currencyCode) || SUPPORTED_CURRENCIES[0];
   cachedProfile = match;
   if (typeof window !== "undefined") {
-    localStorage.setItem("autocom_selected_currency", match.code);
+    safeSetItem("autocom_selected_currency", match.code);
   }
   return match;
 }

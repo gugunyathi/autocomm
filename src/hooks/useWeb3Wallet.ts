@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { safeGetItem, safeSetItem } from "@/lib/safe-storage";
 
 export type SupportedChainId =
   | "arc_mainnet"
@@ -352,7 +353,7 @@ export function useWeb3Wallet(): Web3WalletHookReturn {
     if (typeof window === "undefined") return;
 
     try {
-      const stored = localStorage.getItem(STORAGE_WEB3_PROVIDER_KEY);
+      const stored = safeGetItem(STORAGE_WEB3_PROVIDER_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
         if (
@@ -375,7 +376,7 @@ export function useWeb3Wallet(): Web3WalletHookReturn {
   // Save state updates to localStorage
   useEffect(() => {
     if (typeof window !== "undefined" && isHydratedRef.current) {
-      localStorage.setItem(
+      safeSetItem(
         STORAGE_WEB3_PROVIDER_KEY,
         JSON.stringify({ selectedChainId, address, balances, transactions }),
       );

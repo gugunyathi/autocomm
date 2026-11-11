@@ -14,7 +14,7 @@
 import { A2A_OPENAPI_SPEC_JSON, type A2AMessage } from "../types/a2aProtocol";
 import {
   ZAR_TO_USD_EXCHANGE_RATE,
-  convertZarToUsd,
+
   createRealPayPalOrder,
   captureRealPayPalOrder,
   getRealPayPalOrder,

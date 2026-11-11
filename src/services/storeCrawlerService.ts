@@ -21,6 +21,7 @@ import type { Store } from "../lib/acn-data";
 import { ALL_MALLS } from "../lib/malls";
 import { getStoredUserPersonalAgent } from "./userAgentService";
 import { notificationManager, sendPushNotification } from "../lib/notifications";
+import { safeSetItem } from "../lib/safe-storage";
 
 export const STORAGE_CRAWLED_SPECIALS_KEY = "autocomm_crawled_store_specials_v2";
 export const STORAGE_DELIVERED_AGENT_CARDS_KEY = "autocomm_delivered_agent_cards_v2";
@@ -286,7 +287,7 @@ export function getStoredCrawledSpecials(): Record<string, LiveWebsitePromo> {
 export function saveCrawledSpecials(specials: Record<string, LiveWebsitePromo>): void {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(STORAGE_CRAWLED_SPECIALS_KEY, JSON.stringify(specials));
+    safeSetItem(STORAGE_CRAWLED_SPECIALS_KEY, JSON.stringify(specials));
   } catch (err) {
     console.warn("Failed to persist crawled specials:", err);
   }
@@ -311,7 +312,7 @@ export function getDeliveredAgentCards(): DeliveredSpecialCard[] {
 export function saveDeliveredAgentCards(cards: DeliveredSpecialCard[]): void {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(STORAGE_DELIVERED_AGENT_CARDS_KEY, JSON.stringify(cards.slice(0, 50)));
+    safeSetItem(STORAGE_DELIVERED_AGENT_CARDS_KEY, JSON.stringify(cards.slice(0, 50)));
   } catch (err) {
     console.warn("Failed to persist delivered cards:", err);
   }

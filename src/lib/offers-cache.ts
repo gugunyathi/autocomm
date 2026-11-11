@@ -1,4 +1,5 @@
 import type { Store } from "@/lib/acn-data";
+import { safeGetItem, safeRemoveItem, safeSetItem } from "./safe-storage";
 import type { MatchedDeal } from "@/components/DealMatchPopup";
 
 export const STORAGE_OFFERS_CACHE_KEY = "autocom_cached_offers_v1";
@@ -36,7 +37,7 @@ export function saveSpecialOffersCache(
       savedStores,
       ttlMinutes,
     };
-    localStorage.setItem(STORAGE_OFFERS_CACHE_KEY, JSON.stringify(payload));
+    safeSetItem(STORAGE_OFFERS_CACHE_KEY, JSON.stringify(payload));
   } catch (err) {
     console.warn("[OffersCache] Failed to save offline cache:", err);
   }
@@ -53,7 +54,7 @@ export function loadSpecialOffersCache(
   if (typeof window === "undefined") return null;
 
   try {
-    const raw = localStorage.getItem(STORAGE_OFFERS_CACHE_KEY);
+    const raw = safeGetItem(STORAGE_OFFERS_CACHE_KEY);
     if (!raw) return null;
 
     const payload = JSON.parse(raw) as CachedOffersPayload;
@@ -64,7 +65,7 @@ export function loadSpecialOffersCache(
 
     // If online and expired, purge
     if (isPastTtl && !allowGracePeriodIfOffline && navigator.onLine) {
-      localStorage.removeItem(STORAGE_OFFERS_CACHE_KEY);
+      safeRemoveItem(STORAGE_OFFERS_CACHE_KEY);
       return null;
     }
 
@@ -81,7 +82,7 @@ export function loadSpecialOffersCache(
 export function clearSpecialOffersCache(): void {
   if (typeof window === "undefined") return;
   try {
-    localStorage.removeItem(STORAGE_OFFERS_CACHE_KEY);
+    safeRemoveItem(STORAGE_OFFERS_CACHE_KEY);
   } catch {
     // ignore
   }
