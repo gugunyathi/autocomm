@@ -23,10 +23,7 @@ export default defineConfig({
           defaultHandler(warning);
         },
         onLog(level: any, log: any, defaultHandler: any) {
-          if (
-            log.code === "MODULE_LEVEL_DIRECTIVE" ||
-            log.message?.includes("use client")
-          ) {
+          if (log.code === "MODULE_LEVEL_DIRECTIVE" || log.message?.includes("use client")) {
             return;
           }
           defaultHandler(level, log);
@@ -44,10 +41,7 @@ export default defineConfig({
     },
     rollupConfig: {
       onwarn(warning: any, warn: any) {
-        if (
-          warning.code === "MODULE_LEVEL_DIRECTIVE" ||
-          warning.message?.includes("use client")
-        ) {
+        if (warning.code === "MODULE_LEVEL_DIRECTIVE" || warning.message?.includes("use client")) {
           return;
         }
         warn(warning);
