@@ -19,6 +19,7 @@ import {
   Zap,
   ArrowRight,
 } from "lucide-react";
+import { WishlistDiscoverPanel } from "./WishlistDiscoverPanel";
 
 export type AutoWalletTab = "debit" | "wishlist";
 
@@ -172,6 +173,9 @@ export function AutoWalletModal({
                   <span>Add Wishlist Intent</span>
                 </button>
               </div>
+
+              {/* Searchable inventory + online discovery with one-click add */}
+              <WishlistDiscoverPanel wishlist={wishlist} onAdd={onAddWishlistItem} />
 
               {/* Wishlist Items List */}
               <div className="space-y-3">
