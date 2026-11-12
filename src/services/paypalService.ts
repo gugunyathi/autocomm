@@ -20,6 +20,7 @@ import type {
   A2AVaultedPaymentResult,
 } from "../types/a2aProtocol";
 import type { AgentPayLaterLoan, PayLaterInstallment } from "../types/autocom";
+import { withAgentIdentity } from "../lib/agent-identity";
 
 /**
  * Real-time South African Rand (ZAR) to US Dollar (USD) conversion multiplier.
@@ -559,14 +560,16 @@ export async function createAgentTransaction(
     const res = await fetch("/api/paypal/create-order", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        storeId,
-        negotiatedPriceZAR,
-        originalPriceZAR: Math.round(negotiatedPriceZAR * 1.3),
-        sessionId: `sess_${storeId}_${Date.now()}`,
-        sku: `${storeId.toUpperCase()}-SKU-01`,
-        vaultedAgentConsent: true,
-      }),
+      body: JSON.stringify(
+        withAgentIdentity({
+          storeId,
+          negotiatedPriceZAR,
+          originalPriceZAR: Math.round(negotiatedPriceZAR * 1.3),
+          sessionId: `sess_${storeId}_${Date.now()}`,
+          sku: `${storeId.toUpperCase()}-SKU-01`,
+          vaultedAgentConsent: true,
+        }),
+      ),
     });
 
     if (res.ok) {
@@ -627,10 +630,12 @@ export async function executeVaultedAgentPayment(
     const res = await fetch("/api/paypal/checkout-settle", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        orderId,
-        agentAuthorizationHash: `sha256:${Math.random().toString(36).substring(2, 12)}...`,
-      }),
+      body: JSON.stringify(
+        withAgentIdentity({
+          orderId,
+          agentAuthorizationHash: `sha256:${Math.random().toString(36).substring(2, 12)}...`,
+        }),
+      ),
     });
 
     if (res.ok) {
@@ -703,7 +708,7 @@ export async function sendA2ANegotiationToApi(message: Partial<A2AMessage>): Pro
       "Content-Type": "application/json",
       "X-A2A-Protocol-Version": "1.0.0",
     },
-    body: JSON.stringify(message),
+    body: JSON.stringify(withAgentIdentity({ ...message })),
   });
 
   if (!res.ok) {

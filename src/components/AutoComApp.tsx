@@ -30,12 +30,26 @@ import {
   formatCardinal,
   type SpatialCoordinates,
 } from "@/lib/spatial-sensors";
-import { type PasskeyUser, getCurrentUser, signOutPasskey } from "@/lib/passkey-auth";
+import {
+  type PasskeyUser,
+  getCurrentUser,
+  setCurrentUser as persistPasskeyUser,
+  patchCurrentUser,
+  hasExplicitSignOut,
+  signOutPasskey,
+} from "@/lib/passkey-auth";
+import { getOrCreateDeviceId } from "@/lib/device-identity";
+import { reportAgentActivity } from "@/lib/agent-identity";
 import { ALL_MALLS, getMallById, type MallDefinition, type RealProduct } from "@/lib/malls";
 import { StoreProductsModal } from "@/components/StoreProductsModal";
 import { FloatingCreateAgentButton } from "@/components/agent/FloatingCreateAgentButton";
 import { CreateAgentModal } from "@/components/agent/CreateAgentModal";
-import { hasUserCreatedAgent, convertAgentIntentToWishlistItem } from "@/services/userAgentService";
+import {
+  hasUserCreatedAgent,
+  convertAgentIntentToWishlistItem,
+  getStoredUserPersonalAgent,
+  registerAgentWithBackend,
+} from "@/services/userAgentService";
 import type { UserPersonalAgent } from "@/types/userAgent";
 import { WebsiteSpecialsScannerModal } from "@/components/merchant/WebsiteSpecialsScannerModal";
 import { AgentPayLaterLoanCard } from "@/components/paypal/AgentPayLaterLoanCard";
@@ -178,8 +192,8 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
     return () => stopCrawler();
   }, []);
 
-  // Vertical floating + button appears ONLY for users who haven't created an agent or are not logged in
-  const shouldShowFloatingCreateAgent = !currentUser || !hasCreatedAgent;
+  // Vertical floating + button disappears permanently once the user has created an agent
+  const shouldShowFloatingCreateAgent = !hasCreatedAgent;
 
   const isOnline = useOnlineStatus();
   const [lastCacheSync, setLastCacheSync] = useState<number | null>(null);
@@ -597,8 +611,12 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
   const handleAgentCreated = useCallback(
     (agent: UserPersonalAgent) => {
       setHasCreatedAgent(true);
+      const deviceId = getOrCreateDeviceId();
+      let ownerUserId = currentUser?.id;
 
-      // If user is guest/unauthenticated, automatically provision authenticated session
+      // If user is guest/unauthenticated, automatically provision an authenticated
+      // session keyed on the agent handle, and persist it so future visits
+      // remember the user via agent name + device.
       if (!currentUser) {
         const newUser: PasskeyUser = {
           id: `usr_${agent.name}_${Date.now().toString(36)}`,
@@ -610,9 +628,26 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
           deviceType: "Biometric Enclave",
           agentBudget: agent.funding.preFundedBalanceZar,
           intentTags: [agent.intent.category, agent.intent.whatToBuy].filter(Boolean),
+          agentId: agent.id,
+          agentName: agent.name,
+          deviceId,
         };
+        persistPasskeyUser(newUser);
         setCurrentUser(newUser);
+        ownerUserId = newUser.id;
+      } else if (currentUser.agentName !== agent.name) {
+        const linked = patchCurrentUser({
+          agentId: agent.id,
+          agentName: agent.name,
+          deviceId,
+        });
+        if (linked) setCurrentUser(linked);
       }
+
+      // Save the agent name on the backend registry (DB + memory) and record
+      // the creation event. Fire-and-forget: local storage is authoritative
+      // on this device, so backend downtime never blocks the user.
+      void registerAgentWithBackend(agent, { ownerUserId, deviceId });
 
       if (agent.funding.preFundedBalanceZar) {
         setBudget(agent.funding.preFundedBalanceZar);
@@ -799,6 +834,45 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
       setCurrentUser(user);
       if (user.agentBudget) setBudget(user.agentBudget);
       if (user.intentTags?.length) setTags(user.intentTags);
+      // Returning session: refresh the backend registry touch + login event.
+      const linkedAgent = getStoredUserPersonalAgent();
+      if (linkedAgent) {
+        void registerAgentWithBackend(linkedAgent, {
+          ownerUserId: user.id,
+          deviceId: getOrCreateDeviceId(),
+        });
+      }
+    } else {
+      // No passkey session: remember the user via their created agent handle
+      // plus this device, unless they explicitly signed out.
+      const storedAgent = getStoredUserPersonalAgent();
+      if (storedAgent && !hasExplicitSignOut()) {
+        const deviceId = getOrCreateDeviceId();
+        const restoredUser: PasskeyUser = {
+          id: `usr_${storedAgent.name}_device`,
+          name: storedAgent.name,
+          displayName: `@${storedAgent.fullName}`,
+          credentialId: `cred_device_${deviceId}`,
+          createdAt: storedAgent.createdAt,
+          lastLoginAt: Date.now(),
+          deviceType: "Biometric Enclave",
+          agentBudget: storedAgent.funding.preFundedBalanceZar,
+          intentTags: [storedAgent.intent.category, storedAgent.intent.whatToBuy].filter(Boolean),
+          agentId: storedAgent.id,
+          agentName: storedAgent.name,
+          deviceId,
+        };
+        persistPasskeyUser(restoredUser);
+        setCurrentUser(restoredUser);
+        setHasCreatedAgent(true);
+        if (restoredUser.agentBudget) setBudget(restoredUser.agentBudget);
+        if (restoredUser.intentTags?.length) setTags(restoredUser.intentTags);
+        void registerAgentWithBackend(storedAgent, {
+          ownerUserId: restoredUser.id,
+          deviceId,
+        });
+        void reportAgentActivity("session_restored", { via: "agent_device" });
+      }
     }
 
     try {
@@ -1218,9 +1292,26 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
   };
 
   const handlePasskeySuccess = (user: PasskeyUser) => {
-    setCurrentUser(user);
-    if (user.agentBudget) setBudget(user.agentBudget);
-    if (user.intentTags?.length) setTags(user.intentTags);
+    // Link the session to the created agent so the agent handle acts as the
+    // user's identity for all backend activity.
+    const storedAgent = getStoredUserPersonalAgent();
+    let effectiveUser = user;
+    if (storedAgent && user.agentName !== storedAgent.name) {
+      const linked = patchCurrentUser({
+        agentId: storedAgent.id,
+        agentName: storedAgent.name,
+        deviceId: getOrCreateDeviceId(),
+      });
+      if (linked) effectiveUser = linked;
+      void registerAgentWithBackend(storedAgent, {
+        ownerUserId: effectiveUser.id,
+        deviceId: getOrCreateDeviceId(),
+      });
+    }
+    setCurrentUser(effectiveUser);
+    if (effectiveUser.agentBudget) setBudget(effectiveUser.agentBudget);
+    if (effectiveUser.intentTags?.length) setTags(effectiveUser.intentTags);
+    void reportAgentActivity("passkey_login", { userId: effectiveUser.id });
   };
 
   // Animation state for diving cards and icon expand/contract bounce
@@ -1487,7 +1578,10 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
             handleNavigateView("mesh");
             setWalkthroughOpen(true);
           }}
-          onSignOut={() => setCurrentUser(null)}
+          onSignOut={() => {
+            signOutPasskey();
+            setCurrentUser(null);
+          }}
           onOpenMerchantDashboard={() => setMerchantDashboardOpen(true)}
           onOpenOpenAdLibrary={() => setOpenAdLibraryOpen(true)}
           onOpenAutoWallet={() => setAutoWalletOpen(true)}

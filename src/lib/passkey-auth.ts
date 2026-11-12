@@ -10,10 +10,17 @@ export interface PasskeyUser {
   deviceType: "Touch ID / Face ID" | "Security Key" | "Windows Hello" | "Biometric Enclave";
   agentBudget: number;
   intentTags: string[];
+  /** Linked personal agent id, when the user shops through a created agent. */
+  agentId?: string;
+  /** Linked personal agent handle (without the .agent suffix). */
+  agentName?: string;
+  /** Stable device identifier this session was established on. */
+  deviceId?: string;
 }
 
 const STORAGE_USERS_KEY = "acn_passkey_users_v1";
 const STORAGE_CURRENT_USER_KEY = "acn_current_user_v1";
+const STORAGE_EXPLICIT_SIGNOUT_KEY = "acn_explicit_signout_v1";
 
 export function getStoredUsers(): PasskeyUser[] {
   try {
@@ -36,9 +43,44 @@ export function getCurrentUser(): PasskeyUser | null {
 export function setCurrentUser(user: PasskeyUser | null): void {
   if (user) {
     safeSetItem(STORAGE_CURRENT_USER_KEY, JSON.stringify(user));
+    // A fresh session clears any earlier explicit sign-out.
+    safeRemoveItem(STORAGE_EXPLICIT_SIGNOUT_KEY);
   } else {
     safeRemoveItem(STORAGE_CURRENT_USER_KEY);
   }
+}
+
+/**
+ * True when the user explicitly signed out. Session restore must not silently
+ * re-provision a session from a stored agent in that case.
+ */
+export function hasExplicitSignOut(): boolean {
+  try {
+    return safeGetItem(STORAGE_EXPLICIT_SIGNOUT_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Patches the persisted current user (e.g. to link a created agent) and
+ * returns the updated record, or null when no session exists.
+ */
+export function patchCurrentUser(patch: Partial<PasskeyUser>): PasskeyUser | null {
+  const current = getCurrentUser();
+  if (!current) return null;
+  const updated: PasskeyUser = { ...current, ...patch, lastLoginAt: Date.now() };
+  setCurrentUser(updated);
+  try {
+    const users = getStoredUsers();
+    safeSetItem(
+      STORAGE_USERS_KEY,
+      JSON.stringify(users.map((u) => (u.id === updated.id ? updated : u))),
+    );
+  } catch {
+    // Non-fatal: current-session record is already updated.
+  }
+  return updated;
 }
 
 function detectDeviceType(): PasskeyUser["deviceType"] {
@@ -199,4 +241,5 @@ export async function authenticateWithPasskey(specificUserId?: string): Promise<
 
 export function signOutPasskey(): void {
   setCurrentUser(null);
+  safeSetItem(STORAGE_EXPLICIT_SIGNOUT_KEY, "true");
 }

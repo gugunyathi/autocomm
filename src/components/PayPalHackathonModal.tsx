@@ -23,6 +23,7 @@ import {
   ZAR_TO_USD_EXCHANGE_RATE,
 } from "../services/paypalService";
 import { PAYPAL_AGENT_TOOLS } from "../services/paypalAgentToolkit";
+import { withAgentIdentity } from "../lib/agent-identity";
 import { AgentPayLaterLoanCard } from "./paypal/AgentPayLaterLoanCard";
 
 export interface PayPalHackathonModalProps {
@@ -221,10 +222,12 @@ export function PayPalHackathonModal({
       const res = await fetch("/api/paypal/agent-toolkit/execute", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tool: selectedTool,
-          parameters: parsed,
-        }),
+        body: JSON.stringify(
+          withAgentIdentity({
+            tool: selectedTool,
+            parameters: parsed,
+          }),
+        ),
       });
 
       const data = await res.json();
@@ -509,7 +512,9 @@ export function PayPalHackathonModal({
                         </span>
                         <span className="text-emerald-400 break-all">{testTxId}</span>
                       </div>
-                      <span className="text-[10px] text-muted-foreground shrink-0">Vault Token #771B</span>
+                      <span className="text-[10px] text-muted-foreground shrink-0">
+                        Vault Token #771B
+                      </span>
                     </div>
                   )}
                 </div>

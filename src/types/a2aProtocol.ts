@@ -93,6 +93,25 @@ export interface A2AMessage {
    * @example "Counter-offer within 12% margin tolerance based on historical afternoon foot traffic."
    */
   agentRationale?: string;
+
+  /**
+   * Identity of the user-owned personal agent driving this packet, when known.
+   * The backend links negotiation, order, and settlement activity to this agent.
+   * @example "agent-lisa-m3k9"
+   */
+  agentId?: string;
+
+  /**
+   * Lowercase handle of the driving personal agent (without the .agent suffix).
+   * @example "lisa"
+   */
+  agentName?: string;
+
+  /**
+   * Stable per-device identifier issuing the packet.
+   * @example "dev_9f2e3d8c4a1b"
+   */
+  deviceId?: string;
 }
 
 /**
@@ -534,7 +553,8 @@ export const A2A_OPENAPI_SPEC_JSON: string = JSON.stringify(
         get: {
           summary: "Retrieve Live Crawled Store & Billboard Specials",
           operationId: "getCrawledStoreSpecials",
-          description: "Streams verified website discounts, promotional campaigns, and roadside billboard specials across mall stores.",
+          description:
+            "Streams verified website discounts, promotional campaigns, and roadside billboard specials across mall stores.",
           responses: {
             "200": { description: "Dictionary of store specials indexed by storeId." },
           },
@@ -544,7 +564,8 @@ export const A2A_OPENAPI_SPEC_JSON: string = JSON.stringify(
         get: {
           summary: "List Delivered Promotional Cards for Sovereign Shopping Agents",
           operationId: "getDeliveredAgentCards",
-          description: "Returns autonomous promotional cards matched and delivered directly into consumer agents.",
+          description:
+            "Returns autonomous promotional cards matched and delivered directly into consumer agents.",
           parameters: [
             {
               name: "agentId",
@@ -562,7 +583,8 @@ export const A2A_OPENAPI_SPEC_JSON: string = JSON.stringify(
         post: {
           summary: "Trigger Store & Billboard Web Crawl Radar",
           operationId: "triggerStoreCrawlerCheck",
-          description: "Periodically checks store websites across listed malls and roadside billboards for Black Friday and seasonal promos.",
+          description:
+            "Periodically checks store websites across listed malls and roadside billboards for Black Friday and seasonal promos.",
           responses: {
             "200": { description: "Crawl report with scanned targets and matched specials." },
           },
@@ -572,7 +594,8 @@ export const A2A_OPENAPI_SPEC_JSON: string = JSON.stringify(
         post: {
           summary: "Ingest Store Discount URL with Department Links",
           operationId: "ingestStoreDiscountUrl",
-          description: "Allows retail merchants to input promotional URLs and department links (Mens, Womens, Kids) to auto-update inventory and deliver cards to agents.",
+          description:
+            "Allows retail merchants to input promotional URLs and department links (Mens, Womens, Kids) to auto-update inventory and deliver cards to agents.",
           requestBody: {
             required: true,
             content: {
@@ -582,7 +605,10 @@ export const A2A_OPENAPI_SPEC_JSON: string = JSON.stringify(
                   required: ["storeId", "url"],
                   properties: {
                     storeId: { type: "string", example: "mrprice-blueberry" },
-                    url: { type: "string", example: "https://www.mrp.com/en_za/black-friday/denim-shorts" },
+                    url: {
+                      type: "string",
+                      example: "https://www.mrp.com/en_za/black-friday/denim-shorts",
+                    },
                     discountPercent: { type: "number", example: 50 },
                     title: { type: "string" },
                     promoRule: { type: "string" },
@@ -601,6 +627,121 @@ export const A2A_OPENAPI_SPEC_JSON: string = JSON.stringify(
           },
           responses: {
             "201": { description: "Special ingested and delivered to matched shopping agents." },
+          },
+        },
+      },
+      "/api/agents/register": {
+        post: {
+          summary: "Register Personal Agent Identity",
+          operationId: "registerPersonalAgent",
+          description:
+            "Upserts a user-created personal agent by lowercase handle and links the issuing device. Every negotiation, order, and settlement carrying the agent identity is recorded against this record.",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["name"],
+                  properties: {
+                    name: { type: "string", example: "lisa" },
+                    fullName: { type: "string", example: "lisa.agent" },
+                    agentId: { type: "string", example: "agent-lisa-m3k9" },
+                    ownerUserId: { type: "string", example: "usr_lisa_k2x8" },
+                    deviceId: { type: "string", example: "dev_9f2e3d8c4a1b" },
+                    intent: { type: "object" },
+                    funding: { type: "object" },
+                    schedule: { type: "object" },
+                    privacy: { type: "object" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "201": { description: "Agent registered with initial login event recorded." },
+            "200": { description: "Existing agent touched with a login event recorded." },
+          },
+        },
+      },
+      "/api/agents": {
+        get: {
+          summary: "Look Up Registered Agent",
+          operationId: "getRegisteredAgent",
+          description:
+            "Resolves a registered personal agent by handle or id for session restore and identity display.",
+          parameters: [
+            {
+              name: "name",
+              in: "query",
+              required: false,
+              schema: { type: "string", example: "lisa" },
+              description: "Agent handle (case-insensitive).",
+            },
+            {
+              name: "id",
+              in: "query",
+              required: false,
+              schema: { type: "string", example: "agent-lisa-m3k9" },
+              description: "Agent record id.",
+            },
+          ],
+          responses: {
+            "200": { description: "Registered agent record with linked devices." },
+            "404": { description: "No agent registered under that handle or id." },
+          },
+        },
+      },
+      "/api/agents/activity": {
+        get: {
+          summary: "Read Agent Usage History",
+          operationId: "getAgentActivity",
+          description:
+            "Returns the agent-linked usage history (negotiations, orders, settlements, logins), newest first.",
+          parameters: [
+            {
+              name: "agent",
+              in: "query",
+              required: true,
+              schema: { type: "string", example: "lisa" },
+              description: "Agent handle or id.",
+            },
+            {
+              name: "limit",
+              in: "query",
+              required: false,
+              schema: { type: "number", example: 50 },
+              description: "Maximum events to return (1-500).",
+            },
+          ],
+          responses: {
+            "200": { description: "Agent usage-history event list." },
+          },
+        },
+        post: {
+          summary: "Append Agent Activity Event",
+          operationId: "appendAgentActivity",
+          description: "Records one client-observed usage event against the agent identity.",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["type"],
+                  properties: {
+                    agentId: { type: "string", example: "agent-lisa-m3k9" },
+                    agentName: { type: "string", example: "lisa" },
+                    deviceId: { type: "string", example: "dev_9f2e3d8c4a1b" },
+                    type: { type: "string", example: "session_restored" },
+                    details: { type: "object" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "201": { description: "Activity event recorded." },
           },
         },
       },
@@ -675,6 +816,21 @@ export const A2A_OPENAPI_SPEC_JSON: string = JSON.stringify(
               type: "string",
               description: "Autonomous agent decision engine reasoning.",
               example: "Accepted: Counter-offer falls within optimal 15% discount window.",
+            },
+            agentId: {
+              type: "string",
+              description: "User-owned personal agent driving this packet, when known.",
+              example: "agent-lisa-m3k9",
+            },
+            agentName: {
+              type: "string",
+              description: "Lowercase handle of the driving personal agent.",
+              example: "lisa",
+            },
+            deviceId: {
+              type: "string",
+              description: "Stable per-device identifier issuing the packet.",
+              example: "dev_9f2e3d8c4a1b",
             },
           },
         },

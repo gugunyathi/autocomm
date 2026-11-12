@@ -9,12 +9,15 @@
  * - GET  /api/paypal/audit-ledger  -> Live in-memory audit ledger records
  * - GET  /api/openapi.json         -> Live OpenAPI 3.0.3 specification for APIMatic SDK generation
  * - GET  /api/health               -> Service telemetry & health status
+ * - POST /api/agents/register      -> Register/upsert a user personal agent by handle
+ * - GET  /api/agents               -> Look up a registered agent (?name= or ?id=)
+ * - POST /api/agents/activity      -> Append an agent-linked usage-history event
+ * - GET  /api/agents/activity      -> Read an agent's usage history (?agent=)
  */
 
 import { A2A_OPENAPI_SPEC_JSON, type A2AMessage } from "../types/a2aProtocol";
 import {
   ZAR_TO_USD_EXCHANGE_RATE,
-
   createRealPayPalOrder,
   captureRealPayPalOrder,
   getRealPayPalOrder,
@@ -51,9 +54,90 @@ export interface BackendAuditOrder {
   createdAt: string;
   settledAt?: string;
   vaultRef: string;
+  agentId?: string;
+  agentName?: string;
+  deviceId?: string;
 }
 
-// In-memory backend database for demo sessions
+export interface BackendAgentRecord {
+  name: string;
+  fullName: string;
+  agentId: string;
+  ownerUserId?: string;
+  deviceIds: string[];
+  intent?: Record<string, unknown>;
+  funding?: Record<string, unknown>;
+  schedule?: Record<string, unknown>;
+  privacy?: Record<string, unknown>;
+  avatarIcon?: string;
+  avatarColor?: string;
+  isFreeTier?: boolean;
+  createdAt: string;
+  lastActiveAt: string;
+  loginCount: number;
+}
+
+export interface BackendActivityEvent {
+  id: string;
+  agentId?: string;
+  agentName?: string;
+  deviceId?: string;
+  type: string;
+  details: Record<string, unknown>;
+  createdAt: string;
+}
+
+// In-memory backend database for demo sessions (mirrored to MongoDB when online)
+const serverAgentStore: BackendAgentRecord[] = [];
+const serverActivityStore: BackendActivityEvent[] = [];
+
+/**
+ * Appends an agent-linked usage event to the in-memory buffer and MongoDB.
+ * Anonymous calls (no agent identity) are ignored.
+ */
+function recordAgentActivity(event: {
+  agentId?: unknown;
+  agentName?: unknown;
+  deviceId?: unknown;
+  type: string;
+  details?: Record<string, unknown>;
+}): void {
+  const agentId = typeof event.agentId === "string" ? event.agentId : undefined;
+  const agentName = typeof event.agentName === "string" ? event.agentName.toLowerCase() : undefined;
+  if (!agentId && !agentName) return;
+  const deviceId = typeof event.deviceId === "string" ? event.deviceId : undefined;
+  const record: BackendActivityEvent = {
+    id: `act_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
+    ...(agentId ? { agentId } : {}),
+    ...(agentName ? { agentName } : {}),
+    ...(deviceId ? { deviceId } : {}),
+    type: event.type,
+    details: event.details ?? {},
+    createdAt: new Date().toISOString(),
+  };
+  serverActivityStore.unshift(record);
+  if (serverActivityStore.length > 500) serverActivityStore.length = 500;
+  import("./mongodb")
+    .then((m) => m.persistActivityToDb(record as unknown as Record<string, unknown>))
+    .catch(() => {});
+}
+
+function readIdentity(body: Record<string, unknown>): {
+  agentId?: string;
+  agentName?: string;
+  deviceId?: string;
+} {
+  const agentId = typeof body["agentId"] === "string" ? (body["agentId"] as string) : undefined;
+  const agentName =
+    typeof body["agentName"] === "string" ? (body["agentName"] as string).toLowerCase() : undefined;
+  const deviceId = typeof body["deviceId"] === "string" ? (body["deviceId"] as string) : undefined;
+  return {
+    ...(agentId ? { agentId } : {}),
+    ...(agentName ? { agentName } : {}),
+    ...(deviceId ? { deviceId } : {}),
+  };
+}
+
 const serverAuditStore: BackendAuditOrder[] = [
   {
     orderId: "ORD-SANDBOX-ZARA-90A1B",
@@ -359,6 +443,18 @@ export async function handleApiRoute(request: Request, inputUrl?: URL): Promise<
         agentRationale: replyRationale,
       };
 
+      recordAgentActivity({
+        ...readIdentity(incoming as unknown as Record<string, unknown>),
+        type: "negotiation",
+        details: {
+          storeId: store.id,
+          itemName: store.stickerItem,
+          proposedPrice,
+          replyPrice,
+          replyType,
+        },
+      });
+
       return jsonResponse(responseMessage);
     } catch {
       return jsonResponse({ error: "Malformed A2A negotiation request body" }, 400);
@@ -385,6 +481,7 @@ export async function handleApiRoute(request: Request, inputUrl?: URL): Promise<
       });
 
       const now = new Date().toISOString();
+      const identity = readIdentity(body as Record<string, unknown>);
       const newOrder: BackendAuditOrder = {
         orderId: payPalRes.orderId,
         storeId,
@@ -394,9 +491,22 @@ export async function handleApiRoute(request: Request, inputUrl?: URL): Promise<
         status: "CREATED",
         createdAt: now,
         vaultRef: `VAULT_AUTONOMOUS_DELEGATE_${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+        ...identity,
       };
 
       serverAuditStore.unshift(newOrder);
+
+      recordAgentActivity({
+        ...identity,
+        type: "order_created",
+        details: {
+          orderId: newOrder.orderId,
+          storeId,
+          itemName,
+          priceZAR: negotiatedPriceZAR,
+          amountUSD: payPalRes.amountUSD,
+        },
+      });
 
       // Persist to MongoDB in background
       import("./mongodb").then((m) => m.persistOrderToDb(newOrder as any)).catch(() => {});
@@ -410,6 +520,7 @@ export async function handleApiRoute(request: Request, inputUrl?: URL): Promise<
           timestamp: now,
           vaultConsentVerified: true,
           links: payPalRes.links,
+          ...identity,
         },
         201,
       );
@@ -433,11 +544,15 @@ export async function handleApiRoute(request: Request, inputUrl?: URL): Promise<
       const now = new Date().toISOString();
 
       let existing = serverAuditStore.find((o) => o.orderId === orderId);
+      const settleIdentity = readIdentity(body as Record<string, unknown>);
 
       if (existing) {
         existing.status = "SETTLED";
         existing.transactionId = txId;
         existing.settledAt = now;
+        if (settleIdentity.agentId) existing.agentId = settleIdentity.agentId;
+        if (settleIdentity.agentName) existing.agentName = settleIdentity.agentName;
+        if (settleIdentity.deviceId) existing.deviceId = settleIdentity.deviceId;
       } else {
         existing = {
           orderId: orderId || "ORD-SANDBOX-DEMO",
@@ -450,9 +565,24 @@ export async function handleApiRoute(request: Request, inputUrl?: URL): Promise<
           createdAt: now,
           settledAt: now,
           vaultRef: "VAULT_AUTONOMOUS_DELEGATE_771B",
+          ...settleIdentity,
         };
         serverAuditStore.unshift(existing);
       }
+
+      recordAgentActivity({
+        agentId: settleIdentity.agentId ?? existing.agentId,
+        agentName: settleIdentity.agentName ?? existing.agentName,
+        deviceId: settleIdentity.deviceId ?? existing.deviceId,
+        type: "order_settled",
+        details: {
+          orderId: existing.orderId,
+          transactionId: txId,
+          storeId: existing.storeId,
+          priceZAR: existing.priceZAR,
+          amountUSD: existing.amountUSD,
+        },
+      });
 
       // Persist to MongoDB in background
       import("./mongodb").then((m) => m.persistOrderToDb(existing as any)).catch(() => {});
@@ -570,6 +700,11 @@ export async function handleApiRoute(request: Request, inputUrl?: URL): Promise<
       const toolName = body.tool || body.toolName || body.name;
       const params = body.parameters || body.args || body.arguments || {};
       const result = await executePayPalAgentTool(toolName, params);
+      recordAgentActivity({
+        ...readIdentity(body as Record<string, unknown>),
+        type: "tool_executed",
+        details: { tool: String(toolName || "unknown"), success: result.success },
+      });
       return jsonResponse(result, result.success ? 200 : 400);
     } catch (err: any) {
       return jsonResponse({ error: err?.message || "Agent tool execution failed" }, 400);
@@ -890,9 +1025,8 @@ export async function handleApiRoute(request: Request, inputUrl?: URL): Promise<
 
   // 7d-3. Trigger Store & Billboard Web Crawl: POST /api/crawler/trigger
   if (pathname === "/api/crawler/trigger" && method === "POST") {
-    const { runStoreCrawlerCheck, getStoredCrawledSpecials } = await import(
-      "./storeCrawlerService"
-    );
+    const { runStoreCrawlerCheck, getStoredCrawledSpecials } =
+      await import("./storeCrawlerService");
     const { persistCrawledSpecialsToDb } = await import("./mongodb");
     const report = await runStoreCrawlerCheck();
     const specials = getStoredCrawledSpecials();
@@ -1221,6 +1355,146 @@ export async function handleApiRoute(request: Request, inputUrl?: URL): Promise<
         listSecondary: "/api/names/list",
         buySecondary: "/api/names/buy-secondary",
       },
+    });
+  }
+
+  // 19. Personal Agent Registration: POST /api/agents/register
+  // Upserts the agent by lowercase name; every deviceId accumulates on the record.
+  if (pathname === "/api/agents/register" && method === "POST") {
+    try {
+      const body = await request.json();
+      const name = String(body.name || "").toLowerCase();
+      if (!name) {
+        return jsonResponse({ error: "Agent name is required" }, 400);
+      }
+      const now = new Date().toISOString();
+      const deviceId = typeof body.deviceId === "string" ? body.deviceId : undefined;
+      let record = serverAgentStore.find((a) => a.name === name);
+      let created = false;
+      if (record) {
+        record.lastActiveAt = now;
+        record.loginCount += 1;
+        if (deviceId && !record.deviceIds.includes(deviceId)) record.deviceIds.push(deviceId);
+        if (typeof body.ownerUserId === "string") record.ownerUserId = body.ownerUserId;
+      } else {
+        created = true;
+        record = {
+          name,
+          fullName: String(body.fullName || `${name}.agent`),
+          agentId: String(body.agentId || `agent-${name}-${Date.now().toString(36)}`),
+          ownerUserId: typeof body.ownerUserId === "string" ? body.ownerUserId : undefined,
+          deviceIds: deviceId ? [deviceId] : [],
+          intent: (body.intent as Record<string, unknown>) ?? undefined,
+          funding: (body.funding as Record<string, unknown>) ?? undefined,
+          schedule: (body.schedule as Record<string, unknown>) ?? undefined,
+          privacy: (body.privacy as Record<string, unknown>) ?? undefined,
+          avatarIcon: typeof body.avatarIcon === "string" ? body.avatarIcon : undefined,
+          avatarColor: typeof body.avatarColor === "string" ? body.avatarColor : undefined,
+          isFreeTier: typeof body.isFreeTier === "boolean" ? body.isFreeTier : undefined,
+          createdAt: now,
+          lastActiveAt: now,
+          loginCount: 1,
+        };
+        serverAgentStore.unshift(record);
+      }
+
+      import("./mongodb")
+        .then((m) =>
+          m.persistAgentToDb({
+            name: record.name,
+            fullName: record.fullName,
+            agentId: record.agentId,
+            ownerUserId: record.ownerUserId,
+            deviceId,
+            intent: record.intent,
+            funding: record.funding,
+            schedule: record.schedule,
+            privacy: record.privacy,
+          }),
+        )
+        .catch(() => {});
+
+      recordAgentActivity({
+        agentId: record.agentId,
+        agentName: record.name,
+        deviceId,
+        type: created ? "agent_registered" : "agent_login",
+        details: { ownerUserId: record.ownerUserId ?? null },
+      });
+
+      return jsonResponse({ agent: record, created }, created ? 201 : 200);
+    } catch {
+      return jsonResponse({ error: "Malformed agent registration body" }, 400);
+    }
+  }
+
+  // 20. Personal Agent Lookup: GET /api/agents?name=... or ?id=...
+  if (pathname === "/api/agents" && method === "GET") {
+    const name = (url.searchParams.get("name") || "").toLowerCase();
+    const id = url.searchParams.get("id") || "";
+    if (!name && !id) {
+      return jsonResponse({ error: "Query ?name= or ?id= is required" }, 400);
+    }
+    const memoryHit = serverAgentStore.find((a) => a.name === name || a.agentId === id);
+    if (memoryHit) {
+      return jsonResponse({ agent: memoryHit, source: "memory" });
+    }
+    const { getAgentFromDb } = await import("./mongodb");
+    const dbHit = await getAgentFromDb({
+      ...(name ? { name } : {}),
+      ...(id ? { agentId: id } : {}),
+    });
+    if (!dbHit) {
+      return jsonResponse({ error: `Agent '${name || id}' not found` }, 404);
+    }
+    return jsonResponse({ agent: dbHit, source: "database" });
+  }
+
+  // 21. Agent Activity Append: POST /api/agents/activity
+  if (pathname === "/api/agents/activity" && method === "POST") {
+    try {
+      const body = await request.json();
+      const identity = readIdentity(body as Record<string, unknown>);
+      const type = String(body.type || "").trim();
+      if ((!identity.agentId && !identity.agentName) || !type) {
+        return jsonResponse({ error: "agentName/agentId and type are required" }, 400);
+      }
+      recordAgentActivity({
+        ...identity,
+        type,
+        details: (body.details as Record<string, unknown>) ?? {},
+      });
+      return jsonResponse({ success: true, type }, 201);
+    } catch {
+      return jsonResponse({ error: "Malformed activity body" }, 400);
+    }
+  }
+
+  // 22. Agent Usage History: GET /api/agents/activity?agent=...&limit=...
+  if (pathname === "/api/agents/activity" && method === "GET") {
+    const agent = url.searchParams.get("agent") || "";
+    const limit = Math.min(Math.max(Number(url.searchParams.get("limit") || 100), 1), 500);
+    if (!agent) {
+      return jsonResponse({ error: "Query ?agent= (name or id) is required" }, 400);
+    }
+    const needle = agent.toLowerCase();
+    const memoryHits = serverActivityStore.filter(
+      (e) => e.agentName === needle || e.agentId === agent,
+    );
+    const { getActivityFromDb } = await import("./mongodb");
+    const dbHits = await getActivityFromDb(agent, limit);
+    const merged = new Map<string, unknown>();
+    for (const event of memoryHits) merged.set(event.id, event);
+    for (const event of dbHits) {
+      const key = String(event["id"] || event["_id"] || JSON.stringify(event));
+      if (!merged.has(key)) merged.set(key, event);
+    }
+    const events = Array.from(merged.values()).slice(0, limit);
+    return jsonResponse({
+      agent,
+      count: events.length,
+      events,
+      source: dbHits.length > 0 ? "MongoDB + In-Memory" : "In-Memory Buffer",
     });
   }
 

@@ -41,7 +41,9 @@ export async function getMongoClient(): Promise<MongoClient | null> {
     dbInstance = null;
     isInitialized = false;
 
-    const isTest = typeof process !== "undefined" && Boolean(process.env.VITEST || process.env.NODE_ENV === "test");
+    const isTest =
+      typeof process !== "undefined" &&
+      Boolean(process.env.VITEST || process.env.NODE_ENV === "test");
     client = new MongoClient(currentUri, {
       maxPoolSize: 10,
       serverSelectionTimeoutMS: isTest ? 500 : 5000,
@@ -118,6 +120,8 @@ export async function initAndSeedDatabase(): Promise<{
     const productsCol = db.collection("products");
     const ordersCol = db.collection("orders");
     const parkedCol = db.collection("parked_offers");
+    const agentsCol = db.collection("agents");
+    const activityCol = db.collection("agent_activity");
 
     // Create indexes for blazing-fast query latency (<2ms)
     await Promise.allSettled([
@@ -129,6 +133,10 @@ export async function initAndSeedDatabase(): Promise<{
       ordersCol.createIndex({ orderId: 1 }, { unique: true }),
       ordersCol.createIndex({ createdAt: -1 }),
       parkedCol.createIndex({ id: 1 }, { unique: true }),
+      agentsCol.createIndex({ name: 1 }, { unique: true }),
+      agentsCol.createIndex({ agentId: 1 }),
+      activityCol.createIndex({ agentName: 1, createdAt: -1 }),
+      activityCol.createIndex({ agentId: 1, createdAt: -1 }),
     ]);
 
     let totalStores = 0;
@@ -437,6 +445,8 @@ export async function getMongoHealth(): Promise<{
     storeCount?: number;
     productCount?: number;
     orderCount?: number;
+    agentCount?: number;
+    activityCount?: number;
   };
 }> {
   const uri = getMongoUri();
@@ -457,24 +467,33 @@ export async function getMongoHealth(): Promise<{
     const pingMs = Date.now() - startTime;
     const collections = await db.listCollections().toArray();
 
-    const [mallCount, storeCount, productCount, orderCount] = await Promise.all([
-      db
-        .collection("malls")
-        .countDocuments()
-        .catch(() => 0),
-      db
-        .collection("stores")
-        .countDocuments()
-        .catch(() => 0),
-      db
-        .collection("products")
-        .countDocuments()
-        .catch(() => 0),
-      db
-        .collection("orders")
-        .countDocuments()
-        .catch(() => 0),
-    ]);
+    const [mallCount, storeCount, productCount, orderCount, agentCount, activityCount] =
+      await Promise.all([
+        db
+          .collection("malls")
+          .countDocuments()
+          .catch(() => 0),
+        db
+          .collection("stores")
+          .countDocuments()
+          .catch(() => 0),
+        db
+          .collection("products")
+          .countDocuments()
+          .catch(() => 0),
+        db
+          .collection("orders")
+          .countDocuments()
+          .catch(() => 0),
+        db
+          .collection("agents")
+          .countDocuments()
+          .catch(() => 0),
+        db
+          .collection("agent_activity")
+          .countDocuments()
+          .catch(() => 0),
+      ]);
 
     return {
       connected: ping.ok === 1,
@@ -487,6 +506,8 @@ export async function getMongoHealth(): Promise<{
         storeCount,
         productCount,
         orderCount,
+        agentCount,
+        activityCount,
       },
     };
   } catch {
@@ -566,7 +587,9 @@ export async function persistDeliveredCardToDb(card: Record<string, unknown>): P
 /**
  * Retrieves delivered promo cards from MongoDB
  */
-export async function getDeliveredCardsFromDb(agentId?: string): Promise<Record<string, unknown>[]> {
+export async function getDeliveredCardsFromDb(
+  agentId?: string,
+): Promise<Record<string, unknown>[]> {
   const db = await getDb();
   if (!db) return [];
   try {
@@ -603,7 +626,9 @@ export async function persistPayLaterLoanToDb(loan: Record<string, unknown>): Pr
 /**
  * Retrieves Pay Later loans from MongoDB
  */
-export async function getPayLaterLoansFromDb(ownerAddress?: string): Promise<Record<string, unknown>[]> {
+export async function getPayLaterLoansFromDb(
+  ownerAddress?: string,
+): Promise<Record<string, unknown>[]> {
   const db = await getDb();
   if (!db) return [];
   try {
@@ -623,6 +648,130 @@ export async function getPayLaterLoansFromDb(ownerAddress?: string): Promise<Rec
       .toArray();
   } catch (err) {
     console.error("[MongoDB] Failed to fetch pay later loans:", err);
+    return [];
+  }
+}
+
+/**
+ * Registers (upserts) a user-created personal agent by lowercase name.
+ * Device ids accumulate so every device the agent shops from is remembered.
+ */
+export async function persistAgentToDb(agent: Record<string, unknown>): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  try {
+    const name = String(agent["name"] || "").toLowerCase();
+    if (!name) return false;
+    const deviceId = agent["deviceId"];
+    await db.collection("agents").updateOne(
+      { name },
+      {
+        $set: {
+          ...agent,
+          name,
+          lastActiveAt: new Date(),
+          updatedAt: new Date(),
+        },
+        $setOnInsert: {
+          createdAt: new Date(),
+          loginCount: 0,
+        },
+        ...(typeof deviceId === "string" && deviceId ? { $addToSet: { deviceIds: deviceId } } : {}),
+      },
+      { upsert: true },
+    );
+    return true;
+  } catch (err) {
+    console.error("[MongoDB] Failed to persist agent:", err);
+    return false;
+  }
+}
+
+/**
+ * Looks up a registered agent by handle (case-insensitive) or agent id.
+ */
+export async function getAgentFromDb(lookup: {
+  name?: string;
+  agentId?: string;
+}): Promise<Record<string, unknown> | null> {
+  const db = await getDb();
+  if (!db) return null;
+  try {
+    const or: Record<string, unknown>[] = [];
+    if (lookup.name) or.push({ name: lookup.name.toLowerCase() });
+    if (lookup.agentId) or.push({ agentId: lookup.agentId });
+    if (or.length === 0) return null;
+    return await db.collection("agents").findOne({ $or: or });
+  } catch (err) {
+    console.error("[MongoDB] Failed to fetch agent:", err);
+    return null;
+  }
+}
+
+/**
+ * Bumps an agent's last-active timestamp and login counter.
+ */
+export async function touchAgentInDb(name: string, deviceId?: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  try {
+    await db.collection("agents").updateOne(
+      { name: name.toLowerCase() },
+      {
+        $set: { lastActiveAt: new Date(), updatedAt: new Date() },
+        $inc: { loginCount: 1 },
+        ...(deviceId ? { $addToSet: { deviceIds: deviceId } } : {}),
+      },
+    );
+    return true;
+  } catch (err) {
+    console.error("[MongoDB] Failed to touch agent:", err);
+    return false;
+  }
+}
+
+/**
+ * Appends one usage-history event linked to an agent.
+ */
+export async function persistActivityToDb(event: Record<string, unknown>): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  try {
+    await db.collection("agent_activity").insertOne({
+      ...event,
+      agentName:
+        typeof event["agentName"] === "string"
+          ? (event["agentName"] as string).toLowerCase()
+          : event["agentName"],
+      createdAt: new Date(),
+    });
+    return true;
+  } catch (err) {
+    console.error("[MongoDB] Failed to persist activity:", err);
+    return false;
+  }
+}
+
+/**
+ * Reads an agent's usage history, newest first.
+ */
+export async function getActivityFromDb(
+  agentNameOrId: string,
+  limit = 100,
+): Promise<Record<string, unknown>[]> {
+  const db = await getDb();
+  if (!db) return [];
+  try {
+    return await db
+      .collection("agent_activity")
+      .find({
+        $or: [{ agentName: agentNameOrId.toLowerCase() }, { agentId: agentNameOrId }],
+      })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .toArray();
+  } catch (err) {
+    console.error("[MongoDB] Failed to fetch activity:", err);
     return [];
   }
 }

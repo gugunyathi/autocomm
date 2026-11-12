@@ -6,6 +6,7 @@
 
 import type { UserPersonalAgent, MemoryVaultBill, VoiceIntentRecord } from "../types/userAgent";
 import { saveA2AProfile, getStoredA2AProfile } from "../lib/agent-commerce";
+import { getOrCreateDeviceId } from "../lib/device-identity";
 import type { IntentWishlistItem } from "../types/autocom";
 
 export const STORAGE_USER_AGENT_KEY = "autocomm_user_personal_agent_v1";
@@ -79,6 +80,95 @@ export function saveUserPersonalAgent(agent: UserPersonalAgent): void {
     }
   } catch (err) {
     console.error("Failed to save personal agent to storage:", err);
+  }
+}
+
+export interface RegisteredAgentRecord {
+  name: string;
+  fullName: string;
+  agentId: string;
+  ownerUserId?: string;
+  deviceIds: string[];
+  createdAt: string;
+  lastActiveAt: string;
+  loginCount: number;
+}
+
+/**
+ * Registers the created agent with the backend registry (MongoDB + memory).
+ * Resolves to the server record, or null when offline/unreachable. Local
+ * storage remains the source of truth on this device.
+ */
+export async function registerAgentWithBackend(
+  agent: UserPersonalAgent,
+  opts?: { ownerUserId?: string; deviceId?: string },
+): Promise<{ agent: RegisteredAgentRecord; created: boolean } | null> {
+  try {
+    const res = await fetch("/api/agents/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: agent.name,
+        fullName: agent.fullName,
+        agentId: agent.id,
+        ownerUserId: opts?.ownerUserId,
+        deviceId: opts?.deviceId ?? getOrCreateDeviceId(),
+        intent: agent.intent,
+        funding: agent.funding,
+        schedule: agent.schedule,
+        privacy: agent.privacy,
+        avatarIcon: agent.avatarIcon,
+        avatarColor: agent.avatarColor,
+        isFreeTier: agent.isFreeTier,
+      }),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as { agent: RegisteredAgentRecord; created: boolean };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Looks up a registered agent by handle or id. Null when unknown/offline.
+ */
+export async function fetchAgentByName(name: string): Promise<RegisteredAgentRecord | null> {
+  try {
+    const res = await fetch(`/api/agents?name=${encodeURIComponent(name)}`);
+    if (!res.ok) return null;
+    const data = (await res.json()) as { agent?: RegisteredAgentRecord };
+    return data.agent ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export interface AgentActivityRecord {
+  id: string;
+  agentId?: string;
+  agentName?: string;
+  deviceId?: string;
+  type: string;
+  details: Record<string, unknown>;
+  createdAt: string;
+}
+
+/**
+ * Reads an agent's backend usage history, newest first.
+ */
+export async function fetchAgentActivity(
+  agentNameOrId: string,
+  limit = 50,
+): Promise<AgentActivityRecord[]> {
+  try {
+    const res = await fetch(
+      `/api/agents/activity?agent=${encodeURIComponent(agentNameOrId)}&limit=${limit}`,
+    );
+    if (!res.ok) return [];
+    const data = (await res.json()) as { events?: AgentActivityRecord[] };
+    return Array.isArray(data.events) ? data.events : [];
+  } catch {
+    return [];
   }
 }
 
