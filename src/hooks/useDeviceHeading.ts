@@ -1,6 +1,23 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { safeGetItem, safeSetItem } from "@/lib/safe-storage";
 
 export type HeadingPermissionStatus = "granted" | "denied" | "prompt" | "unsupported";
+
+/** Persisted master switch for gyro/compass + GPS. Absence means ON. */
+export const SENSORS_ENABLED_STORAGE_KEY = "autocomm.sensors.enabled";
+
+export function readSensorsEnabledPreference(): boolean {
+  if (typeof window === "undefined") return true;
+  return safeGetItem(SENSORS_ENABLED_STORAGE_KEY) !== "0";
+}
+
+function requiresUserGesturePermission(): boolean {
+  if (typeof window === "undefined") return false;
+  const DeviceOrientationWithPermission = window.DeviceOrientationEvent as unknown as {
+    requestPermission?: () => Promise<"granted" | "denied">;
+  };
+  return typeof DeviceOrientationWithPermission?.requestPermission === "function";
+}
 
 export interface UseDeviceHeadingResult {
   heading: number; // 0° - 360°
@@ -9,12 +26,18 @@ export interface UseDeviceHeadingResult {
   requestPermission: () => Promise<boolean>;
   setManualHeading: (deg: number) => void;
   turnHeadingBy: (delta: number) => void;
+  /** Master sensor switch. Defaults to true; persisted across sessions. */
+  sensorsEnabled: boolean;
+  setSensorsEnabled: (enabled: boolean) => void;
 }
 
 export function useDeviceHeading(initialHeading = 45): UseDeviceHeadingResult {
   const [heading, setHeading] = useState<number>(initialHeading);
   const [isLiveSensor, setIsLiveSensor] = useState<boolean>(false);
   const [permissionStatus, setPermissionStatus] = useState<HeadingPermissionStatus>("prompt");
+  const [sensorsEnabled, setSensorsEnabledState] = useState<boolean>(() =>
+    readSensorsEnabledPreference(),
+  );
 
   // Performance Optimization: Throttle hardware sensor updates to prevent high-frequency React re-renders on budget Android CPUs
   const lastUpdateRef = useRef<number>(0);
@@ -86,26 +109,64 @@ export function useDeviceHeading(initialHeading = 45): UseDeviceHeadingResult {
     }
   }, [handleOrientation]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+  const setSensorsEnabled = useCallback(
+    (enabled: boolean) => {
+      safeSetItem(SENSORS_ENABLED_STORAGE_KEY, enabled ? "1" : "0");
+      setSensorsEnabledState(enabled);
+      if (!enabled) {
+        // Master switch off: detach immediately and report manual mode.
+        if (typeof window !== "undefined") {
+          window.removeEventListener("deviceorientation", handleOrientation, true);
+        }
+        setIsLiveSensor(false);
+      } else if (requiresUserGesturePermission()) {
+        // A toggle tap is a user gesture, so request at once on iOS instead
+        // of waiting for the next interaction.
+        void requestPermission();
+      }
+    },
+    [handleOrientation, requestPermission],
+  );
 
-    const DeviceOrientationWithPermission = window.DeviceOrientationEvent as unknown as {
-      requestPermission?: () => Promise<"granted" | "denied">;
-    };
+  useEffect(() => {
+    if (typeof window === "undefined" || !sensorsEnabled) return;
 
     // On standard browsers without iOS permission requirement, attach listener directly
-    if (typeof DeviceOrientationWithPermission?.requestPermission !== "function") {
+    if (!requiresUserGesturePermission()) {
       if ("DeviceOrientationEvent" in window) {
         window.addEventListener("deviceorientation", handleOrientation, true);
       } else {
         setPermissionStatus("unsupported");
       }
+      return () => {
+        window.removeEventListener("deviceorientation", handleOrientation, true);
+      };
     }
 
+    // iOS requires requestPermission() inside a user gesture, so auto-request on
+    // the first tap/keypress anywhere. One attempt per mount; the drawer button
+    // stays as a manual fallback.
+    let settled = false;
+    const removeGestureListeners = () => {
+      window.removeEventListener("pointerdown", autoRequestOnGesture);
+      window.removeEventListener("touchend", autoRequestOnGesture);
+      window.removeEventListener("keydown", autoRequestOnGesture);
+    };
+    const autoRequestOnGesture = () => {
+      if (settled) return;
+      settled = true;
+      removeGestureListeners();
+      void requestPermission();
+    };
+    window.addEventListener("pointerdown", autoRequestOnGesture);
+    window.addEventListener("touchend", autoRequestOnGesture);
+    window.addEventListener("keydown", autoRequestOnGesture);
+
     return () => {
+      removeGestureListeners();
       window.removeEventListener("deviceorientation", handleOrientation, true);
     };
-  }, [handleOrientation]);
+  }, [handleOrientation, requestPermission, sensorsEnabled]);
 
   const setManualHeading = useCallback((deg: number) => {
     const normalized = ((deg % 360) + 360) % 360;
@@ -128,5 +189,7 @@ export function useDeviceHeading(initialHeading = 45): UseDeviceHeadingResult {
     requestPermission,
     setManualHeading,
     turnHeadingBy,
+    sensorsEnabled,
+    setSensorsEnabled,
   };
 }

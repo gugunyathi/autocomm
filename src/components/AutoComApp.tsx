@@ -45,7 +45,7 @@ import {
   getDeliveredAgentCards,
   type DeliveredSpecialCard,
 } from "@/services/storeCrawlerService";
-import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Heart } from "lucide-react";
 
 // Lazy-load heavy sub-applications and dialogs so initial mesh loading is instantaneous
 const PitchDeckModal = lazy(() =>
@@ -438,9 +438,24 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
     ]);
   }, []);
 
-  // Geolocation auto-detection of Indoor vs. Outdoor, Speed Tracking & Mall Geofence
+  // Spatial Sensor Heading & Compass state (declared before the GPS effect so
+  // the geolocation watch can gate on the shared sensorsEnabled preference).
+  const {
+    heading,
+    isLiveSensor,
+    permissionStatus,
+    requestPermission,
+    setManualHeading,
+    turnHeadingBy,
+    sensorsEnabled,
+    setSensorsEnabled,
+  } = useDeviceHeading(45);
+
+  // Geolocation auto-detection of Indoor vs. Outdoor, Speed Tracking & Mall Geofence.
+  // Always on by default; the compass drawer Sensors toggle stops/starts the
+  // watch via the shared sensorsEnabled preference.
   useEffect(() => {
-    if (typeof window === "undefined" || !("geolocation" in navigator)) return;
+    if (typeof window === "undefined" || !("geolocation" in navigator) || !sensorsEnabled) return;
 
     const watcher = navigator.geolocation.watchPosition(
       (pos) => {
@@ -489,7 +504,7 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
     );
 
     return () => navigator.geolocation.clearWatch(watcher);
-  }, [envMode, currentMall]);
+  }, [envMode, currentMall, sensorsEnabled]);
 
   const handleSetEnvMode = (mode: "auto" | "indoor" | "outdoor") => {
     setEnvMode(mode);
@@ -759,16 +774,6 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
     if (bottomDragMoved.current) return;
     action();
   };
-
-  // Spatial Sensor Heading & Compass state
-  const {
-    heading,
-    isLiveSensor,
-    permissionStatus,
-    requestPermission,
-    setManualHeading,
-    turnHeadingBy,
-  } = useDeviceHeading(45);
 
   // userCoords is statefully managed at top level (Bel Air Shopping Centre coordinates & live GPS)
 
@@ -1618,6 +1623,7 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
               wishlist={wishlist}
               onAddWishlistItem={handleAddWishlistItem}
               onRemoveWishlistItem={handleRemoveWishlistItem}
+              initialTab="wishlist"
             />
           )}
           {marketplaceOpen && (
@@ -1724,6 +1730,20 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
                 msOverflowStyle: "none",
               }}
             >
+              {/* Intent Wishlist Button */}
+              <button
+                onClick={() => setAutoWalletOpen(true)}
+                className="glass flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 text-[9.5px] sm:text-[10.5px] font-mono text-rose-300 border-rose-500/40 bg-rose-500/10 hover:border-rose-400 hover:bg-rose-500/20 transition-all cursor-pointer shadow-[0_0_8px_rgba(244,63,94,0.25)] shrink-0 whitespace-nowrap"
+                title={`Open Intent Wishlist (${wishlist.length} items)`}
+                aria-label={`Open Intent Wishlist, ${wishlist.length} items`}
+              >
+                <Heart className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                <span className="font-bold hidden xs:inline">Wishlist</span>
+                <span className="px-1 sm:px-1.5 py-px rounded-full bg-rose-500/25 border border-rose-500/40 text-[8.5px] sm:text-[9px] font-bold text-rose-200">
+                  {wishlist.length}
+                </span>
+              </button>
+
               {/* PayPal AI Hackathon Hub Badge */}
               <button
                 onClick={() => {
@@ -1921,6 +1941,8 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
                 onSetHeading={setManualHeading}
                 onRequestPermission={requestPermission}
                 permissionStatus={permissionStatus}
+                sensorsEnabled={sensorsEnabled}
+                onToggleSensors={setSensorsEnabled}
                 onCollapse={() => setCompassHudExpanded(false)}
               />
             </div>
@@ -3671,6 +3693,7 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
             wishlist={wishlist}
             onAddWishlistItem={handleAddWishlistItem}
             onRemoveWishlistItem={handleRemoveWishlistItem}
+            initialTab="wishlist"
           />
         )}
         {marketplaceOpen && (

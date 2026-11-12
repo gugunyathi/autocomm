@@ -14,6 +14,8 @@ interface SpatialCompassHUDProps {
   onSetHeading: (deg: number) => void;
   onRequestPermission: () => Promise<boolean>;
   permissionStatus: string;
+  sensorsEnabled: boolean;
+  onToggleSensors: (enabled: boolean) => void;
   onCollapse?: () => void;
 }
 
@@ -28,6 +30,8 @@ export const SpatialCompassHUD = React.memo(function SpatialCompassHUD({
   onSetHeading,
   onRequestPermission,
   permissionStatus,
+  sensorsEnabled,
+  onToggleSensors,
   onCollapse,
 }: SpatialCompassHUDProps) {
   const [showControls, setShowControls] = useState<boolean>(false);
@@ -66,7 +70,11 @@ export const SpatialCompassHUD = React.memo(function SpatialCompassHUD({
                 </span>
               </div>
               <p className="font-mono text-[8px] sm:text-[9px] text-muted-foreground truncate">
-                {isLiveSensor ? "⚡ Gyro/Compass Active" : "📡 Spatial Heading Mesh"}
+                {!sensorsEnabled
+                  ? "🚫 Sensors Off · Manual"
+                  : isLiveSensor
+                    ? "⚡ Gyro/Compass Active"
+                    : "📡 Spatial Heading Mesh"}
               </p>
             </div>
           </div>
@@ -167,14 +175,33 @@ export const SpatialCompassHUD = React.memo(function SpatialCompassHUD({
                 Accuracy: ±{userCoords.accuracy}m
               </div>
 
-              {permissionStatus === "prompt" && (
+              <div className="flex flex-wrap items-center gap-1.5">
                 <button
-                  onClick={onRequestPermission}
-                  className="px-2.5 py-1 rounded-lg bg-primary/20 border border-primary/50 text-primary hover:bg-primary/30 transition-colors cursor-pointer"
+                  onClick={() => onToggleSensors(!sensorsEnabled)}
+                  aria-pressed={sensorsEnabled}
+                  title={
+                    sensorsEnabled
+                      ? "Turn off gyro, compass and GPS (manual mode)"
+                      : "Turn on gyro, compass and GPS"
+                  }
+                  className={`px-2.5 py-1 rounded-lg border transition-colors cursor-pointer font-bold ${
+                    sensorsEnabled
+                      ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/30"
+                      : "bg-white/5 border-white/15 text-muted-foreground hover:text-white"
+                  }`}
                 >
-                  Enable iOS Compass Sensor
+                  {sensorsEnabled ? "📡 Sensors: ON" : "🚫 Sensors: OFF"}
                 </button>
-              )}
+
+                {sensorsEnabled && permissionStatus === "prompt" && (
+                  <button
+                    onClick={onRequestPermission}
+                    className="px-2.5 py-1 rounded-lg bg-primary/20 border border-primary/50 text-primary hover:bg-primary/30 transition-colors cursor-pointer"
+                  >
+                    Enable iOS Compass Sensor
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}

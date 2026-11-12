@@ -20,6 +20,8 @@ import {
   ArrowRight,
 } from "lucide-react";
 
+export type AutoWalletTab = "debit" | "wishlist";
+
 interface AutoWalletModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -28,6 +30,7 @@ interface AutoWalletModalProps {
   wishlist: IntentWishlistItem[];
   onAddWishlistItem: (item: Omit<IntentWishlistItem, "id" | "status" | "createdAt">) => void;
   onRemoveWishlistItem: (id: string) => void;
+  initialTab?: AutoWalletTab;
 }
 
 export function AutoWalletModal({
@@ -38,8 +41,9 @@ export function AutoWalletModal({
   wishlist,
   onAddWishlistItem,
   onRemoveWishlistItem,
+  initialTab = "wishlist",
 }: AutoWalletModalProps) {
-  const [activeTab, setActiveTab] = useState<"debit" | "wishlist">("wishlist");
+  const [activeTab, setActiveTab] = useState<AutoWalletTab>(initialTab);
   const [newTitle, setNewTitle] = useState("");
   const [newCategory, setNewCategory] = useState("Sportswear");
   const [newBrand, setNewBrand] = useState("Nike");
@@ -73,27 +77,27 @@ export function AutoWalletModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-in fade-in">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-5 bg-black/85 backdrop-blur-md animate-in fade-in">
       <div
-        className="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-2xl sm:rounded-3xl bg-slate-950 border border-amber-500/40 shadow-2xl text-slate-100 overflow-hidden"
+        className="relative w-full sm:max-w-4xl h-[100dvh] sm:h-auto sm:max-h-[90dvh] flex flex-col rounded-t-2xl sm:rounded-3xl bg-slate-950 border border-amber-500/40 shadow-2xl text-slate-100 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-800 shrink-0 bg-slate-900/90 backdrop-blur-md">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 flex items-center justify-center font-bold text-lg shadow-lg shadow-amber-500/20 shrink-0">
-              <CreditCard className="w-5 h-5 text-slate-950" />
+        <div className="flex items-center justify-between gap-2 p-3 sm:p-5 border-b border-slate-800 shrink-0 bg-slate-900/90 backdrop-blur-md">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 flex items-center justify-center font-bold text-lg shadow-lg shadow-amber-500/20 shrink-0">
+              <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-slate-950" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-xl font-extrabold text-white truncate">
+                <h2 className="text-sm sm:text-xl font-extrabold text-white truncate">
                   FinTech Auto-Wallet &amp; Intent Wishlist
                 </h2>
-                <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-mono border border-amber-500/40 hidden xs:inline">
+                <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-mono border border-amber-500/40 hidden xs:inline shrink-0">
                   Automated Algorithmic Checkout
                 </span>
               </div>
-              <p className="text-xs text-slate-400 truncate">
+              <p className="text-[11px] sm:text-xs text-slate-400 truncate">
                 Recurring debit order pool + autonomous intent wishlist bargaining engine
               </p>
             </div>
@@ -101,48 +105,57 @@ export function AutoWalletModal({
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            aria-label="Close wallet"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 active:bg-slate-800 transition-colors cursor-pointer touch-manipulation shrink-0 min-w-[40px] min-h-[40px] flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex items-center gap-2 px-4 sm:px-6 pt-3 pb-2 border-b border-slate-800 bg-slate-900/40">
+        {/* Tab Navigation — horizontally scrollable on narrow screens */}
+        <div
+          role="tablist"
+          aria-label="Wallet sections"
+          className="tab-scroll flex items-center gap-2 px-3 sm:px-6 pt-3 pb-2 border-b border-slate-800 bg-slate-900/40 overflow-x-auto flex-nowrap shrink-0"
+        >
           <button
+            role="tab"
+            aria-selected={activeTab === "wishlist"}
             onClick={() => setActiveTab("wishlist")}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border whitespace-nowrap shrink-0 snap-start touch-manipulation min-h-[40px] ${
               activeTab === "wishlist"
                 ? "bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-sm"
-                : "text-slate-400 border-transparent hover:text-slate-200"
+                : "text-slate-400 border-transparent hover:text-slate-200 active:text-slate-200"
             }`}
           >
-            <Target className="w-4 h-4" />
+            <Target className="w-4 h-4 shrink-0" />
             <span>Intent Wishlist ({wishlist.length})</span>
           </button>
           <button
+            role="tab"
+            aria-selected={activeTab === "debit"}
             onClick={() => setActiveTab("debit")}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border whitespace-nowrap shrink-0 snap-start touch-manipulation min-h-[40px] ${
               activeTab === "debit"
                 ? "bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-sm"
-                : "text-slate-400 border-transparent hover:text-slate-200"
+                : "text-slate-400 border-transparent hover:text-slate-200 active:text-slate-200"
             }`}
           >
-            <CreditCard className="w-4 h-4" />
+            <CreditCard className="w-4 h-4 shrink-0" />
             <span>Debit Order Tier (R{config.tier})</span>
           </button>
         </div>
 
-        {/* Tab Content */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-5">
+        {/* Tab Content — vertical scroll to view all info */}
+        <div className="scroll-y-touch p-3 sm:p-6 pb-[max(1rem,env(safe-area-inset-bottom))] overflow-y-auto overscroll-contain flex-1 min-h-0 space-y-5">
           {/* TAB 1: INTENT WISHLIST */}
           {activeTab === "wishlist" && (
             <div className="space-y-4">
               {/* Top Banner Stats */}
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-slate-900 to-slate-900 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
+              <div className="p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-slate-900 to-slate-900 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center items-stretch justify-between gap-3">
+                <div className="min-w-0">
                   <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-400" />
+                    <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
                     <span>Autonomous Intent Bargaining Engine</span>
                   </h3>
                   <p className="text-xs text-slate-400 mt-0.5">
@@ -153,9 +166,9 @@ export function AutoWalletModal({
 
                 <button
                   onClick={() => setAddItemOpen(true)}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
+                  className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer touch-manipulation min-h-[42px] w-full sm:w-auto shrink-0"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4 shrink-0" />
                   <span>Add Wishlist Intent</span>
                 </button>
               </div>
@@ -175,23 +188,25 @@ export function AutoWalletModal({
                   wishlist.map((w) => (
                     <div
                       key={w.id}
-                      className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-amber-500/40 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                      className="p-3 sm:p-4 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-amber-500/40 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                     >
-                      <div className="space-y-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-sm text-white truncate">{w.title}</h4>
-                          <span className="px-2 py-0.2 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-mono font-bold">
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <h4 className="font-bold text-sm text-white break-words min-w-0">
+                            {w.title}
+                          </h4>
+                          <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-mono font-bold whitespace-nowrap shrink-0">
                             Min {w.minDiscountPercent}% Drop
                           </span>
                         </div>
-                        <div className="flex items-center gap-3 text-xs font-mono text-slate-400">
-                          <span>Max Price: R{w.maxPriceZar}</span>
-                          <span>·</span>
-                          <span>Category: {w.category}</span>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs font-mono text-slate-400">
+                          <span className="whitespace-nowrap">Max Price: R{w.maxPriceZar}</span>
+                          <span className="hidden min-[420px]:inline">·</span>
+                          <span className="break-words">Category: {w.category}</span>
                           {w.targetBrand && (
                             <>
-                              <span>·</span>
-                              <span className="text-teal-400 font-bold">
+                              <span className="hidden min-[420px]:inline">·</span>
+                              <span className="text-teal-400 font-bold break-words">
                                 Brand: {w.targetBrand}
                               </span>
                             </>
@@ -200,15 +215,15 @@ export function AutoWalletModal({
 
                         {w.status === "ACTIVE_SCANNING" ? (
                           <div className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-400 pt-1">
-                            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+                            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
                             <span>
                               🤖 Agent actively scanning spatial mesh &amp; DOOH billboards
                             </span>
                           </div>
                         ) : (
                           <div className="flex items-center gap-1.5 text-[11px] font-mono text-teal-300 pt-1">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-teal-400" />
-                            <span>
+                            <CheckCircle2 className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+                            <span className="break-words">
                               Executed at {w.matchedDeal?.storeName} (-
                               {w.matchedDeal?.discountPercent}% OFF)
                             </span>
@@ -216,15 +231,16 @@ export function AutoWalletModal({
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
                         {w.autoExecute && (
-                          <span className="px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono font-bold">
+                          <span className="px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono font-bold whitespace-nowrap">
                             ⚡ Auto-Buy ON
                           </span>
                         )}
                         <button
                           onClick={() => onRemoveWishlistItem(w.id)}
-                          className="p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                          aria-label={`Remove ${w.title}`}
+                          className="p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 active:bg-rose-500/20 transition-colors cursor-pointer touch-manipulation min-w-[40px] min-h-[40px] flex items-center justify-center"
                           title="Remove item"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -241,30 +257,30 @@ export function AutoWalletModal({
           {activeTab === "debit" && (
             <div className="space-y-5">
               {/* Balance Card */}
-              <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-slate-900 to-slate-900 border border-amber-500/40 space-y-3">
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-slate-900 to-slate-900 border border-amber-500/40 space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs font-mono text-slate-400 uppercase">
                       Available Auto-Wallet Pool
                     </p>
-                    <p className="text-2xl sm:text-3xl font-black text-white font-mono">
+                    <p className="text-2xl sm:text-3xl font-black text-white font-mono break-words">
                       R{config.autoWalletBalanceZar.toLocaleString()}{" "}
-                      <span className="text-sm font-normal text-amber-300">
+                      <span className="text-sm font-normal text-amber-300 whitespace-nowrap">
                         (~${config.autoWalletBalanceUsdc.toFixed(1)} USDC)
                       </span>
                     </p>
                   </div>
 
-                  <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-right font-mono text-xs">
+                  <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-left sm:text-right font-mono text-xs shrink-0">
                     <p className="text-slate-500">Bank Debit Mandate</p>
-                    <p className="text-slate-200 font-bold">{config.bankAccountMask}</p>
+                    <p className="text-slate-200 font-bold break-all">{config.bankAccountMask}</p>
                     <p className="text-[10px] text-emerald-400">Status: Active &amp; Verified</p>
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs font-mono text-slate-400">
+                <div className="pt-2 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center items-start justify-between gap-1 text-xs font-mono text-slate-400">
                   <span>Next Automated Cycle: {config.nextDebitDate}</span>
-                  <span className="text-teal-400 font-bold">
+                  <span className="text-teal-400 font-bold break-words">
                     Total Automated Savings: R{config.totalAutomatedSavingsZar.toLocaleString()}
                   </span>
                 </div>
@@ -283,7 +299,7 @@ export function AutoWalletModal({
                         key={amount}
                         type="button"
                         onClick={() => handleSelectTier(amount as AutoDebitTier)}
-                        className={`p-4 rounded-2xl border text-left transition-all cursor-pointer space-y-2 relative overflow-hidden ${
+                        className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all cursor-pointer touch-manipulation space-y-2 relative overflow-hidden ${
                           isSelected
                             ? "bg-amber-500/20 border-amber-400 shadow-lg shadow-amber-500/20 ring-1 ring-amber-400"
                             : "bg-slate-900 border-slate-800 hover:border-slate-700"
@@ -321,7 +337,7 @@ export function AutoWalletModal({
                       key={freq}
                       type="button"
                       onClick={() => handleSelectSchedule(freq)}
-                      className={`p-3.5 rounded-xl border text-center font-mono text-xs font-bold capitalize transition-all cursor-pointer ${
+                      className={`p-3.5 rounded-xl border text-center font-mono text-xs font-bold capitalize transition-all cursor-pointer touch-manipulation min-h-[48px] ${
                         config.schedule === freq
                           ? "bg-teal-500/20 text-teal-300 border-teal-500"
                           : "bg-slate-900 text-slate-400 border-slate-800"
@@ -339,16 +355,17 @@ export function AutoWalletModal({
 
       {/* Add Wishlist Item Modal Overlay */}
       {addItemOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-3 bg-black/90 backdrop-blur-lg animate-in fade-in">
-          <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-amber-500/50 p-5 space-y-4 shadow-2xl text-slate-100">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Target className="w-4 h-4 text-amber-400" />
-                <span>Add Intent Wishlist Requirement</span>
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-3 bg-black/90 backdrop-blur-lg animate-in fade-in overflow-y-auto">
+          <div className="scroll-y-touch w-full sm:max-w-md max-h-[92dvh] overflow-y-auto overscroll-contain rounded-t-2xl sm:rounded-2xl bg-slate-900 border border-amber-500/50 p-4 sm:p-5 space-y-4 shadow-2xl text-slate-100 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2 min-w-0">
+                <Target className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="truncate">Add Intent Wishlist Requirement</span>
               </h3>
               <button
                 onClick={() => setAddItemOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white"
+                aria-label="Close add item form"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 active:bg-slate-800 cursor-pointer touch-manipulation shrink-0 min-w-[36px] min-h-[36px] flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -365,18 +382,18 @@ export function AutoWalletModal({
                   placeholder="e.g. Nike Air Max Running Shoes"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="mt-1 w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 outline-none focus:border-amber-500"
+                  className="mt-1 w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 outline-none focus:border-amber-500 min-h-[40px]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-mono text-slate-400">Target Brand</label>
                   <input
                     type="text"
                     value={newBrand}
                     onChange={(e) => setNewBrand(e.target.value)}
-                    className="mt-1 w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 outline-none"
+                    className="mt-1 w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 outline-none min-h-[40px]"
                   />
                 </div>
                 <div>
@@ -384,7 +401,7 @@ export function AutoWalletModal({
                   <select
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
-                    className="mt-1 w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 outline-none"
+                    className="mt-1 w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 outline-none min-h-[40px]"
                   >
                     <option value="Sportswear">Sportswear</option>
                     <option value="Apparel">Apparel</option>
@@ -397,7 +414,7 @@ export function AutoWalletModal({
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
+                <div className="min-w-0">
                   <label className="text-xs font-mono text-slate-400">
                     Min Discount Target (%)
                   </label>
@@ -407,42 +424,42 @@ export function AutoWalletModal({
                     max="90"
                     value={newMinDiscount}
                     onChange={(e) => setNewMinDiscount(Number(e.target.value))}
-                    className="mt-1 w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 outline-none"
+                    className="mt-1 w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 outline-none min-h-[40px]"
                   />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <label className="text-xs font-mono text-slate-400">Max Price (ZAR)</label>
                   <input
                     type="number"
                     min="100"
                     value={newMaxPrice}
                     onChange={(e) => setNewMaxPrice(Number(e.target.value))}
-                    className="mt-1 w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 outline-none"
+                    className="mt-1 w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 outline-none min-h-[40px]"
                   />
                 </div>
               </div>
 
-              <label className="flex items-center gap-2 text-xs font-mono text-slate-300 pt-1 cursor-pointer">
+              <label className="flex items-start gap-2.5 text-xs font-mono text-slate-300 pt-1 cursor-pointer touch-manipulation">
                 <input
                   type="checkbox"
                   checked={newAutoExecute}
                   onChange={(e) => setNewAutoExecute(e.target.checked)}
-                  className="accent-amber-500 rounded"
+                  className="accent-amber-500 rounded w-4 h-4 mt-0.5 shrink-0"
                 />
                 <span>Auto-execute and buy immediately using debited wallet pool</span>
               </label>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="flex flex-col-reverse sm:flex-row sm:items-center items-stretch justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setAddItemOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs text-slate-400 hover:text-white"
+                  className="px-4 py-2.5 rounded-xl text-xs text-slate-400 hover:text-white hover:bg-slate-800 active:bg-slate-800 cursor-pointer touch-manipulation min-h-[42px]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer touch-manipulation min-h-[42px]"
                 >
                   Activate AI Scanning
                 </button>
