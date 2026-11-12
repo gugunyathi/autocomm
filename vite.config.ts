@@ -7,6 +7,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { sanitizeChunkCode } from "./scripts/sanitize-chunks";
 
 export default defineConfig({
   vite: {
@@ -17,27 +18,45 @@ export default defineConfig({
       {
         name: "fix-rolldown-preload-hash",
         apply: "build",
-        closeBundle() {
+        async closeBundle() {
+          const ts = await import("typescript");
           const publicDirs = [
             path.resolve(process.cwd(), ".output/public/assets"),
             path.resolve(process.cwd(), ".vercel/output/static/assets"),
           ];
           for (const assetsDir of publicDirs) {
-            if (fs.existsSync(assetsDir)) {
-              const files = fs.readdirSync(assetsDir).filter((f) => f.endsWith(".js"));
-              for (const file of files) {
-                const filePath = path.join(assetsDir, file);
-                const code = fs.readFileSync(filePath, "utf-8");
-                if (code.includes("__vite__mapDeps")) {
-                  const sanitized = code.replace(
-                    /(__vite__mapDeps\(\[[^\]]*\]\))[0-9a-f]{16,64}/g,
-                    "$1",
-                  );
-                  if (sanitized !== code) {
-                    fs.writeFileSync(filePath, sanitized, "utf-8");
-                    console.log(`🩹 [vite:closeBundle] Fixed mapDeps in ${file}`);
-                  }
-                }
+            if (!fs.existsSync(assetsDir)) continue;
+            const files = fs.readdirSync(assetsDir).filter((f) => f.endsWith(".js"));
+            for (const file of files) {
+              const filePath = path.join(assetsDir, file);
+              const code = fs.readFileSync(filePath, "utf-8");
+              const { code: sanitized, repaired, repairs } = sanitizeChunkCode(code);
+              const finalCode = repaired ? sanitized : code;
+              if (repaired) {
+                fs.writeFileSync(filePath, sanitized, "utf-8");
+                console.log(`🩹 [vite:closeBundle] Fixed ${repairs.join(",")} in ${file}`);
+              }
+              // Fail the build rather than ship a chunk that cannot parse.
+              const out = ts.transpileModule(finalCode, {
+                reportDiagnostics: true,
+                compilerOptions: {
+                  allowJs: true,
+                  target: ts.ScriptTarget.ESNext,
+                  module: ts.ModuleKind.ESNext,
+                },
+              });
+              const syntaxErrors = (out.diagnostics ?? []).filter(
+                (d) =>
+                  d.category === ts.DiagnosticCategory.Error && d.code >= 1000 && d.code < 2000,
+              );
+              if (syntaxErrors.length > 0) {
+                const first = syntaxErrors
+                  .slice(0, 3)
+                  .map((d) => ts.flattenDiagnosticMessageText(d.messageText, " "))
+                  .join("; ");
+                throw new Error(
+                  `[vite:closeBundle] Refusing to ship corrupt chunk ${file}: ${first}`,
+                );
               }
             }
           }
