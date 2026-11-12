@@ -40,6 +40,15 @@ import {
 } from "@/lib/passkey-auth";
 import { getOrCreateDeviceId } from "@/lib/device-identity";
 import { reportAgentActivity } from "@/lib/agent-identity";
+import {
+  matchWishlistCandidates,
+  decideWishlistOutcome,
+  computeBnplAvailable,
+  titlesMatch,
+  type WishlistCandidate,
+  type WishlistFunds,
+} from "@/lib/wishlist-engine";
+import { getStoredPayLaterLoans, requestAgentPayLaterLoan } from "@/services/paypalService";
 import { ALL_MALLS, getMallById, type MallDefinition, type RealProduct } from "@/lib/malls";
 import { StoreProductsModal } from "@/components/StoreProductsModal";
 import { FloatingCreateAgentButton } from "@/components/agent/FloatingCreateAgentButton";
@@ -1566,6 +1575,222 @@ export function AutoComApp({ initialView }: { initialView?: "landing" | "mesh" }
   const handleClearBoughtReceipt = (id: string) => {
     saveBought(boughtItems.filter((b) => b.id !== id));
   };
+
+  // ---- Live wishlist autopilot -------------------------------------------------
+  // Every ACTIVE_SCANNING wishlist item is immediately shoppable by the user's
+  // personal agent: the engine negotiates against live inventory, then either
+  // buys (budget + debit pool + Pay Later headroom) or parks the deal. Bought
+  // items are removed from the wishlist so it stays live and real.
+  const wishlistAutopilotInFlight = useRef(false);
+  const wishlistAutopilotSig = useRef(new Map<string, string>());
+
+  const processWishlistAutopilot = useCallback(async () => {
+    if (!hasCreatedAgent || wishlistAutopilotInFlight.current) return;
+    const scanning = wishlist.filter((w) => w.status === "ACTIVE_SCANNING");
+    if (scanning.length === 0) return;
+    wishlistAutopilotInFlight.current = true;
+    try {
+      // Candidate inventory: spatial mesh stores + mall products + live deals.
+      const candidates: WishlistCandidate[] = [];
+      for (const s of stores) {
+        if (!s.item) continue;
+        candidates.push({
+          storeId: s.id,
+          storeName: s.name,
+          store: s,
+          itemTitle: s.item,
+          stickerPrice: s.open,
+          listedDiscount: 0,
+          inStock: true,
+          source: "mesh-store",
+        });
+      }
+      for (const mallStore of currentMall.stores) {
+        for (const p of mallStore.products ?? []) {
+          candidates.push({
+            storeId: mallStore.id,
+            storeName: mallStore.name,
+            store: mallStore,
+            itemTitle: p.name,
+            stickerPrice: p.originalPriceZAR,
+            listedDiscount: p.discountPercent,
+            inStock: p.inStock,
+            source: "mall-product",
+          });
+        }
+      }
+      for (const d of [...(deal ? [deal] : []), ...matchedDeck]) {
+        const discount =
+          d.store.open > 0 ? Math.max(0, Math.round((1 - d.price / d.store.open) * 100)) : 0;
+        candidates.push({
+          storeId: d.store.id,
+          storeName: d.store.name,
+          store: d.store,
+          itemTitle: d.store.item,
+          stickerPrice: d.store.open,
+          listedDiscount: discount,
+          inStock: true,
+          source: "live-deal",
+          livePrice: d.price,
+        });
+      }
+
+      const ownerKey =
+        currentUser?.id || currentUser?.name || "0x49B0E1F8C2224424B10a82B93E94d1F3238385a4";
+      const funds: WishlistFunds = {
+        budget,
+        autoWalletZar: autoDebitConfig.autoWalletBalanceZar,
+        bnplAvailable: computeBnplAvailable(getStoredPayLaterLoans(ownerKey)),
+      };
+      const dealSig = `${deal?.store.id ?? "-"}:${deal?.price ?? "-"}|deck:${matchedDeck.length}|stores:${stores.length}`;
+      const agent = getStoredUserPersonalAgent();
+
+      const newBought: BoughtItem[] = [];
+      const newParked: ParkedOffer[] = [];
+      const boughtIds: string[] = [];
+      const logLines: string[] = [];
+      let spendFromBudget = 0;
+      let spendFromAutoWallet = 0;
+
+      for (const item of scanning) {
+        const sig = `${item.id}|${dealSig}`;
+        if (wishlistAutopilotSig.current.get(item.id) === sig) continue;
+        wishlistAutopilotSig.current.set(item.id, sig);
+
+        const matches = matchWishlistCandidates(item, candidates);
+        const decision = decideWishlistOutcome(item, matches, funds);
+        if (decision.action === "wait") continue;
+
+        if (decision.action === "park") {
+          const alreadyParked = [...parkedOffers, ...newParked].some(
+            (p) => p.store.id === decision.candidate.storeId,
+          );
+          if (alreadyParked) continue;
+          newParked.push({
+            id: `park-wishlist-${item.id}-${Date.now()}`,
+            store: decision.candidate.store,
+            price: decision.negotiated.price,
+            counter: 1,
+            open: decision.candidate.stickerPrice,
+            expires: Date.now() + 24 * 60 * 60 * 1000,
+            parkedAt: Date.now(),
+          });
+          logLines.push(
+            `WISHLIST PARKED: ${item.title} @ R${decision.negotiated.price} (-${decision.negotiated.discountPercent}%) · ${decision.reason}`,
+          );
+          void reportAgentActivity("wishlist_parked", {
+            wishlistId: item.id,
+            title: item.title,
+            price: decision.negotiated.price,
+            discountPercent: decision.negotiated.discountPercent,
+            reason: decision.reason,
+          });
+          continue;
+        }
+
+        // Buy: finance any shortfall through Pay Later micro-credit first.
+        if (decision.bnplShortfall > 0) {
+          try {
+            await requestAgentPayLaterLoan({
+              agentId: agent?.id || "consumer-agent",
+              agentName: agent?.name || currentUser?.name || "Consumer Shopping Agent",
+              ownerAddress: ownerKey,
+              ownerName: currentUser?.name || currentUser?.displayName || "AutoCom Shopper",
+              storeId: decision.candidate.storeId,
+              storeName: decision.candidate.storeName,
+              itemTitle: item.title,
+              principalZAR: decision.bnplShortfall,
+            });
+            logLines.push(
+              `PAY LATER TOP-UP: R${decision.bnplShortfall.toLocaleString()} micro-credit secured for ${item.title}`,
+            );
+          } catch {
+            logLines.push(`PAY LATER FAILED: could not finance ${item.title}, holding deal`);
+            continue;
+          }
+        }
+
+        spendFromBudget += decision.payFromBudget;
+        spendFromAutoWallet += decision.payFromAutoWallet;
+        funds.budget -= decision.payFromBudget;
+        funds.autoWalletZar -= decision.payFromAutoWallet;
+
+        const token = `AUTOCOM-${decision.candidate.storeId.slice(0, 3).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}-${new Date().getFullYear()}`;
+        newBought.push({
+          id: `bought-wishlist-${item.id}-${Date.now()}`,
+          store: decision.candidate.store,
+          item: item.title,
+          price: decision.negotiated.price,
+          open: decision.candidate.stickerPrice,
+          boughtAt: Date.now(),
+          qrToken: token,
+        });
+        boughtIds.push(item.id);
+        logLines.push(
+          `WISHLIST AUTO-BOUGHT: ${item.title} @ R${decision.negotiated.price} (-${decision.negotiated.discountPercent}%) · Voucher ${token} issued`,
+        );
+        void reportAgentActivity("wishlist_auto_bought", {
+          wishlistId: item.id,
+          title: item.title,
+          price: decision.negotiated.price,
+          discountPercent: decision.negotiated.discountPercent,
+          payFromBudget: decision.payFromBudget,
+          payFromAutoWallet: decision.payFromAutoWallet,
+          bnplShortfall: decision.bnplShortfall,
+        });
+      }
+
+      if (newParked.length > 0) {
+        saveParked([...newParked, ...parkedOffers]);
+      }
+      if (newBought.length > 0) {
+        saveBought([...newBought, ...boughtItems]);
+        setBudget((b) => Math.max(0, Math.round((b - spendFromBudget) * 100) / 100));
+        handleUpdateAutoDebit({
+          autoWalletBalanceZar: Math.max(
+            0,
+            Math.round((autoDebitConfig.autoWalletBalanceZar - spendFromAutoWallet) * 100) / 100,
+          ),
+        });
+        // Keep the wishlist live: bought items leave the scanning list at once.
+        for (const id of boughtIds) handleRemoveWishlistItem(id);
+        try {
+          notificationManager?.sendPushNotification?.(
+            `Wishlist Auto-Buy · ${newBought.length} item${newBought.length > 1 ? "s" : ""}`,
+            newBought.map((b) => `${b.item} @ R${b.price}`).join(" · "),
+          );
+        } catch {
+          // Guarded
+        }
+      }
+      if (logLines.length > 0) {
+        setLogs((l) => [...logLines.map((msg) => ({ t: now(), msg, id: logId++ })), ...l]);
+      }
+    } finally {
+      wishlistAutopilotInFlight.current = false;
+    }
+  }, [
+    hasCreatedAgent,
+    wishlist,
+    stores,
+    currentMall,
+    deal,
+    matchedDeck,
+    budget,
+    autoDebitConfig,
+    parkedOffers,
+    boughtItems,
+    currentUser,
+    saveBought,
+    saveParked,
+    handleRemoveWishlistItem,
+    handleUpdateAutoDebit,
+  ]);
+
+  useEffect(() => {
+    if (!hasCreatedAgent) return;
+    void processWishlistAutopilot();
+  }, [processWishlistAutopilot, hasCreatedAgent]);
 
   if (view === "landing") {
     return (

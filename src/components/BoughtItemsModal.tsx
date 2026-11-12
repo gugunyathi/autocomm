@@ -1,5 +1,7 @@
 import { useState } from "react";
 import type { Store } from "@/lib/acn-data";
+import { VoucherQrCode } from "@/components/VoucherQrCode";
+import { buildVoucherQrPayload } from "@/lib/voucher";
 
 export interface BoughtItem {
   id: string;
@@ -102,28 +104,20 @@ export function BoughtItemsModal({
               </p>
             </div>
 
-            {/* Simulated High-Contrast QR Code */}
+            {/* Scannable receipt QR code (token + store + price + timestamp) */}
             <div className="rounded-2xl bg-white p-4 shadow-xl border-4 border-accent/30 inline-block my-2">
-              <div className="w-36 h-36 bg-slate-900 rounded-lg p-2 flex flex-col justify-between items-center text-white">
-                <div className="w-full flex justify-between">
-                  <div className="w-7 h-7 bg-white p-1 rounded-sm">
-                    <div className="w-full h-full bg-slate-900" />
-                  </div>
-                  <div className="w-7 h-7 bg-white p-1 rounded-sm">
-                    <div className="w-full h-full bg-slate-900" />
-                  </div>
-                </div>
-                <div className="font-mono text-[9px] text-center tracking-widest text-emerald-400 font-bold">
-                  AUTOCOM · VERIFIED
-                </div>
-                <div className="w-full flex justify-between">
-                  <div className="w-7 h-7 bg-white p-1 rounded-sm">
-                    <div className="w-full h-full bg-slate-900" />
-                  </div>
-                  <div className="w-7 h-7 bg-white flex items-center justify-center text-slate-900 font-bold text-[8px]">
-                    QR
-                  </div>
-                </div>
+              <VoucherQrCode
+                value={buildVoucherQrPayload({
+                  qrToken: selectedVoucher.qrToken,
+                  store: selectedVoucher.store.name,
+                  price: selectedVoucher.price,
+                  boughtAt: selectedVoucher.boughtAt,
+                })}
+                size={144}
+                label={`Voucher QR code ${selectedVoucher.qrToken}`}
+              />
+              <div className="font-mono text-[9px] text-center tracking-widest text-emerald-600 font-bold pt-2">
+                AUTOCOM · VERIFIED
               </div>
             </div>
 
