@@ -770,35 +770,35 @@ export function A2ATransactionAuditLedger() {
 
       {/* Grid Control Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-2xl glass border border-white/10 bg-[#0c101d]">
-        <div className="flex items-center gap-2 flex-1">
-          <div className="relative flex-1 max-w-sm">
+        <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center items-stretch gap-2 flex-1 min-w-0">
+          <div className="relative flex-1 min-w-0 min-[480px]:max-w-sm">
             <Filter className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
               placeholder="Filter outlets, statuses, items..."
               value={quickFilterText}
               onChange={(e) => setQuickFilterText(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-black/40 border border-white/15 text-xs text-white placeholder-muted-foreground focus:outline-none focus:border-primary/60 font-mono"
+              className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-black/40 border border-white/15 text-xs text-white placeholder-muted-foreground focus:outline-none focus:border-primary/60 font-mono min-h-[38px]"
             />
           </div>
 
-          <div className="flex rounded-xl bg-black/40 p-1 border border-white/10">
+          <div className="flex rounded-xl bg-black/40 p-1 border border-white/10 shrink-0">
             <button
               onClick={() => setActiveTab("grid")}
-              className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+              className={`flex-1 min-[480px]:flex-none px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer touch-manipulation whitespace-nowrap ${
                 activeTab === "grid"
                   ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-white"
+                  : "text-muted-foreground hover:text-white active:text-white"
               }`}
             >
               AG Grid Ledger
             </button>
             <button
               onClick={() => setActiveTab("apimatic")}
-              className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+              className={`flex-1 min-[480px]:flex-none px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer touch-manipulation whitespace-nowrap ${
                 activeTab === "apimatic"
                   ? "bg-accent text-accent-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-white"
+                  : "text-muted-foreground hover:text-white active:text-white"
               }`}
             >
               APIMatic Spec
@@ -806,20 +806,20 @@ export function A2ATransactionAuditLedger() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={triggerAutonomousStep}
             disabled={isSimulating}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-mono text-xs font-extrabold shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-400 text-slate-950 font-mono text-xs font-extrabold shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer touch-manipulation min-h-[38px]"
             title="Simulate an incoming autonomous agent negotiation and vaulted PayPal capture"
           >
-            <Play className={`w-3.5 h-3.5 ${isSimulating ? "animate-spin" : ""}`} />
+            <Play className={`w-3.5 h-3.5 shrink-0 ${isSimulating ? "animate-spin" : ""}`} />
             {isSimulating ? "Settling…" : "Simulate A2A + PayPal"}
           </button>
 
           <button
             onClick={() => setRowData(INITIAL_LEDGER_DATA)}
-            className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-muted-foreground hover:text-white transition-colors cursor-pointer"
+            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/15 text-muted-foreground hover:text-white transition-colors cursor-pointer touch-manipulation min-w-[38px] min-h-[38px] flex items-center justify-center"
             title="Reset Ledger Data"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -827,11 +827,11 @@ export function A2ATransactionAuditLedger() {
 
           <button
             onClick={downloadOpenApiSpec}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-white font-mono text-xs transition-colors cursor-pointer"
+            className="flex items-center gap-1 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/15 text-white font-mono text-xs transition-colors cursor-pointer touch-manipulation min-h-[38px]"
             title="Download OpenAPI 3.0 JSON for APIMatic SDK generation"
           >
             <Download className="w-3.5 h-3.5 text-primary" />
-            <span className="hidden sm:inline">APIMatic Export</span>
+            <span className="hidden min-[480px]:inline">APIMatic Export</span>
           </button>
         </div>
       </div>
@@ -839,24 +839,23 @@ export function A2ATransactionAuditLedger() {
       {/* Main Tab Content */}
       {activeTab === "grid" ? (
         <div className="rounded-2xl overflow-hidden border border-white/15 shadow-2xl glass bg-[#080d19]/90">
-          <div className="px-4 py-2.5 border-b border-white/10 flex items-center justify-between text-xs font-mono text-muted-foreground bg-black/40">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="font-bold text-white">
+          <div className="px-3 sm:px-4 py-2.5 border-b border-white/10 flex flex-col sm:flex-row sm:items-center items-start justify-between gap-1 text-xs font-mono text-muted-foreground bg-black/40">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+              <span className="font-bold text-white truncate">
                 AG Grid Enterprise-Grade Real-Time Transaction Engine
               </span>
-              <span>·</span>
-              <span>8 South African Mall Outlets</span>
+              <span className="hidden md:inline shrink-0">·</span>
+              <span className="hidden md:inline shrink-0">8 South African Mall Outlets</span>
             </div>
-            <span className="text-[10px] text-teal-400 font-semibold">
+            <span className="text-[10px] text-teal-400 font-semibold shrink-0">
               Client-Side Row Model · High-Frequency Filter Safe
             </span>
           </div>
 
           <div
-            className="ag-theme-quartz-dark w-full"
+            className="ag-theme-quartz-dark w-full h-[52dvh] min-h-[300px] max-h-[420px] overscroll-contain"
             style={{
-              height: "420px",
               fontFamily:
                 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto',
             }}
@@ -875,8 +874,8 @@ export function A2ATransactionAuditLedger() {
         </div>
       ) : (
         /* APIMatic Spec Viewer Tab */
-        <div className="rounded-2xl border border-white/15 glass bg-[#080d19]/95 p-4 space-y-3">
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+        <div className="rounded-2xl border border-white/15 glass bg-[#080d19]/95 p-3 sm:p-4 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center items-stretch justify-between gap-2.5 border-b border-white/10 pb-3">
             <div>
               <h3 className="text-sm font-extrabold text-white font-mono flex items-center gap-2">
                 <ExternalLink className="w-4 h-4 text-accent" />
@@ -889,14 +888,14 @@ export function A2ATransactionAuditLedger() {
             </div>
             <button
               onClick={downloadOpenApiSpec}
-              className="px-3.5 py-1.5 rounded-xl bg-accent text-accent-foreground font-mono text-xs font-bold shadow-md hover:bg-accent/90 transition-all cursor-pointer flex items-center gap-1.5"
+              className="px-3.5 py-2 rounded-xl bg-accent text-accent-foreground font-mono text-xs font-bold shadow-md hover:bg-accent/90 active:bg-accent/90 transition-all cursor-pointer flex items-center justify-center gap-1.5 touch-manipulation min-h-[40px] w-full sm:w-auto shrink-0"
             >
               <Download className="w-3.5 h-3.5" />
               Download JSON Spec
             </button>
           </div>
 
-          <pre className="max-h-96 overflow-auto p-4 rounded-xl bg-black/80 border border-white/10 font-mono text-[11px] text-teal-300 leading-relaxed">
+          <pre className="scroll-y-touch max-h-96 overflow-auto overscroll-contain p-3 sm:p-4 rounded-xl bg-black/80 border border-white/10 font-mono text-[10px] sm:text-[11px] text-teal-300 leading-relaxed">
             {A2A_OPENAPI_SPEC_JSON}
           </pre>
         </div>

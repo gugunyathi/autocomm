@@ -193,15 +193,15 @@ export function AgentPayLaterLoanCard({
 
       {/* Simulator / Fast Credit Advance Box (Shown if shortfall or requested) */}
       {(showCreateSimulator || currentShortfallZAR) && (
-        <div className="p-4 rounded-2xl border border-accent/40 bg-accent/10 space-y-3 font-mono">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-base">⚡</span>
+        <div className="p-3 sm:p-4 rounded-2xl border border-accent/40 bg-accent/10 space-y-3 font-mono">
+          <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center items-start justify-between gap-1.5">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-base shrink-0">⚡</span>
               <h4 className="text-xs sm:text-sm font-black text-white">
                 Autonomous Shortfall Financing Simulator
               </h4>
             </div>
-            <span className="text-[10px] text-accent font-bold px-2 py-0.5 rounded-full bg-accent/20 border border-accent/30">
+            <span className="text-[10px] text-accent font-bold px-2 py-0.5 rounded-full bg-accent/20 border border-accent/30 whitespace-nowrap shrink-0">
               Underfunded Checkout Protection
             </span>
           </div>
@@ -220,7 +220,7 @@ export function AgentPayLaterLoanCard({
                 type="number"
                 value={simAmountZAR}
                 onChange={(e) => setSimAmountZAR(Math.max(10, Number(e.target.value)))}
-                className="w-full bg-black/60 border border-white/20 rounded-xl p-2 text-xs text-white"
+                className="w-full bg-black/60 border border-white/20 rounded-xl p-2 text-xs text-white min-h-[40px]"
                 min={10}
                 step={10}
               />
@@ -231,7 +231,7 @@ export function AgentPayLaterLoanCard({
               <select
                 value={simStore}
                 onChange={(e) => setSimStore(e.target.value)}
-                className="w-full bg-black/60 border border-white/20 rounded-xl p-2 text-xs text-white"
+                className="w-full bg-black/60 border border-white/20 rounded-xl p-2 text-xs text-white min-h-[40px]"
               >
                 <option value="woolworths-food">Woolworths Food (Artisan Platter)</option>
                 <option value="zara-fashion">Zara Fashion (Wool Hoodie)</option>
@@ -253,7 +253,7 @@ export function AgentPayLaterLoanCard({
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-1">
+          <div className="flex flex-col sm:flex-row sm:items-center items-stretch justify-between gap-2.5 pt-1">
             <div className="text-[11px] text-muted-foreground">
               Total to Repay:{" "}
               <strong className="text-white">R{calculatedPlan.totalSecuredZAR.toFixed(2)}</strong>{" "}
@@ -262,7 +262,7 @@ export function AgentPayLaterLoanCard({
             <button
               onClick={handleApplyPayLaterCredit}
               disabled={isApplying}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-sky-400 to-blue-500 hover:from-sky-500 text-slate-950 font-black text-xs flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50 cursor-pointer shadow-md"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-sky-400 to-blue-500 hover:from-sky-500 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 disabled:opacity-50 cursor-pointer touch-manipulation min-h-[42px] w-full sm:w-auto shrink-0 shadow-md"
             >
               <Zap className={`w-3.5 h-3.5 ${isApplying ? "animate-spin" : ""}`} />
               <span>{isApplying ? "Securing Credit..." : "Auto-Advance Credit"}</span>
@@ -306,11 +306,11 @@ export function AgentPayLaterLoanCard({
           {activeLoan && (
             <div className="p-4 sm:p-5 rounded-2xl border border-white/15 bg-black/50 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-white/10 gap-2">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-white">{activeLoan.itemTitle}</span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-bold text-white break-words">{activeLoan.itemTitle}</span>
                     <span
-                      className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                      className={`px-2 py-0.5 rounded-full text-[9px] font-bold whitespace-nowrap ${
                         activeLoan.status === "SETTLED"
                           ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                           : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
@@ -321,7 +321,7 @@ export function AgentPayLaterLoanCard({
                         : "ACTIVE 6-MO REPAYMENT"}
                     </span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-[10px] text-muted-foreground break-all">
                     Store: {activeLoan.storeName} · Loan ID: {activeLoan.id}
                   </span>
                 </div>

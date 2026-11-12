@@ -289,27 +289,27 @@ export function PayPalHackathonModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-xl animate-fade-in select-none"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-xl animate-fade-in select-none"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-6xl max-h-[92vh] flex flex-col rounded-3xl glass border border-primary/40 bg-[#070b14]/95 shadow-2xl overflow-hidden"
+        className="relative w-full sm:max-w-6xl h-[100dvh] sm:h-auto sm:max-h-[92dvh] flex flex-col rounded-t-3xl sm:rounded-3xl glass border border-primary/40 bg-[#070b14]/95 shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Top Header with Hackathon Badge Bar */}
-        <div className="p-4 sm:p-5 border-b border-white/10 bg-gradient-to-r from-primary/20 via-black to-accent/20 shrink-0">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-amber-400 to-primary flex items-center justify-center shadow-lg text-slate-950 font-black">
-                <Trophy className="w-5 h-5 text-slate-950" />
+        <div className="px-3 pt-3 pb-2 sm:p-5 border-b border-white/10 bg-gradient-to-r from-primary/20 via-black to-accent/20 shrink-0">
+          <div className="flex items-center justify-between gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-gradient-to-tr from-amber-400 to-primary flex items-center justify-center shadow-lg text-slate-950 font-black shrink-0">
+                <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-slate-950" />
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-base sm:text-lg font-black text-white tracking-tight">
+                  <h2 className="text-sm sm:text-lg font-black text-white tracking-tight truncate">
                     PayPal Hub
                   </h2>
                 </div>
-                <p className="text-xs text-slate-300 font-sans">
+                <p className="text-[11px] sm:text-xs text-slate-300 font-sans truncate sm:whitespace-normal">
                   Autocomm Spatial Commerce · AG Grid, Channel3, PayPal Sandbox, APIMatic SDKs
                 </p>
               </div>
@@ -317,98 +317,112 @@ export function PayPalHackathonModal({
 
             <button
               onClick={onClose}
-              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-white transition-colors cursor-pointer shrink-0"
+              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 active:bg-white/15 text-muted-foreground hover:text-white transition-colors cursor-pointer shrink-0 touch-manipulation min-w-[40px] min-h-[40px] flex items-center justify-center"
               aria-label="Close modal"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Navigation Tabs */}
-          <div className="mt-4 flex items-center gap-1.5 p-1 rounded-2xl bg-black/60 border border-white/10 max-w-full overflow-x-auto">
+          {/* Navigation Tabs — swipe/scroll left-right on small screens */}
+          <div
+            role="tablist"
+            aria-label="PayPal Hub sections"
+            className="tab-scroll mt-3 sm:mt-4 flex items-center gap-1.5 p-1 rounded-2xl bg-black/60 border border-white/10 max-w-full overflow-x-auto flex-nowrap"
+          >
             <button
+              role="tab"
+              aria-selected={activeTab === "ag-grid"}
               onClick={() => setActiveTab("ag-grid")}
-              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 snap-start touch-manipulation min-h-[36px] ${
                 activeTab === "ag-grid"
                   ? "bg-amber-400 text-slate-950 shadow-md"
-                  : "text-muted-foreground hover:text-white"
+                  : "text-muted-foreground hover:text-white active:text-white"
               }`}
             >
-              <Trophy className="w-3.5 h-3.5" />
+              <Trophy className="w-3.5 h-3.5 shrink-0" />
               AG Grid A2A Ledger
             </button>
 
             <button
+              role="tab"
+              aria-selected={activeTab === "channel3"}
               onClick={() => setActiveTab("channel3")}
-              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 snap-start touch-manipulation min-h-[36px] ${
                 activeTab === "channel3"
                   ? "bg-red-500 text-white shadow-md"
-                  : "text-muted-foreground hover:text-white"
+                  : "text-muted-foreground hover:text-white active:text-white"
               }`}
             >
-              <Radio className="w-3.5 h-3.5" />
+              <Radio className="w-3.5 h-3.5 shrink-0" />
               Channel3 Retail & Live Mesh
             </button>
 
             <button
+              role="tab"
+              aria-selected={activeTab === "paypal"}
               onClick={() => setActiveTab("paypal")}
-              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 snap-start touch-manipulation min-h-[36px] ${
                 activeTab === "paypal"
                   ? "bg-primary text-primary-foreground shadow-md"
-                  : "text-muted-foreground hover:text-white"
+                  : "text-muted-foreground hover:text-white active:text-white"
               }`}
             >
-              <DollarSign className="w-3.5 h-3.5" />
+              <DollarSign className="w-3.5 h-3.5 shrink-0" />
               PayPal Sandbox M2M
             </button>
 
             <button
+              role="tab"
+              aria-selected={activeTab === "apimatic"}
               onClick={() => setActiveTab("apimatic")}
-              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 snap-start touch-manipulation min-h-[36px] ${
                 activeTab === "apimatic"
                   ? "bg-purple-500 text-white shadow-md"
-                  : "text-muted-foreground hover:text-white"
+                  : "text-muted-foreground hover:text-white active:text-white"
               }`}
             >
-              <FileCode className="w-3.5 h-3.5" />
+              <FileCode className="w-3.5 h-3.5 shrink-0" />
               APIMatic OpenAPI Spec
             </button>
 
             <button
+              role="tab"
+              aria-selected={activeTab === "ai-toolkit"}
               onClick={() => setActiveTab("ai-toolkit")}
-              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 snap-start touch-manipulation min-h-[36px] ${
                 activeTab === "ai-toolkit"
                   ? "bg-sky-500 text-slate-950 font-black shadow-md"
-                  : "text-muted-foreground hover:text-white"
+                  : "text-muted-foreground hover:text-white active:text-white"
               }`}
             >
-              <Bot className="w-3.5 h-3.5" />
+              <Bot className="w-3.5 h-3.5 shrink-0" />
               AI Agent Toolkit & LLM
             </button>
           </div>
         </div>
 
-        {/* Modal Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-3 sm:p-5">
+        {/* Modal Scrollable Body — vertical scroll to view all info */}
+        <div className="scroll-y-touch flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-5">
           {activeTab === "ag-grid" && <A2ATransactionAuditLedger />}
 
           {activeTab === "channel3" && <AgentLiveStream />}
 
           {activeTab === "paypal" && (
             <div className="space-y-4 max-w-4xl mx-auto">
-              <div className="glass p-5 rounded-2xl border border-primary/30 bg-primary/5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-base font-extrabold text-white font-mono flex items-center gap-2">
-                      <ShieldCheck className="w-5 h-5 text-primary" />
-                      Autonomous PayPal Sandbox Vault Execution Engine
+              <div className="glass p-4 sm:p-5 rounded-2xl border border-primary/30 bg-primary/5 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h3 className="text-sm sm:text-base font-extrabold text-white font-mono flex items-center gap-2">
+                      <ShieldCheck className="w-5 h-5 text-primary shrink-0" />
+                      <span>Autonomous PayPal Sandbox Vault Execution Engine</span>
                     </h3>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       Simulate machine-to-machine settlement without human clicks once bilateral
                       negotiation thresholds converge.
                     </p>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-primary/20 text-primary border border-primary/30">
+                  <span className="px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-mono font-bold bg-primary/20 text-primary border border-primary/30 whitespace-nowrap shrink-0">
                     Braintree Vaulted Delegate
                   </span>
                 </div>
@@ -421,7 +435,7 @@ export function PayPalHackathonModal({
                     <select
                       value={testStore}
                       onChange={(e) => setTestStore(e.target.value)}
-                      className="w-full bg-black/80 border border-white/15 rounded-lg p-2 text-xs text-white font-mono"
+                      className="w-full bg-black/80 border border-white/15 rounded-lg p-2 text-xs text-white font-mono min-h-[40px]"
                     >
                       <option value="woolworths-food">Woolworths Food (Artisan Platter)</option>
                       <option value="zara-fashion">Zara Fashion (Wool Hoodie)</option>
@@ -442,7 +456,7 @@ export function PayPalHackathonModal({
                       type="number"
                       value={testPriceZar}
                       onChange={(e) => setTestPriceZar(Number(e.target.value))}
-                      className="w-full bg-black/80 border border-white/15 rounded-lg p-2 text-xs text-white font-mono"
+                      className="w-full bg-black/80 border border-white/15 rounded-lg p-2 text-xs text-white font-mono min-h-[40px]"
                       min={10}
                       step={10}
                     />
@@ -459,14 +473,14 @@ export function PayPalHackathonModal({
                   </div>
                 </div>
 
-                <div className="pt-2 flex items-center justify-between">
+                <div className="pt-2 flex flex-col sm:flex-row sm:items-center items-stretch justify-between gap-2.5">
                   <div className="text-xs text-muted-foreground font-mono">
                     Zero-click checkout satisfies the Agentic Commerce challenge.
                   </div>
                   <button
                     onClick={handleRunPayPalPipeline}
                     disabled={isProcessing}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-teal-400 hover:from-primary/90 text-slate-950 font-mono text-xs font-black shadow-lg transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                    className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-teal-400 hover:from-primary/90 text-slate-950 font-mono text-xs font-black shadow-lg transition-all active:scale-95 disabled:opacity-50 cursor-pointer touch-manipulation min-h-[44px] w-full sm:w-auto shrink-0"
                   >
                     <Zap className={`w-4 h-4 ${isProcessing ? "animate-spin" : ""}`} />
                     {isProcessing ? "Executing Vault Loop…" : "Trigger Zero-Click M2M Payment"}
@@ -487,15 +501,15 @@ export function PayPalHackathonModal({
                     </div>
                   ))}
                   {testTxId && (
-                    <div className="mt-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-emerald-400" />
+                    <div className="mt-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center items-start justify-between gap-1.5">
+                      <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                        <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
                         <span className="text-white font-bold">
                           PayPal Sandbox Capture Success:
                         </span>
-                        <span className="text-emerald-400">{testTxId}</span>
+                        <span className="text-emerald-400 break-all">{testTxId}</span>
                       </div>
-                      <span className="text-[10px] text-muted-foreground">Vault Token #771B</span>
+                      <span className="text-[10px] text-muted-foreground shrink-0">Vault Token #771B</span>
                     </div>
                   )}
                 </div>
@@ -516,7 +530,7 @@ export function PayPalHackathonModal({
 
           {activeTab === "apimatic" && (
             <div className="space-y-4 max-w-5xl mx-auto">
-              <div className="glass p-5 rounded-2xl border border-purple-500/30 bg-purple-950/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="glass p-4 sm:p-5 rounded-2xl border border-purple-500/30 bg-purple-950/10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                 <div>
                   <h3 className="text-base font-extrabold text-white font-mono flex items-center gap-2">
                     <FileCode className="w-5 h-5 text-purple-400" />
@@ -530,7 +544,7 @@ export function PayPalHackathonModal({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={downloadOpenApiSpec}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-500 hover:bg-purple-400 text-white font-mono text-xs font-bold shadow-md transition-all cursor-pointer"
+                    className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-purple-500 hover:bg-purple-400 active:bg-purple-400 text-white font-mono text-xs font-bold shadow-md transition-all cursor-pointer touch-manipulation min-h-[40px] w-full sm:w-auto"
                   >
                     <Download className="w-3.5 h-3.5" />
                     Download JSON Spec
@@ -538,11 +552,11 @@ export function PayPalHackathonModal({
                 </div>
               </div>
 
-              <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-black/90 p-4">
+              <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-black/90 p-3 sm:p-4">
                 <div className="absolute top-3 right-3 text-[10px] font-mono text-muted-foreground px-2 py-0.5 rounded bg-white/10">
                   OpenAPI 3.0.3 · APIMatic Ready
                 </div>
-                <pre className="max-h-[500px] overflow-auto font-mono text-[11px] text-teal-300 leading-relaxed pr-2">
+                <pre className="scroll-y-touch max-h-[60dvh] sm:max-h-[500px] overflow-auto font-mono text-[10px] sm:text-[11px] text-teal-300 leading-relaxed pr-2 pt-6">
                   {A2A_OPENAPI_SPEC_JSON}
                 </pre>
               </div>
@@ -551,7 +565,7 @@ export function PayPalHackathonModal({
           {activeTab === "ai-toolkit" && (
             <div className="space-y-4 max-w-5xl mx-auto">
               {/* Header Card */}
-              <div className="glass p-5 rounded-2xl border border-sky-500/30 bg-sky-950/10 space-y-3">
+              <div className="glass p-4 sm:p-5 rounded-2xl border border-sky-500/30 bg-sky-950/10 space-y-3">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div>
                     <h3 className="text-base font-extrabold text-white font-mono flex items-center gap-2">
@@ -636,7 +650,7 @@ export function PayPalHackathonModal({
                       {PAYPAL_AGENT_TOOLS.length} Tools
                     </span>
                   </div>
-                  <div className="space-y-1.5 max-h-[420px] overflow-y-auto pr-1">
+                  <div className="scroll-y-touch space-y-1.5 max-h-[220px] lg:max-h-[420px] overflow-y-auto overscroll-contain pr-1">
                     {PAYPAL_AGENT_TOOLS.map((tool) => (
                       <button
                         key={tool.name}
@@ -665,9 +679,9 @@ export function PayPalHackathonModal({
                 {/* Parameter Editor & Invoker */}
                 <div className="lg:col-span-2 space-y-4">
                   <div className="glass p-4 rounded-2xl border border-white/15 bg-black/50 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-mono font-bold text-sky-400">
+                    <div className="flex flex-col sm:flex-row sm:items-center items-stretch justify-between gap-2.5">
+                      <div className="min-w-0">
+                        <span className="text-xs font-mono font-bold text-sky-400 break-all">
                           {selectedTool}
                         </span>
                         <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -677,7 +691,7 @@ export function PayPalHackathonModal({
                       <button
                         onClick={handleExecuteAgentTool}
                         disabled={isExecutingTool}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-sky-400 to-primary hover:from-sky-300 text-slate-950 font-mono text-xs font-black shadow-lg transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                        className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-sky-400 to-primary hover:from-sky-300 text-slate-950 font-mono text-xs font-black shadow-lg transition-all active:scale-95 disabled:opacity-50 cursor-pointer touch-manipulation min-h-[40px] w-full sm:w-auto shrink-0"
                       >
                         <Zap className={`w-3.5 h-3.5 ${isExecutingTool ? "animate-spin" : ""}`} />
                         {isExecutingTool ? "Invoking Live Tool…" : "Execute Tool"}
@@ -720,7 +734,7 @@ export function PayPalHackathonModal({
                           {toolResult.agentRationale}
                         </div>
                       )}
-                      <pre className="max-h-[220px] overflow-auto font-mono text-[11px] text-teal-300 p-2 rounded-lg bg-black/60 border border-white/5">
+                      <pre className="scroll-y-touch max-h-[220px] overflow-auto overscroll-contain font-mono text-[10px] sm:text-[11px] text-teal-300 p-2 rounded-lg bg-black/60 border border-white/5">
                         {JSON.stringify(toolResult, null, 2)}
                       </pre>
                     </div>
